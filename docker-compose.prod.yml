@@ -1,29 +1,7 @@
-# Docker Compose para Produção - VetQueue
-version: '3.8'
+# Docker Compose para Produção - VetQueue v2 (Otimizado para DigitalOcean)
 
 services:
-  # PostgreSQL Database
-  postgres:
-    image: postgres:16-alpine
-    container_name: vetqueue-postgres
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: vetqueue_prod
-      POSTGRES_USER: vetqueue
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-vetqueue_prod_password}
-      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./backend/scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
-    ports:
-      - "5432:5432"
-    networks:
-      - vetqueue-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U vetqueue -d vetqueue_prod"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+  # O serviço 'postgres' foi REMOVIDO. Usaremos o banco de dados gerenciado.
 
   # Backend API
   backend:
@@ -32,32 +10,13 @@ services:
       dockerfile: Dockerfile
     container_name: vetqueue-backend
     restart: unless-stopped
-    environment:
-      # Database
-      DATABASE_URL: postgresql+asyncpg://vetqueue:${POSTGRES_PASSWORD:-vetqueue_prod_password}@postgres:5432/vetqueue_prod
-      
-      # JWT Security
-      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
-      JWT_ALGORITHM: ${JWT_ALGORITHM:-HS256}
-      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-30}
-      REFRESH_TOKEN_EXPIRE_DAYS: ${REFRESH_TOKEN_EXPIRE_DAYS:-7}
-      
-      # Application
-      DEBUG: ${DEBUG:-false}
-      LOG_LEVEL: ${LOG_LEVEL:-INFO}
-      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
-      
-      # Database Pool
-      ECHO_SQL: ${ECHO_SQL:-false}
-      POOL_SIZE: ${POOL_SIZE:-10}
-      MAX_OVERFLOW: ${MAX_OVERFLOW:-20}
-    ports:
-      - "8000:8000"
-    depends_on:
-      postgres:
-        condition: service_healthy
+    env_file:
+      - .env  # <--- MUDANÇA: Carrega todas as variáveis do arquivo .env
     networks:
       - vetqueue-network
+    ports:
+      - "8000:8000"
+    # <--- MUDANÇA: 'depends_on' para o postgres foi removido pois ele é externo.
     volumes:
       - ./backend/logs:/app/logs
     healthcheck:
@@ -73,47 +32,47 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        VITE_API_URL: ${VITE_API_URL:-http://localhost:8000}
-        VITE_WS_URL: ${VITE_WS_URL:-ws://localhost:8000}
+        # Passa as variáveis do .env para o build do frontend
+        VITE_API_URL: ${VITE_API_URL}
+        VITE_WS_URL: ${VITE_WS_URL}
     container_name: vetqueue-frontend
     restart: unless-stopped
     ports:
       - "3000:80"
     depends_on:
       backend:
-        condition: service_healthy
+        condition: service_healthy # Mantém a dependência do backend, que é ótimo.
     networks:
       - vetqueue-network
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80/"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/"]
       interval: 30s
       timeout: 10s
       retries: 3
 
-  # Redis (opcional - para cache e sessões)
+  # Redis (para cache e sessões)
   redis:
     image: redis:7-alpine
     container_name: vetqueue-redis
     restart: unless-stopped
-    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-vetqueue_redis_password}
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
     volumes:
       - redis_data:/data
-    ports:
-      - "6379:6379"
+    # <--- MUDANÇA: Seção 'ports' removida para aumentar a segurança.
+    # O backend vai acessar o Redis pela rede interna 'vetqueue-network'.
     networks:
       - vetqueue-network
     healthcheck:
-      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 3s
       retries: 5
 
 # Volumes persistentes
 volumes:
-  postgres_data:
-    driver: local
   redis_data:
     driver: local
+  # <--- MUDANÇA: Volume 'postgres_data' removido.
 
 # Rede interna
 networks:

@@ -73,7 +73,7 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
     });
 
     // Handler para FILA_ATUALIZADA - Invalidação do cache
-    wsService.on('FILA_ATUALIZADA', (message) => {
+    wsService.on('FILA_ATUALIZADA', (_message) => {
       console.log('🔄 FILA_ATUALIZADA recebido - Invalidando cache TanStack Query');
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.fila });
     });
@@ -99,7 +99,7 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
     });
 
     // Handler para PACIENTE_ADICIONADO - Log e Toast opcional
-    wsService.on('PACIENTE_ADICIONADO', (message) => {
+    wsService.on('PACIENTE_ADICIONADO', (_message) => {
       console.log('➕ Novo paciente adicionado à fila');
       
       if (enableToasts) {
@@ -109,7 +109,7 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
     });
 
     // Handler para PACIENTE_FINALIZADO - Log
-    wsService.on('PACIENTE_FINALIZADO', (message) => {
+    wsService.on('PACIENTE_FINALIZADO', (_message) => {
       console.log('✅ Atendimento finalizado');
     });
 

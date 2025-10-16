@@ -1,4 +1,3 @@
-import React from 'react';
 import { Megaphone, Check } from 'lucide-react';
 import { Paciente } from '../../types';
 import { Card, CardHeader, CardTitle, CardFooter } from '../ui/Card';

@@ -1,4 +1,4 @@
-import React, { useState, FormEvent } from 'react';
+import { useState, FormEvent } from 'react';
 import { User, KeyRound, Loader2 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';

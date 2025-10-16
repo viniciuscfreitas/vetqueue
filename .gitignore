@@ -1,0 +1,491 @@
+# ===========================================
+# VETQUEUE - MONOREPO .GITIGNORE
+# ===========================================
+# Backend: Python/FastAPI + pip + pytest + alembic
+# Frontend: React/TypeScript + Vite + npm
+# Infrastructure: Docker + Docker Compose
+# IDE: Visual Studio Code
+# ===========================================
+
+# ===========================================
+# 🔐 SECRETS & ENVIRONMENT VARIABLES
+# ===========================================
+# CRITICAL: Never commit these files
+.env
+.env.*
+.env.local
+.env.development
+.env.test
+.env.production
+.env.staging
+
+# Configuration files with secrets
+config.ini
+secrets.json
+*.key
+*.pem
+*.p12
+*.pfx
+*.crt
+*.csr
+*.token
+*.secret
+
+# Database credentials and connection strings
+database.yml
+db_config.json
+*.db.local
+
+# ===========================================
+# 🐍 PYTHON BACKEND
+# ===========================================
+# Bytecode and compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.pyo
+*.pyd
+
+# Virtual environments
+venv/
+.venv/
+env/
+.env/
+ENV/
+env.bak/
+venv.bak/
+.venv.bak/
+
+# Python distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+.pytest_cache/
+cover/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# pipenv
+Pipfile.lock
+
+# poetry
+poetry.lock
+
+# pdm
+.pdm.toml
+
+# PEP 582
+__pypackages__/
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pytype static type analyzer
+.pytype/
+
+# Cython debug symbols
+cython_debug/
+
+# ===========================================
+# ⚛️ NODE.JS FRONTEND
+# ===========================================
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+
+# nyc test coverage
+.nyc_output
+
+# Grunt intermediate storage
+.grunt
+
+# Bower dependency directory
+bower_components
+
+# node-waf configuration
+.lock-wscript
+
+# Compiled binary addons
+build/Release
+
+# Dependency directories
+jspm_packages/
+
+# Snowpack dependency directory
+web_modules/
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Optional stylelint cache
+.stylelintcache
+
+# Microbundle cache
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# dotenv environment variable files
+.env.development.local
+.env.test.local
+.env.production.local
+.env.local
+
+# parcel-bundler cache
+.cache
+.parcel-cache
+
+# Next.js build output
+.next
+out
+
+# Nuxt.js build / generate output
+.nuxt
+dist
+
+# Gatsby files
+.cache/
+public
+
+# Vuepress build output
+.vuepress/dist
+
+# Docusaurus cache and generated files
+.docusaurus
+
+# Serverless directories
+.serverless/
+
+# FuseBox cache
+.fusebox/
+
+# DynamoDB Local files
+.dynamodb/
+
+# TernJS port file
+.tern-port
+
+# Stores VSCode versions used for testing VSCode extensions
+.vscode-test
+
+# yarn v2
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+.pnp.*
+
+# ===========================================
+# 🚀 VITE/REACT SPECIFIC
+# ===========================================
+# Vite build output
+dist/
+dist-ssr/
+
+# Vite cache
+.vite/
+
+# ===========================================
+# 🗄️ DATABASE & MIGRATIONS
+# ===========================================
+# SQLite databases
+*.db
+*.sqlite
+*.sqlite3
+
+# PostgreSQL dumps
+*.sql
+*.dump
+
+# Database backups
+backups/
+*.backup
+
+# ===========================================
+# 🐳 DOCKER & CONTAINERS
+# ===========================================
+# Docker volumes
+docker-volumes/
+
+# Docker compose override files
+docker-compose.override.yml
+docker-compose.override.yaml
+
+# ===========================================
+# 📝 LOGS & TEMPORARY FILES
+# ===========================================
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Temporary files
+tmp/
+temp/
+.tmp/
+.temp/
+
+# ===========================================
+# 💻 IDE & EDITORS
+# ===========================================
+# VS Code
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/*.code-snippets
+
+# Local History for Visual Studio Code
+.history/
+
+# Built Visual Studio Code Extensions
+*.vsix
+
+# JetBrains IDEs
+.idea/
+*.swp
+*.swo
+*~
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# ===========================================
+# 🖥️ OPERATING SYSTEM FILES
+# ===========================================
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# ===========================================
+# 🧪 TESTING & COVERAGE
+# ===========================================
+# Test results
+test-results/
+playwright-report/
+test-results.xml
+
+# Coverage reports
+coverage/
+.nyc_output/
+.coverage
+htmlcov/
+
+# ===========================================
+# 🚀 DEPLOYMENT & PRODUCTION
+# ===========================================
+# Production builds
+build/
+dist/
+out/
+
+# Deployment files
+.deploy/
+deploy/
+
+# SSL certificates
+*.crt
+*.csr
+*.key
+*.pem
+
+# ===========================================
+# 📦 MONOREPO SPECIFIC
+# ===========================================
+# Root level node_modules (se usando workspace)
+node_modules/
+
+# Package manager lock files (manter apenas um)
+# package-lock.json  # Descomente se usar yarn
+# yarn.lock         # Descomente se usar npm
+
+# ===========================================
+# 🔒 SECURITY & SENSITIVE DATA
+# ===========================================
+# API keys e tokens
+*.key
+*.token
+*.secret
+
+# Backup files
+*.bak
+*.backup
+*.old
+
+# ===========================================
+# ###___ CUSTOM VETQUEUE IGNORES ___###
+# ===========================================
+# Adicione aqui ignores específicos do VetQueue
+# Exemplo:
+# vetqueue.log
+# *.pid
+# *.sock
+# vetqueue_backup_*.sql
+# vetqueue_*.dump
+# backend/logs/
+# frontend/logs/
+# backend/.cache/
+# frontend/.cache/
+backend/logs/
+frontend/logs/
+backend/.cache/
+frontend/.cache/
+backend/venv/
+frontend/venv/
+backend/.venv/
+frontend/.venv/
+backend/env/
+frontend/env/
+backend/ENV/
+frontend/ENV/

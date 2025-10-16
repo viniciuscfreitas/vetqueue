@@ -1,0 +1,35 @@
+# FastAPI e servidor ASGI
+fastapi>=0.115.0
+uvicorn[standard]>=0.32.0
+
+# Validação de dados
+pydantic>=2.10.0
+pydantic-settings>=2.7.0
+
+# Autenticação (para Fase 2)
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+python-multipart==0.0.6
+
+# Testing
+pytest>=8.3.0
+pytest-asyncio>=0.24.0
+pytest-cov>=6.0.0
+httpx>=0.28.0
+
+# Linting e formatação
+black>=24.0.0
+flake8>=7.0.0
+mypy>=1.13.0
+
+# Utilitários
+python-dotenv>=1.0.0
+
+# Persistência (PostgreSQL + SQLAlchemy + Alembic)
+sqlalchemy[asyncio]>=2.0.0
+alembic>=1.13.0
+asyncpg>=0.29.0
+
+# Validação de email
+email-validator>=2.0.0
+

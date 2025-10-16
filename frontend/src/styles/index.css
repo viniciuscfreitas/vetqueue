@@ -1,0 +1,321 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Sistema de tokens CSS - Paleta Fintech Vibrante */
+:root {
+  /* Tipografia */
+  --fs-h1: 1.25rem; /* 20px */
+  --fs-h2: 1.125rem; /* 18px */
+  --fs-body: 1rem; /* 16px */
+  --fs-small: 0.875rem; /* 14px */
+  --fs-tiny: 0.75rem; /* 12px */
+
+  --lh-tight: 1.3;
+  --lh-normal: 1.55;
+  --lh-snug: 1.45;
+
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+
+  /* Espaçamentos */
+  --space-8: 8px;
+  --space-12: 12px;
+  --space-16: 16px;
+  --space-24: 24px;
+  --space-32: 32px;
+
+  /* Font families */
+  --font-sans: 'Inter', system-ui, sans-serif;
+
+  /* Raios */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+
+  /* Light mode - Paleta Fintech Vibrante */
+  --bg-0: oklch(0.99 0.005 260);  /* Fundo principal - quase branco */
+  --bg-1: oklch(0.97 0.008 260);  /* Seções - cinza muito claro */
+  --bg-2: oklch(0.95 0.01 260);   /* Cards - cinza claro */
+  --bg-3: oklch(0.92 0.012 260);  /* Controles - cinza médio */
+
+  --text-1: oklch(0.15 0.02 260);  /* Títulos - quase preto */
+  --text-2: oklch(0.25 0.015 260); /* Corpo - cinza escuro */
+  --text-muted: oklch(0.45 0.01 260); /* Meta - cinza médio */
+
+  /* Cores primárias vibrantes */
+  --primary: oklch(0.58 0.16 260);      /* Azul Profundo */
+  --primary-hover: oklch(0.54 0.16 260);
+  --primary-pressed: oklch(0.50 0.16 260);
+
+  /* Cores semânticas vibrantes */
+  --success: oklch(0.62 0.14 140);      /* Verde Esmeralda */
+  --success-bg: oklch(0.92 0.08 140);
+  --success-text: oklch(0.35 0.14 140);
+  
+  --warn: oklch(0.68 0.15 85);          /* Amarelo vibrante */
+  --warn-bg: oklch(0.93 0.08 85);
+  --warn-text: oklch(0.40 0.12 85);
+  
+  --danger: oklch(0.55 0.18 25);        /* Vermelho Claret */
+  --danger-bg: oklch(0.92 0.08 25);
+  --danger-text: oklch(0.35 0.15 25);
+  
+  --info: oklch(0.60 0.12 220);         /* Azul vibrante */
+  --info-bg: oklch(0.92 0.08 220);
+  --info-text: oklch(0.35 0.14 220);
+
+  /* Cores de acento */
+  --accent-1: oklch(0.60 0.14 170);     /* Verde-azulado */
+  --accent-2: oklch(0.50 0.16 30);      /* Laranja vibrante */
+  --accent-3: oklch(0.55 0.15 280);     /* Roxo vibrante */
+
+  --shadow-soft: rgba(0,0,0,0.08);
+  --shadow-strong: rgba(0,0,0,0.15);
+  --highlight: rgba(255,255,255,0.6);
+}
+
+@layer base {
+  * {
+    @apply border-gray-200;
+  }
+  
+  body {
+    background-color: var(--bg-0);
+    color: var(--text-1);
+    font-family: var(--font-sans);
+    font-feature-settings: 'cv11', 'ss01';
+    font-variant-numeric: tabular-nums;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    margin: 0;
+  }
+}
+
+/* Sombras compostas */
+.shadow-elev-1 { 
+  box-shadow: 
+    0 1px 0 var(--highlight) inset,
+    0 2px 6px var(--shadow-soft),
+    0 1px 2px var(--shadow-strong); 
+}
+
+.shadow-elev-2 { 
+  box-shadow: 
+    0 1px 0 var(--highlight) inset,
+    0 6px 16px var(--shadow-soft),
+    0 3px 6px var(--shadow-strong); 
+}
+
+.shadow-elev-3 { 
+  box-shadow: 
+    0 1px 0 var(--highlight) inset,
+    0 16px 32px var(--shadow-soft),
+    0 8px 16px var(--shadow-strong); 
+}
+
+/* Inset para inputs */
+.shadow-inset { 
+  box-shadow: 
+    0 1px 0 var(--highlight) inset,
+    0 -1px 0 var(--shadow-strong) inset; 
+}
+
+@layer components {
+  .btn-primary {
+    background: linear-gradient(135deg, var(--primary), var(--accent-3));
+    color: white;
+    padding: 10px 14px;
+    border-radius: var(--radius-sm);
+    border: none;
+    font-weight: var(--fw-medium);
+    box-shadow: var(--shadow-elev-2);
+    transition: all 160ms ease;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 44px;
+    min-width: 44px;
+    gap: 8px;
+  }
+
+  .btn-primary:hover {
+    background: linear-gradient(135deg, var(--primary-hover), var(--accent-3));
+    box-shadow: var(--shadow-elev-3);
+    transform: translateY(-1px);
+  }
+
+  .btn-primary:active {
+    background: linear-gradient(135deg, var(--primary-pressed), var(--accent-3));
+    box-shadow: var(--shadow-elev-1);
+    transform: translateY(0);
+  }
+
+  .btn-primary:focus-visible {
+    outline: 3px solid color-mix(in oklch, var(--primary), white 35%);
+    outline-offset: 2px;
+  }
+
+  .btn-secondary {
+    background: var(--bg-3);
+    color: var(--text-2);
+    padding: 10px 14px;
+    border-radius: var(--radius-sm);
+    border: 1px solid color-mix(in oklch, var(--bg-3), var(--text-2) 12%);
+    font-weight: var(--fw-medium);
+    transition: all 160ms ease;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 44px;
+    min-width: 44px;
+    gap: 8px;
+  }
+
+  .btn-secondary:hover {
+    background: color-mix(in oklch, var(--bg-3), var(--text-2) 5%);
+    border-color: color-mix(in oklch, var(--bg-3), var(--text-2) 20%);
+  }
+
+  .btn-secondary:focus-visible {
+    outline: 3px solid color-mix(in oklch, var(--primary), white 35%);
+    outline-offset: 2px;
+  }
+
+  .card {
+    background: var(--bg-2);
+    border-radius: var(--radius-md);
+    padding: var(--space-16);
+    box-shadow: var(--shadow-elev-1);
+    transition: all 160ms ease;
+  }
+
+  .card:hover {
+    box-shadow: var(--shadow-elev-2);
+    transform: translateY(-1px);
+  }
+
+  .input {
+    background: var(--bg-3);
+    color: var(--text-2);
+    border: 1px solid color-mix(in oklch, var(--bg-3), var(--text-2) 12%);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    box-shadow: var(--shadow-inset);
+    transition: all 160ms ease;
+    height: 44px;
+  }
+
+  .input:hover {
+    border-color: color-mix(in oklch, var(--bg-3), var(--text-2) 20%);
+  }
+
+  .input:focus {
+    outline: 3px solid color-mix(in oklch, var(--primary), white 35%);
+    outline-offset: 2px;
+    border-color: transparent;
+  }
+
+  .input::placeholder {
+    color: var(--text-muted);
+  }
+
+  /* Typography System */
+  .text-title-1 {
+    font-size: var(--fs-h1);
+    line-height: var(--lh-tight);
+    font-weight: var(--fw-bold);
+    color: var(--text-1);
+  }
+
+  .text-title-2 {
+    font-size: var(--fs-h2);
+    line-height: var(--lh-tight);
+    font-weight: var(--fw-semibold);
+    color: var(--text-1);
+  }
+
+  .text-body {
+    font-size: var(--fs-body);
+    line-height: var(--lh-normal);
+    font-weight: var(--fw-regular);
+    color: var(--text-2);
+  }
+
+  .text-meta {
+    font-size: var(--fs-small);
+    line-height: var(--lh-snug);
+    font-weight: var(--fw-regular);
+    color: var(--text-muted);
+  }
+
+  .text-label {
+    font-size: var(--fs-tiny);
+    line-height: var(--lh-snug);
+    font-weight: var(--fw-medium);
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    color: var(--text-muted);
+  }
+
+  /* Status badges */
+  .badge-success {
+    background: var(--success-bg);
+    color: var(--success-text);
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+    font-size: var(--fs-tiny);
+    font-weight: var(--fw-medium);
+  }
+
+  .badge-warning {
+    background: var(--warn-bg);
+    color: var(--warn-text);
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+    font-size: var(--fs-tiny);
+    font-weight: var(--fw-medium);
+  }
+
+  .badge-danger {
+    background: var(--danger-bg);
+    color: var(--danger-text);
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+    font-size: var(--fs-tiny);
+    font-weight: var(--fw-medium);
+  }
+}
+
+@layer utilities {
+  .animate-fadeIn {
+    animation: fadeIn 1s ease-in-out;
+  }
+}
+
+/* Focus outlines customizados para acessibilidade */
+*:focus-visible {
+  outline: none;
+}
+
+button:focus-visible,
+[role="button"]:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+a:focus-visible {
+  outline: 3px solid color-mix(in oklch, var(--primary), white 35%);
+  outline-offset: 2px;
+}
+
+/* Animações para Toast */
+@keyframes slideInToast {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}

@@ -33,13 +33,11 @@ COPY nginx.conf /etc/nginx/nginx.conf
 COPY --from=builder /app/dist /usr/share/nginx/html
 
 # Criação de usuário não-root (Excelente prática de segurança!)
-RUN addgroup -g 1001 -S nginx && \
-    adduser -S -D -H -u 1001 -h /var/cache/nginx -s /sbin/nologin -G nginx -g nginx nginx
-RUN chown -R nginx:nginx /usr/share/nginx/html && \
-    chown -R nginx:nginx /var/cache/nginx && \
-    chown -R nginx:nginx /var/log/nginx && \
-    chown -R nginx:nginx /etc/nginx/conf.d
+# A imagem base 'nginx:alpine' já vem com um usuário 'nginx'.
+# Apenas precisamos garantir que as permissões dos arquivos que copiamos estejam corretas para ele.
+RUN chown -R nginx:nginx /usr/share/nginx/html
 
+# Mudar para o usuário não-root já existente
 USER nginx
 EXPOSE 80
 

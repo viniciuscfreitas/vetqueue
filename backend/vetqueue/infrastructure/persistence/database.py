@@ -25,6 +25,8 @@ def get_async_engine():
             max_overflow=database_settings.max_overflow,
             # Para testes, usar NullPool para evitar problemas de conexão
             poolclass=NullPool if "test" in database_settings.database_url else None,
+            # Fix para incompatibilidade SQLAlchemy + asyncpg com sslmode
+            connect_args={"ssl": "prefer"}
         )
     return _engine
 
@@ -93,7 +95,9 @@ async def get_test_session() -> AsyncGenerator[AsyncSession, None]:
     test_engine = create_async_engine(
         database_settings.test_database_url,
         echo=False,
-        poolclass=NullPool
+        poolclass=NullPool,
+        # Fix para incompatibilidade SQLAlchemy + asyncpg com sslmode
+        connect_args={"ssl": "prefer"}
     )
     
     test_session_factory = async_sessionmaker(

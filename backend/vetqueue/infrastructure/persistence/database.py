@@ -4,6 +4,7 @@ from typing import AsyncGenerator
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.pool import NullPool
+from sqlalchemy.engine import URL
 
 from .config import database_settings
 from .models import Base
@@ -18,14 +19,22 @@ def get_async_engine():
     """Get or create the async engine."""
     global _engine
     if _engine is None:
+        # Pega a URL string da configuração
+        db_url_str = database_settings.database_url
+        
+        # Cria um objeto URL e remove o parâmetro 'sslmode' se existir
+        db_url = URL.create(db_url_str)
+        if 'sslmode' in db_url.query:
+            del db_url.query['sslmode']
+
         _engine = create_async_engine(
-            database_settings.database_url,
+            db_url,  # Usa o objeto URL modificado
             echo=database_settings.echo_sql,
             pool_size=database_settings.pool_size,
             max_overflow=database_settings.max_overflow,
             # Para testes, usar NullPool para evitar problemas de conexão
             poolclass=NullPool if "test" in database_settings.database_url else None,
-            # Fix para incompatibilidade SQLAlchemy + asyncpg com sslmode
+            # Passa o argumento 'ssl' diretamente para o asyncpg
             connect_args={"ssl": "prefer"}
         )
     return _engine
@@ -92,11 +101,18 @@ async def get_test_session() -> AsyncGenerator[AsyncSession, None]:
         AsyncSession: Sessão do SQLAlchemy para testes
     """
     # Para testes, criar engine específico com URL de teste
+    test_db_url_str = database_settings.test_database_url
+    
+    # Cria um objeto URL e remove o parâmetro 'sslmode' se existir
+    test_db_url = URL.create(test_db_url_str)
+    if 'sslmode' in test_db_url.query:
+        del test_db_url.query['sslmode']
+    
     test_engine = create_async_engine(
-        database_settings.test_database_url,
+        test_db_url,  # Usa o objeto URL modificado
         echo=False,
         poolclass=NullPool,
-        # Fix para incompatibilidade SQLAlchemy + asyncpg com sslmode
+        # Passa o argumento 'ssl' diretamente para o asyncpg
         connect_args={"ssl": "prefer"}
     )
     

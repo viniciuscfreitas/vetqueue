@@ -26,9 +26,12 @@ def get_async_engine():
         db_url = URL.create(db_url_str)
         if 'sslmode' in db_url.query:
             del db_url.query['sslmode']
+        
+        # Converte o objeto URL de volta para string
+        clean_db_url = str(db_url)
 
         _engine = create_async_engine(
-            db_url,  # Usa o objeto URL modificado
+            clean_db_url,  # Usa a string da URL modificada
             echo=database_settings.echo_sql,
             pool_size=database_settings.pool_size,
             max_overflow=database_settings.max_overflow,
@@ -108,8 +111,11 @@ async def get_test_session() -> AsyncGenerator[AsyncSession, None]:
     if 'sslmode' in test_db_url.query:
         del test_db_url.query['sslmode']
     
+    # Converte o objeto URL de volta para string
+    clean_test_db_url = str(test_db_url)
+    
     test_engine = create_async_engine(
-        test_db_url,  # Usa o objeto URL modificado
+        clean_test_db_url,  # Usa a string da URL modificada
         echo=False,
         poolclass=NullPool,
         # Passa o argumento 'ssl' diretamente para o asyncpg

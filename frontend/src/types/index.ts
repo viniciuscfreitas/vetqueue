@@ -19,7 +19,27 @@ export interface ChamadaRecente extends Paciente {
   timestamp: number;
 }
 
-// Interface para autenticação
+// Interface para dados do usuário (compatível com backend)
+export interface UserResponse {
+  id: string;
+  username: string;
+  email: string;
+  full_name: string | null;
+  is_admin: boolean;
+  is_active: boolean;
+  last_login: string | null;
+}
+
+// Interface para resposta de login (compatível com backend)
+export interface LoginResponse {
+  access_token: string;
+  refresh_token: string;
+  token_type: string;
+  expires_in: number;
+  user: UserResponse;
+}
+
+// Interface para autenticação (simplificada para uso interno)
 export interface AuthUser {
   nome: string;
   token: string;
@@ -33,6 +53,7 @@ export interface AuthContextType {
   logout: () => void;
   loading: boolean;
   error: string | null;
+  token: string | null;
 }
 
 // Interface para contexto da fila

@@ -1,5 +1,5 @@
 import axios, { AxiosError } from 'axios';
-import { Paciente, FilaState, AuthUser } from '../types';
+import { Paciente, FilaState, AuthUser, LoginResponse } from '../types';
 
 // --- REAL API SERVICE ---
 // Cliente HTTP que se comunica com o backend FastAPI
@@ -15,6 +15,19 @@ const apiClient = axios.create({
   },
   timeout: Number(import.meta.env.VITE_API_TIMEOUT) || 10000, // 10 segundos
 });
+
+// Interceptor para adicionar token de autenticação
+apiClient.interceptors.request.use(
+  (config) => {
+    // Pega o token do localStorage ou sessionStorage
+    const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
 
 // Interceptor para tratamento de erros
 apiClient.interceptors.response.use(
@@ -49,12 +62,18 @@ export const api = {
   /**
    * Realiza login no sistema
    */
-  login: async (user: string, pass: string): Promise<AuthUser> => {
-    const response = await apiClient.post<AuthUser>('/auth/login', {
-      user,
-      pass,
+  login: async (username: string, password: string): Promise<AuthUser> => {
+    const response = await apiClient.post<LoginResponse>('/auth/login', {
+      username,
+      password,
     });
-    return response.data;
+    
+    // Mapeia a resposta completa do backend para a interface simplificada
+    const loginData = response.data;
+    return {
+      nome: loginData.user.full_name || loginData.user.username,
+      token: loginData.access_token
+    };
   },
 
   /**

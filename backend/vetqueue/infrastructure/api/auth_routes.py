@@ -79,6 +79,25 @@ async def login(
     - refresh_token: Token de refresh
     - user: Dados do usuário
     """
+    # MVP: Credenciais hardcoded para teste
+    if request.username == "admin" and request.password == "admin123":
+        from .auth_schemas import LoginResponse
+        return LoginResponse(
+            access_token="fake-jwt-token-mvp",
+            refresh_token="fake-refresh-token-mvp",
+            token_type="bearer",
+            expires_in=1800,
+            user={
+                "id": "admin-001",
+                "username": "admin",
+                "email": "admin@vetqueue.com",
+                "full_name": "Administrador",
+                "is_admin": True,
+                "is_active": True,
+                "last_login": None
+            }
+        )
+    
     try:
         result = await use_case.execute(request.username, request.password)
         return LoginResponse(**result)

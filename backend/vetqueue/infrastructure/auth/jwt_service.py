@@ -9,7 +9,7 @@ from passlib.context import CryptContext
 from ..persistence.config import app_settings
 
 # Configuração do bcrypt para hash de senhas
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 
 # Configurações JWT agora vêm do app_settings (configuração segura)
 

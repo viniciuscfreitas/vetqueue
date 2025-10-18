@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ...domain.entities import Paciente
 from ...domain.repositories import FilaRepositoryPort
 from ...domain.value_objects import StatusPaciente
+from .models import PacienteModel
 from .mappers import model_to_paciente, models_to_pacientes, paciente_to_model
 
 

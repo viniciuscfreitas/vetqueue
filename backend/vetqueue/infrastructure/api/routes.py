@@ -51,11 +51,12 @@ async def login(request: LoginRequest):
     Endpoint de autenticação (MVP simplificado).
     
     **Credenciais de teste:**
-    - user: admin
-    - pass: 1234
+    - username: admin
+    - password: admin
     """
     # TODO: Implementar autenticação real com JWT em Fase 2
-    if request.user == "admin" and request.pass_ == "1234":
+    print(f"Login attempt: username={request.username}, password={request.password}")
+    if request.username == "admin" and request.password == "admin":
         return AuthUserResponse(
             nome="Dr. Ricardo",
             token="fake-jwt-token"

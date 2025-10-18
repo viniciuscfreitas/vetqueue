@@ -31,14 +31,12 @@ def get_async_engine():
         clean_db_url = str(db_url)
 
         _engine = create_async_engine(
-            clean_db_url,  # Usa a string da URL modificada
+            db_url_str,  # Usa a URL diretamente sem modificações
             echo=database_settings.echo_sql,
             pool_size=database_settings.pool_size,
             max_overflow=database_settings.max_overflow,
             # Para testes, usar NullPool para evitar problemas de conexão
-            poolclass=NullPool if "test" in database_settings.database_url else None,
-            # Passa o argumento 'ssl' diretamente para o asyncpg
-            connect_args={"ssl": "prefer"}
+            poolclass=NullPool if "test" in database_settings.database_url else None
         )
     return _engine
 
@@ -82,7 +80,7 @@ async def init_db() -> None:
         # Criar todas as tabelas
         await conn.run_sync(Base.metadata.create_all)
     
-    print("✅ Database initialized successfully")
+    print("Database initialized successfully")
 
 
 async def close_db() -> None:

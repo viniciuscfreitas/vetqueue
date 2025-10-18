@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 class LoginRequest(BaseModel):
     """Schema para requisição de login"""
     username: str = Field(..., min_length=3, max_length=50, description="Nome de usuário")
-    password: str = Field(..., min_length=6, description="Senha")
+    password: str = Field(..., min_length=4, description="Senha")
 
 
 class RegisterRequest(BaseModel):

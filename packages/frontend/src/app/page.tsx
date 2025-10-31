@@ -12,6 +12,7 @@ import { AddQueueFormInline } from "@/components/AddQueueFormInline";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { RoomSelectModal } from "@/components/RoomSelectModal";
+import { Role } from "@/lib/api";
 import {
   Tabs,
   TabsContent,
@@ -227,16 +228,18 @@ export default function Home() {
           </TabsList>
 
           <TabsContent value="queue" className="space-y-6">
-            <div className="space-y-4">
-              <div>
-                <h2 className="text-xl font-semibold mb-4">Adicionar à Fila</h2>
-                <AddQueueFormInline
-                  onSuccess={() => {
-                    queryClient.invalidateQueries({ queryKey: ["queue"] });
-                  }}
-                />
+            {user?.role === Role.RECEPCAO && (
+              <div className="space-y-4">
+                <div>
+                  <h2 className="text-xl font-semibold mb-4">Adicionar à Fila</h2>
+                  <AddQueueFormInline
+                    onSuccess={() => {
+                      queryClient.invalidateQueries({ queryKey: ["queue"] });
+                    }}
+                  />
+                </div>
               </div>
-            </div>
+            )}
 
             <div className="space-y-4">
               <div className="flex items-center justify-between">

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { authApi, User, Room } from "@/lib/api";
 
 interface AuthContextType {
@@ -37,17 +37,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     checkAuth();
   }, []);
 
-  const login = async (username: string, password: string) => {
+  const login = useCallback(async (username: string, password: string) => {
     const response = await authApi.login(username, password);
     setUser(response.data.user);
     localStorage.setItem("auth_token", response.data.token);
-  };
+  }, []);
 
-  const logout = () => {
+  const logout = useCallback(() => {
     setUser(null);
     setCurrentRoom(null);
     localStorage.removeItem("auth_token");
-  };
+  }, []);
+
+  const setCurrentRoomCallback = useCallback((room: Room | null) => {
+    setCurrentRoom(room);
+  }, []);
 
   return (
     <AuthContext.Provider
@@ -58,7 +62,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isLoading,
         login,
         logout,
-        setCurrentRoom,
+        setCurrentRoom: setCurrentRoomCallback,
       }}
     >
       {children}

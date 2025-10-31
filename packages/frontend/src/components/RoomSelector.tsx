@@ -24,7 +24,7 @@ export function RoomSelector() {
     if (rooms.length > 0 && user?.role === "VET" && !currentRoom) {
       setCurrentRoom(rooms[0]);
     }
-  }, [rooms, user, currentRoom, setCurrentRoom]);
+  }, [rooms, user, currentRoom]);
 
   if (user?.role !== "VET") return null;
 

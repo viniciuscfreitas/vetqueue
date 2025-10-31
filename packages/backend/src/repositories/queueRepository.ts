@@ -62,13 +62,16 @@ export class QueueRepository {
     calledAt?: Date,
     completedAt?: Date
   ): Promise<QueueEntry> {
+    const data: any = { status };
+    if (calledAt !== undefined) {
+      data.calledAt = calledAt;
+    }
+    if (completedAt !== undefined) {
+      data.completedAt = completedAt;
+    }
     const entry = await prisma.queueEntry.update({
       where: { id },
-      data: {
-        status,
-        calledAt: calledAt || undefined,
-        completedAt: completedAt || undefined,
-      },
+      data,
     });
     return mapPrismaToDomain(entry);
   }
@@ -146,15 +149,20 @@ export class QueueRepository {
       {} as Record<string, number>
     );
 
-    const avgWaitTime =
-      completed.reduce((sum: number, entry: PrismaQueueEntry) => {
-        if (entry.calledAt && entry.createdAt) {
-          const waitTime =
-            entry.calledAt.getTime() - entry.createdAt.getTime();
-          return sum + waitTime;
-        }
-        return sum;
-      }, 0) / (total || 1);
+    let waitTimeSum = 0;
+    let entriesWithCalledAt = 0;
+    
+    completed.forEach((entry: PrismaQueueEntry) => {
+      if (entry.calledAt && entry.createdAt) {
+        const waitTime = entry.calledAt.getTime() - entry.createdAt.getTime();
+        waitTimeSum += waitTime;
+        entriesWithCalledAt++;
+      }
+    });
+
+    const avgWaitTime = entriesWithCalledAt > 0 
+      ? waitTimeSum / entriesWithCalledAt 
+      : 0;
 
     return {
       total,

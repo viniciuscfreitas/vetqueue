@@ -49,6 +49,10 @@ export class QueueService {
       throw new Error("Apenas entradas chamadas ou aguardando podem iniciar atendimento");
     }
 
+    if (entry.status === Status.WAITING && !entry.calledAt) {
+      return this.repository.updateStatus(id, Status.IN_PROGRESS, new Date());
+    }
+
     return this.repository.updateStatus(id, Status.IN_PROGRESS);
   }
 

@@ -45,7 +45,7 @@ services:
       context: ./packages/frontend
       dockerfile: Dockerfile
     environment:
-      NEXT_PUBLIC_API_URL: http://localhost:3002
+      NEXT_PUBLIC_API_URL: http://161.35.115.145:3002
       NODE_ENV: production
     ports:
       - "3000:3000"

@@ -30,7 +30,7 @@ export function AddQueueFormInline({ onSuccess }: AddQueueFormInlineProps) {
     tutorName: "",
     serviceType: "" as ServiceType | "",
     priority: Priority.NORMAL as Priority,
-    assignedVetId: "",
+    assignedVetId: "NONE",
   });
 
   const { data: vets = [] } = useQuery({
@@ -48,14 +48,14 @@ export function AddQueueFormInline({ onSuccess }: AddQueueFormInlineProps) {
         tutorName: formData.tutorName,
         serviceType: formData.serviceType as ServiceType,
         priority: formData.priority,
-        assignedVetId: formData.assignedVetId || undefined,
+        assignedVetId: formData.assignedVetId === "NONE" ? undefined : formData.assignedVetId,
       });
       setFormData({
         patientName: "",
         tutorName: "",
         serviceType: "" as ServiceType | "",
         priority: Priority.NORMAL as Priority,
-        assignedVetId: "",
+        assignedVetId: "NONE",
       });
       toast({
         title: "Sucesso",
@@ -163,7 +163,7 @@ export function AddQueueFormInline({ onSuccess }: AddQueueFormInlineProps) {
               <SelectValue placeholder="Fila geral" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Fila geral</SelectItem>
+              <SelectItem value="NONE">Fila geral</SelectItem>
               {vets.map((vet) => (
                 <SelectItem key={vet.id} value={vet.id}>
                   {vet.name}

@@ -3,6 +3,15 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { RoomSelector } from "./RoomSelector";
+import { User, Settings, Monitor, LogOut, ChevronDown } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export function Header() {
   const { user, logout } = useAuth();
@@ -18,36 +27,74 @@ export function Header() {
   return (
     <header className="border-b">
       <div className="container mx-auto px-4 py-4">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex items-center justify-between gap-4">
           <Link href="/" className="text-xl sm:text-2xl font-semibold hover:opacity-80 whitespace-nowrap">
             VetQueue
           </Link>
           
-          <div className="flex flex-wrap items-center gap-2 sm:gap-4 w-full sm:w-auto justify-end">
+          <div className="flex items-center gap-3">
             <RoomSelector />
+            
             {user.role === "RECEPCAO" && (
-              <>
-                <Link href="/admin/users">
-                  <Button variant="outline" size="sm" className="text-xs sm:text-sm">Usuários</Button>
-                </Link>
-                <Link href="/admin/rooms">
-                  <Button variant="outline" size="sm" className="text-xs sm:text-sm">Salas</Button>
-                </Link>
-              </>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="text-xs sm:text-sm">
+                    <Settings className="h-4 w-4 mr-1" />
+                    Admin
+                    <ChevronDown className="h-3 w-3 ml-1" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuLabel>Administração</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href="/admin/users" className="flex items-center cursor-pointer">
+                      <User className="mr-2 h-4 w-4" />
+                      Usuários
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/admin/rooms" className="flex items-center cursor-pointer">
+                      <Settings className="mr-2 h-4 w-4" />
+                      Salas
+                    </Link>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
-            <div className="text-right text-xs sm:text-sm hidden sm:block">
-              <p className="font-medium truncate max-w-[100px] sm:max-w-none">{user.name}</p>
-              <p className="text-muted-foreground capitalize">{user.role.toLowerCase()}</p>
-            </div>
-            <div className="text-right text-xs sm:text-sm block sm:hidden">
-              <p className="font-medium truncate">{user.name}</p>
-            </div>
-            <Link href="/display">
-              <Button variant="outline" size="sm" className="text-xs sm:text-sm">Display</Button>
-            </Link>
-            <Button variant="outline" size="sm" onClick={handleLogout} className="text-xs sm:text-sm">
-              Sair
-            </Button>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="flex items-center gap-2">
+                  <div className="text-right hidden sm:block">
+                    <p className="text-xs font-medium truncate max-w-[100px]">{user.name}</p>
+                    <p className="text-xs text-muted-foreground capitalize">{user.role.toLowerCase()}</p>
+                  </div>
+                  <User className="h-4 w-4 sm:hidden" />
+                  <ChevronDown className="h-3 w-3 hidden sm:block" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuLabel>
+                  <div className="flex flex-col">
+                    <span className="font-medium">{user.name}</span>
+                    <span className="text-xs text-muted-foreground capitalize">{user.role.toLowerCase()}</span>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/display" className="flex items-center cursor-pointer">
+                    <Monitor className="mr-2 h-4 w-4" />
+                    Display
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout} className="flex items-center cursor-pointer text-red-600 focus:text-red-600">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Sair
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </div>

@@ -15,6 +15,7 @@ import { ServiceType, Priority, queueApi } from "@/lib/api";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/use-toast";
 import { createErrorHandler } from "@/lib/errors";
+import { SERVICE_TYPE_OPTIONS } from "@/lib/constants";
 
 export function AddQueueForm() {
   const router = useRouter();
@@ -87,11 +88,11 @@ export function AddQueueForm() {
             <SelectValue placeholder="Selecione o serviço" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value={ServiceType.CONSULTA}>Consulta</SelectItem>
-            <SelectItem value={ServiceType.VACINACAO}>Vacinação</SelectItem>
-            <SelectItem value={ServiceType.CIRURGIA}>Cirurgia</SelectItem>
-            <SelectItem value={ServiceType.EXAME}>Exame</SelectItem>
-            <SelectItem value={ServiceType.BANHO_TOSA}>Banho e Tosa</SelectItem>
+            {SERVICE_TYPE_OPTIONS.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>

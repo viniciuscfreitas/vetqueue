@@ -1,4 +1,4 @@
-import { PrismaClient, QueueEntry as PrismaQueueEntry } from "@prisma/client";
+import { PrismaClient, Prisma, QueueEntry as PrismaQueueEntry } from "@prisma/client";
 import { QueueEntry, Priority, Status, ServiceType } from "../core/types";
 
 const prisma = new PrismaClient();
@@ -62,7 +62,7 @@ export class QueueRepository {
     calledAt?: Date,
     completedAt?: Date
   ): Promise<QueueEntry> {
-    const data: any = { status };
+    const data: Prisma.QueueEntryUpdateInput = { status };
     if (calledAt !== undefined) {
       data.calledAt = calledAt;
     }
@@ -97,7 +97,7 @@ export class QueueRepository {
     tutorName?: string;
     serviceType?: ServiceType;
   }): Promise<QueueEntry[]> {
-    const where: any = {
+    const where: Prisma.QueueEntryWhereInput = {
       status: Status.COMPLETED,
     };
 

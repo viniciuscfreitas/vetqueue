@@ -3,8 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { queueApi, ServiceType } from "@/lib/api";
 import { QueueList } from "@/components/QueueList";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { Header } from "@/components/Header";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -17,6 +16,7 @@ import {
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { createErrorHandler } from "@/lib/errors";
+import { SERVICE_TYPE_OPTIONS } from "@/lib/constants";
 
 export default function HistoryPage() {
   const { toast } = useToast();
@@ -58,16 +58,7 @@ export default function HistoryPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold">VetQueue</h1>
-            <Link href="/">
-              <Button variant="outline">Voltar</Button>
-            </Link>
-          </div>
-        </div>
-      </header>
+      <Header />
 
       <main className="container mx-auto px-4 py-8">
         <h2 className="text-3xl font-bold mb-6">Histórico de Atendimentos</h2>
@@ -125,11 +116,11 @@ export default function HistoryPage() {
                 <SelectValue placeholder="Todos" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={ServiceType.CONSULTA}>Consulta</SelectItem>
-                <SelectItem value={ServiceType.VACINACAO}>Vacinação</SelectItem>
-                <SelectItem value={ServiceType.CIRURGIA}>Cirurgia</SelectItem>
-                <SelectItem value={ServiceType.EXAME}>Exame</SelectItem>
-                <SelectItem value={ServiceType.BANHO_TOSA}>Banho e Tosa</SelectItem>
+                {SERVICE_TYPE_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

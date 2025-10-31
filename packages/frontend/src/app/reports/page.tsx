@@ -2,8 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { queueApi } from "@/lib/api";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { Header } from "@/components/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useState, useEffect } from "react";
@@ -43,16 +42,7 @@ export default function ReportsPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold">VetQueue</h1>
-            <Link href="/">
-              <Button variant="outline">Voltar</Button>
-            </Link>
-          </div>
-        </div>
-      </header>
+      <Header />
 
       <main className="container mx-auto px-4 py-8">
         <h2 className="text-3xl font-bold mb-6">Relatórios</h2>

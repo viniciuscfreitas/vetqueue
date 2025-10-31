@@ -78,9 +78,16 @@ router.patch("/:id/cancel", async (req: Request, res: Response) => {
   }
 });
 
+interface HistoryFilters {
+  startDate?: Date;
+  endDate?: Date;
+  tutorName?: string;
+  serviceType?: ServiceType;
+}
+
 router.get("/history", async (req: Request, res: Response) => {
   try {
-    const filters: any = {};
+    const filters: HistoryFilters = {};
 
     if (req.query.startDate) {
       const dateStr = req.query.startDate as string;

@@ -4,10 +4,10 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { queueApi } from "@/lib/api";
 import { QueueList } from "@/components/QueueList";
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
 import { useToast } from "@/components/ui/use-toast";
 import { createErrorHandler } from "@/lib/errors";
 import { useEffect } from "react";
+import { Header } from "@/components/Header";
 
 export default function Home() {
   const queryClient = useQueryClient();
@@ -79,24 +79,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold">VetQueue</h1>
-            <nav className="flex gap-4">
-              <Link href="/add">
-                <Button variant="outline">Adicionar à Fila</Button>
-              </Link>
-              <Link href="/history">
-                <Button variant="outline">Histórico</Button>
-              </Link>
-              <Link href="/reports">
-                <Button variant="outline">Relatórios</Button>
-              </Link>
-            </nav>
-          </div>
-        </div>
-      </header>
+      <Header showNavigation />
 
       <main className="container mx-auto px-4 py-8">
         <div className="mb-6 flex items-center justify-between">

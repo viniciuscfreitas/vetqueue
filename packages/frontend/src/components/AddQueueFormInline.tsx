@@ -16,12 +16,14 @@ import { ServiceType, Priority, queueApi, userApi, Role } from "@/lib/api";
 import { useToast } from "@/components/ui/use-toast";
 import { createErrorHandler } from "@/lib/errors";
 import { SERVICE_TYPE_OPTIONS } from "@/lib/constants";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface AddQueueFormInlineProps {
   onSuccess?: () => void;
 }
 
 export function AddQueueFormInline({ onSuccess }: AddQueueFormInlineProps) {
+  const { user } = useAuth();
   const { toast } = useToast();
   const handleError = createErrorHandler(toast);
   const [loading, setLoading] = useState(false);
@@ -33,9 +35,12 @@ export function AddQueueFormInline({ onSuccess }: AddQueueFormInlineProps) {
     assignedVetId: "NONE",
   });
 
+  const isRecepcao = user?.role === Role.RECEPCAO;
+
   const { data: vets = [] } = useQuery({
     queryKey: ["users", "vets"],
     queryFn: () => userApi.list().then((res) => res.data.filter((u) => u.role === Role.VET)),
+    enabled: isRecepcao,
   });
 
   const handleSubmit = async (e: React.FormEvent) => {

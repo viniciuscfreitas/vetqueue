@@ -6,6 +6,7 @@ interface QueueListProps {
   onStart?: (id: string) => void;
   onComplete?: (id: string) => void;
   onCancel?: (id: string) => void;
+  emptyMessage?: string;
 }
 
 export function QueueList({
@@ -13,11 +14,12 @@ export function QueueList({
   onStart,
   onComplete,
   onCancel,
+  emptyMessage = "Nenhuma entrada na fila no momento",
 }: QueueListProps) {
   if (entries.length === 0) {
     return (
       <div className="text-center py-12 text-muted-foreground">
-        Nenhuma entrada na fila no momento
+        {emptyMessage}
       </div>
     );
   }

@@ -73,7 +73,15 @@ export function QueueCard({
               </p>
             </div>
           )}
-          {(canStart || canComplete || entry.status === Status.WAITING) && (
+          {entry.completedAt && (
+            <div>
+              <p className="text-xs text-muted-foreground">
+                Finalizado em {new Date(entry.completedAt).toLocaleString()}
+              </p>
+            </div>
+          )}
+          {(canStart || canComplete || entry.status === Status.WAITING) && 
+           (onStart || onComplete || onCancel) && (
             <div className="flex gap-2 pt-2">
               {canStart && onStart && (
                 <button

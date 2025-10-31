@@ -99,12 +99,12 @@ export class QueueRepository {
     };
 
     if (filters?.startDate || filters?.endDate) {
-      where.createdAt = {};
+      where.completedAt = {};
       if (filters.startDate) {
-        where.createdAt.gte = filters.startDate;
+        where.completedAt.gte = filters.startDate;
       }
       if (filters.endDate) {
-        where.createdAt.lte = filters.endDate;
+        where.completedAt.lte = filters.endDate;
       }
     }
 

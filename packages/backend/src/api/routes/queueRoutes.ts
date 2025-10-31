@@ -2,6 +2,7 @@ import { Router, Request, Response } from "express";
 import { QueueService } from "../../services/queueService";
 import { QueueRepository } from "../../repositories/queueRepository";
 import { Priority, ServiceType } from "../../core/types";
+import { authMiddleware, AuthenticatedRequest, requireRole } from "../../middleware/authMiddleware";
 import { z } from "zod";
 
 const router = Router();
@@ -13,9 +14,15 @@ const addQueueSchema = z.object({
   tutorName: z.string().min(1, "Nome do tutor é obrigatório"),
   serviceType: z.nativeEnum(ServiceType),
   priority: z.nativeEnum(Priority).optional(),
+  assignedVetId: z.string().optional(),
 });
 
-router.post("/", async (req: Request, res: Response) => {
+const callNextSchema = z.object({
+  vetId: z.string().optional(),
+  roomId: z.string().min(1, "Sala é obrigatória"),
+});
+
+router.post("/", authMiddleware, async (req: Request, res: Response) => {
   try {
     const data = addQueueSchema.parse(req.body);
     const entry = await queueService.addToQueue(data);
@@ -29,29 +36,46 @@ router.post("/", async (req: Request, res: Response) => {
   }
 });
 
-router.get("/active", async (req: Request, res: Response) => {
+router.get("/active", authMiddleware, async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const entries = await queueService.listActive();
+    const vetId = req.query.vetId as string | undefined;
+    const finalVetId = vetId === "null" ? null : vetId;
+    const entries = await queueService.listActive(finalVetId);
     res.json(entries);
   } catch (error) {
     res.status(500).json({ error: (error as Error).message });
   }
 });
 
-router.post("/call-next", async (req: Request, res: Response) => {
+router.post("/call-next", authMiddleware, async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const next = await queueService.callNext();
+    const data = callNextSchema.parse(req.body);
+    const vetId = data.vetId || req.user?.id;
+    const next = await queueService.callNext(vetId, data.roomId);
     if (!next) {
       res.status(404).json({ message: "Nenhuma entrada aguardando na fila" });
       return;
     }
     res.json(next);
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      res.status(400).json({ error: error.errors });
+      return;
+    }
     res.status(500).json({ error: (error as Error).message });
   }
 });
 
-router.patch("/:id/start", async (req: Request, res: Response) => {
+router.post("/:id/claim", authMiddleware, requireRole(["VET"]), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const entry = await queueService.claimPatient(req.params.id, req.user!.id);
+    res.json(entry);
+  } catch (error) {
+    res.status(400).json({ error: (error as Error).message });
+  }
+});
+
+router.patch("/:id/start", authMiddleware, async (req: Request, res: Response) => {
   try {
     const entry = await queueService.startService(req.params.id);
     res.json(entry);
@@ -60,7 +84,7 @@ router.patch("/:id/start", async (req: Request, res: Response) => {
   }
 });
 
-router.patch("/:id/complete", async (req: Request, res: Response) => {
+router.patch("/:id/complete", authMiddleware, async (req: Request, res: Response) => {
   try {
     const entry = await queueService.completeService(req.params.id);
     res.json(entry);
@@ -69,7 +93,7 @@ router.patch("/:id/complete", async (req: Request, res: Response) => {
   }
 });
 
-router.patch("/:id/cancel", async (req: Request, res: Response) => {
+router.patch("/:id/cancel", authMiddleware, async (req: Request, res: Response) => {
   try {
     const entry = await queueService.cancelEntry(req.params.id);
     res.json(entry);
@@ -85,7 +109,7 @@ interface HistoryFilters {
   serviceType?: ServiceType;
 }
 
-router.get("/history", async (req: Request, res: Response) => {
+router.get("/history", authMiddleware, async (req: Request, res: Response) => {
   try {
     const filters: HistoryFilters = {};
 
@@ -113,7 +137,7 @@ router.get("/history", async (req: Request, res: Response) => {
   }
 });
 
-router.get("/reports", async (req: Request, res: Response) => {
+router.get("/reports", authMiddleware, async (req: Request, res: Response) => {
   try {
     const startDate = req.query.startDate
       ? new Date((req.query.startDate as string) + "T00:00:00-03:00")

@@ -9,6 +9,7 @@ export class QueueService {
     tutorName: string;
     serviceType: ServiceType;
     priority?: Priority;
+    assignedVetId?: string;
   }): Promise<QueueEntry> {
     const priority = data.priority || Priority.NORMAL;
 
@@ -21,11 +22,14 @@ export class QueueService {
       tutorName: data.tutorName.trim(),
       serviceType: data.serviceType,
       priority,
+      assignedVetId: data.assignedVetId,
     });
   }
 
-  async callNext(): Promise<QueueEntry | null> {
-    const next = await this.repository.findNextWaiting();
+  async callNext(vetId?: string, roomId?: string): Promise<QueueEntry | null> {
+    const next = vetId
+      ? await this.repository.findNextWaiting(vetId)
+      : await this.repository.findNextWaitingGeneral();
 
     if (!next) {
       return null;
@@ -34,7 +38,9 @@ export class QueueService {
     return this.repository.updateStatus(
       next.id,
       Status.CALLED,
-      new Date()
+      new Date(),
+      undefined,
+      roomId
     );
   }
 
@@ -84,8 +90,30 @@ export class QueueService {
     return this.repository.updateStatus(id, Status.CANCELLED);
   }
 
-  async listActive(): Promise<QueueEntry[]> {
-    return this.repository.listActive();
+  async listActive(vetId?: string | null): Promise<QueueEntry[]> {
+    if (vetId === undefined) {
+      return this.repository.listActive();
+    }
+
+    if (vetId === null) {
+      return this.repository.listActiveGeneral();
+    }
+
+    return this.repository.listActiveByVet(vetId);
+  }
+
+  async claimPatient(entryId: string, vetId: string): Promise<QueueEntry> {
+    const entry = await this.repository.findById(entryId);
+
+    if (!entry) {
+      throw new Error("Entrada não encontrada");
+    }
+
+    if (entry.status !== Status.WAITING) {
+      throw new Error("Apenas pacientes aguardando podem ser atribuídos");
+    }
+
+    return this.repository.updateAssignedVet(entryId, vetId);
   }
 
   async getHistory(filters?: {

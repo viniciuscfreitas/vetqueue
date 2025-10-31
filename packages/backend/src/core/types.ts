@@ -20,6 +20,11 @@ export enum ServiceType {
   BANHO_TOSA = "BANHO_TOSA",
 }
 
+export enum Role {
+  VET = "VET",
+  RECEPCAO = "RECEPCAO",
+}
+
 export interface QueueEntry {
   id: string;
   patientName: string;
@@ -30,5 +35,21 @@ export interface QueueEntry {
   createdAt: Date;
   calledAt?: Date | null;
   completedAt?: Date | null;
+  assignedVetId?: string | null;
+  roomId?: string | null;
 }
 
+export interface User {
+  id: string;
+  username: string;
+  name: string;
+  role: Role;
+  createdAt: Date;
+}
+
+export interface Room {
+  id: string;
+  name: string;
+  isActive: boolean;
+  createdAt: Date;
+}

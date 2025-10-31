@@ -5,6 +5,14 @@ const api = axios.create({
   timeout: 10000,
 });
 
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem("auth_token");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
 let lastLoggedError: string | null = null;
 let lastLoggedTime = 0;
 const LOG_THROTTLE_MS = 5000;
@@ -12,6 +20,11 @@ const LOG_THROTTLE_MS = 5000;
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem("auth_token");
+      window.location.href = "/login";
+    }
+    
     const errorKey = `${error.config?.url || "unknown"}-${error.response?.status || error.code}`;
     const now = Date.now();
     const shouldLog = errorKey !== lastLoggedError || now - lastLoggedTime > LOG_THROTTLE_MS;
@@ -61,6 +74,11 @@ export enum ServiceType {
   BANHO_TOSA = "BANHO_TOSA",
 }
 
+export enum Role {
+  VET = "VET",
+  RECEPCAO = "RECEPCAO",
+}
+
 export interface QueueEntry {
   id: string;
   patientName: string;
@@ -71,6 +89,23 @@ export interface QueueEntry {
   createdAt: string;
   calledAt?: string | null;
   completedAt?: string | null;
+  assignedVetId?: string | null;
+  roomId?: string | null;
+}
+
+export interface User {
+  id: string;
+  username: string;
+  name: string;
+  role: Role;
+  createdAt: string;
+}
+
+export interface Room {
+  id: string;
+  name: string;
+  isActive: boolean;
+  createdAt: string;
 }
 
 export interface ReportStats {
@@ -85,11 +120,14 @@ export const queueApi = {
     tutorName: string;
     serviceType: ServiceType;
     priority?: Priority;
+    assignedVetId?: string;
   }) => api.post<QueueEntry>("/api/queue", data),
 
-  listActive: () => api.get<QueueEntry[]>("/api/queue/active"),
+  listActive: (vetId?: string | null) => 
+    api.get<QueueEntry[]>("/api/queue/active", { params: vetId !== undefined ? { vetId } : {} }),
 
-  callNext: () => api.post<QueueEntry>("/api/queue/call-next"),
+  callNext: (vetId?: string, roomId: string) => 
+    api.post<QueueEntry>("/api/queue/call-next", { vetId, roomId }),
 
   startService: (id: string) =>
     api.patch<QueueEntry>(`/api/queue/${id}/start`),
@@ -99,6 +137,9 @@ export const queueApi = {
 
   cancelEntry: (id: string) =>
     api.patch<QueueEntry>(`/api/queue/${id}/cancel`),
+
+  claimPatient: (id: string) =>
+    api.post<QueueEntry>(`/api/queue/${id}/claim`),
 
   getHistory: (filters?: {
     startDate?: string;
@@ -111,5 +152,32 @@ export const queueApi = {
     startDate?: string;
     endDate?: string;
   }) => api.get<ReportStats>("/api/queue/reports", { params: filters }),
+};
+
+export const authApi = {
+  login: (username: string, password: string) =>
+    api.post<{ user: User; token: string }>("/api/auth/login", { username, password }),
+  
+  me: () => api.get<{ user: User }>("/api/auth/me"),
+};
+
+export const roomApi = {
+  list: () => api.get<Room[]>("/api/rooms"),
+  
+  listAll: () => api.get<Room[]>("/api/rooms/all"),
+  
+  create: (name: string) => api.post<Room>("/api/rooms", { name }),
+  
+  update: (id: string, data: { name?: string; isActive?: boolean }) =>
+    api.patch<Room>(`/api/rooms/${id}`, data),
+  
+  delete: (id: string) => api.delete(`/api/rooms/${id}`),
+};
+
+export const userApi = {
+  list: () => api.get<User[]>("/api/users"),
+  
+  create: (data: { username: string; password: string; name: string; role: Role }) =>
+    api.post<User>("/api/users", data),
 };
 

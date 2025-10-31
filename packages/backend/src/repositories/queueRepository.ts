@@ -14,6 +14,8 @@ function mapPrismaToDomain(entry: PrismaQueueEntry): QueueEntry {
     createdAt: entry.createdAt,
     calledAt: entry.calledAt,
     completedAt: entry.completedAt,
+    assignedVetId: entry.assignedVetId,
+    roomId: entry.roomId,
   };
 }
 
@@ -23,6 +25,7 @@ export class QueueRepository {
     tutorName: string;
     serviceType: ServiceType;
     priority: Priority;
+    assignedVetId?: string;
   }): Promise<QueueEntry> {
     const entry = await prisma.queueEntry.create({
       data: {
@@ -31,6 +34,7 @@ export class QueueRepository {
         serviceType: data.serviceType,
         priority: data.priority,
         status: Status.WAITING,
+        assignedVetId: data.assignedVetId,
       },
     });
     return mapPrismaToDomain(entry);
@@ -43,10 +47,27 @@ export class QueueRepository {
     return entry ? mapPrismaToDomain(entry) : null;
   }
 
-  async findNextWaiting(): Promise<QueueEntry | null> {
+  async findNextWaiting(assignedVetId?: string | null): Promise<QueueEntry | null> {
+    const whereClause: any = {
+      status: Status.WAITING,
+      assignedVetId: assignedVetId || null,
+    };
+
+    const entry = await prisma.queueEntry.findFirst({
+      where: whereClause,
+      orderBy: [
+        { priority: "asc" },
+        { createdAt: "asc" },
+      ],
+    });
+    return entry ? mapPrismaToDomain(entry) : null;
+  }
+
+  async findNextWaitingGeneral(): Promise<QueueEntry | null> {
     const entry = await prisma.queueEntry.findFirst({
       where: {
         status: Status.WAITING,
+        assignedVetId: null,
       },
       orderBy: [
         { priority: "asc" },
@@ -60,7 +81,8 @@ export class QueueRepository {
     id: string,
     status: Status,
     calledAt?: Date,
-    completedAt?: Date
+    completedAt?: Date,
+    roomId?: string
   ): Promise<QueueEntry> {
     const data: Prisma.QueueEntryUpdateInput = { status };
     if (calledAt !== undefined) {
@@ -69,9 +91,23 @@ export class QueueRepository {
     if (completedAt !== undefined) {
       data.completedAt = completedAt;
     }
+    if (roomId !== undefined) {
+      data.room = roomId ? { connect: { id: roomId } } : { disconnect: true };
+    }
     const entry = await prisma.queueEntry.update({
       where: { id },
       data,
+    });
+    return mapPrismaToDomain(entry);
+  }
+
+  async updateAssignedVet(
+    id: string,
+    assignedVetId: string
+  ): Promise<QueueEntry> {
+    const entry = await prisma.queueEntry.update({
+      where: { id },
+      data: { assignedVetId },
     });
     return mapPrismaToDomain(entry);
   }
@@ -82,6 +118,38 @@ export class QueueRepository {
         status: {
           in: [Status.WAITING, Status.CALLED, Status.IN_PROGRESS],
         },
+      },
+      orderBy: [
+        { priority: "asc" },
+        { createdAt: "asc" },
+      ],
+    });
+    return entries.map(mapPrismaToDomain);
+  }
+
+  async listActiveByVet(assignedVetId: string): Promise<QueueEntry[]> {
+    const entries = await prisma.queueEntry.findMany({
+      where: {
+        status: {
+          in: [Status.WAITING, Status.CALLED, Status.IN_PROGRESS],
+        },
+        assignedVetId: assignedVetId,
+      },
+      orderBy: [
+        { priority: "asc" },
+        { createdAt: "asc" },
+      ],
+    });
+    return entries.map(mapPrismaToDomain);
+  }
+
+  async listActiveGeneral(): Promise<QueueEntry[]> {
+    const entries = await prisma.queueEntry.findMany({
+      where: {
+        status: {
+          in: [Status.WAITING, Status.CALLED, Status.IN_PROGRESS],
+        },
+        assignedVetId: null,
       },
       orderBy: [
         { priority: "asc" },

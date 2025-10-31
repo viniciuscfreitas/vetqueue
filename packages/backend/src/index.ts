@@ -1,6 +1,9 @@
 import express from "express";
 import cors from "cors";
 import queueRoutes from "./api/routes/queueRoutes";
+import authRoutes from "./api/routes/authRoutes";
+import roomRoutes from "./api/routes/roomRoutes";
+import userRoutes from "./api/routes/userRoutes";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -36,6 +39,9 @@ app.get("/health", (req, res) => {
   res.json({ status: "ok" });
 });
 
+app.use("/api/auth", authRoutes);
+app.use("/api/rooms", roomRoutes);
+app.use("/api/users", userRoutes);
 app.use("/api/queue", queueRoutes);
 
 app.listen(Number(PORT), HOST, () => {

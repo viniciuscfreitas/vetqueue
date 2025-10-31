@@ -7,20 +7,48 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id        String       @id @default(uuid())
+  username  String       @unique
+  password  String
+  name      String
+  role      String
+  createdAt DateTime     @default(now())
+  entries   QueueEntry[]
+
+  @@map("users")
+}
+
+model Room {
+  id        String       @id @default(uuid())
+  name      String       @unique
+  isActive  Boolean      @default(true)
+  createdAt DateTime     @default(now())
+  entries   QueueEntry[]
+
+  @@map("rooms")
+}
+
 model QueueEntry {
-  id           String   @id @default(uuid())
-  patientName  String
-  tutorName    String
-  serviceType  String
-  priority     Int
-  status       String
-  createdAt    DateTime @default(now())
-  calledAt     DateTime?
-  completedAt  DateTime?
+  id            String   @id @default(uuid())
+  patientName   String
+  tutorName     String
+  serviceType   String
+  priority      Int
+  status        String
+  createdAt     DateTime @default(now())
+  calledAt      DateTime?
+  completedAt   DateTime?
+  assignedVetId String?
+  assignedVet   User?    @relation(fields: [assignedVetId], references: [id])
+  roomId        String?
+  room          Room?    @relation(fields: [roomId], references: [id])
 
   @@map("queue_entries")
   @@index([status])
   @@index([priority, createdAt])
   @@index([serviceType])
+  @@index([assignedVetId])
+  @@index([roomId])
 }
 

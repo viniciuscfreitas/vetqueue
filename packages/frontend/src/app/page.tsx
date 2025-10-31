@@ -9,6 +9,8 @@ import { createErrorHandler } from "@/lib/errors";
 import { useEffect, useState } from "react";
 import { Header } from "@/components/Header";
 import { AddQueueFormInline } from "@/components/AddQueueFormInline";
+import { useAuth } from "@/contexts/AuthContext";
+import { useRouter } from "next/navigation";
 import {
   Tabs,
   TabsContent,
@@ -39,9 +41,21 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { SERVICE_TYPE_OPTIONS } from "@/lib/constants";
 
 export default function Home() {
+  const router = useRouter();
+  const { user, isLoading: authLoading } = useAuth();
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const handleError = createErrorHandler(toast);
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push("/login");
+    }
+  }, [user, authLoading, router]);
+
+  if (authLoading || !user) {
+    return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;
+  }
 
   const { data: entries = [], isLoading, isError, error } = useQuery({
     queryKey: ["queue", "active"],

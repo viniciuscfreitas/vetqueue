@@ -113,11 +113,11 @@ export default function HistoryPage() {
               Tipo de Serviço
             </Label>
             <Select
-              value={filters.serviceType || ""}
+              value={filters.serviceType}
               onValueChange={(value) =>
                 setFilters({ 
                   ...filters, 
-                  serviceType: value ? (value as ServiceType) : undefined 
+                  serviceType: value as ServiceType
                 })
               }
             >
@@ -125,7 +125,6 @@ export default function HistoryPage() {
                 <SelectValue placeholder="Todos" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos</SelectItem>
                 <SelectItem value={ServiceType.CONSULTA}>Consulta</SelectItem>
                 <SelectItem value={ServiceType.VACINACAO}>Vacinação</SelectItem>
                 <SelectItem value={ServiceType.CIRURGIA}>Cirurgia</SelectItem>

@@ -126,7 +126,7 @@ export const queueApi = {
   listActive: (vetId?: string | null) => 
     api.get<QueueEntry[]>("/api/queue/active", { params: vetId !== undefined ? { vetId } : {} }),
 
-  callNext: (vetId?: string, roomId: string) => 
+  callNext: (roomId: string, vetId?: string) => 
     api.post<QueueEntry>("/api/queue/call-next", { vetId, roomId }),
 
   startService: (id: string) =>

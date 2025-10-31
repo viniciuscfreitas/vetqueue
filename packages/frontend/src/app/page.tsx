@@ -72,7 +72,7 @@ export default function Home() {
   }, [isError, error, handleError]);
 
   const callNextMutation = useMutation({
-    mutationFn: (roomId: string) => queueApi.callNext(undefined, roomId).then((res) => res.data),
+    mutationFn: (roomId: string) => queueApi.callNext(roomId).then((res) => res.data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["queue"] });
       setShowRoomModal(false);

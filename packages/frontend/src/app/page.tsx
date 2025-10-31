@@ -52,20 +52,6 @@ export default function Home() {
     onError: handleError,
   });
 
-  const callNextAndStartMutation = useMutation({
-    mutationFn: async () => {
-      const result = await queueApi.callNext().then((res) => res.data);
-      if (result.id) {
-        await queueApi.startService(result.id).then((res) => res.data);
-      }
-      return result;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["queue"] });
-    },
-    onError: handleError,
-  });
-
   const startServiceMutation = useMutation({
     mutationFn: (id: string) => queueApi.startService(id).then((res) => res.data),
     onSuccess: () => {
@@ -93,10 +79,6 @@ export default function Home() {
 
   const handleCallNext = () => {
     callNextMutation.mutate();
-  };
-
-  const handleCallNextAndStart = () => {
-    callNextAndStartMutation.mutate();
   };
 
   const handleStart = (id: string) => {
@@ -186,40 +168,29 @@ export default function Home() {
 
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-2xl font-bold">Fila Atual</h2>
-              <div className="flex gap-2">
-                <Button
-                  onClick={handleCallNext}
-                  disabled={callNextMutation.isPending}
-                  variant="outline"
-                >
-                  {callNextMutation.isPending ? "Chamando..." : "Chamar"}
-                </Button>
-                <Button
-                  onClick={handleCallNextAndStart}
-                  disabled={callNextAndStartMutation.isPending}
-                  size="lg"
-                >
-                  {callNextAndStartMutation.isPending
-                    ? "Chamando e Iniciando..."
-                    : "Chamar e Iniciar"}
-                </Button>
-              </div>
+              <Button
+                onClick={handleCallNext}
+                disabled={callNextMutation.isPending}
+                size="lg"
+              >
+                {callNextMutation.isPending ? "Chamando..." : "Chamar Próximo"}
+              </Button>
             </div>
 
-            {isLoading ? (
-              <div className="text-center py-12">Carregando...</div>
-            ) : isError ? (
-              <div className="text-center py-12 text-destructive">
-                Erro ao carregar fila. Tente recarregar a página.
-              </div>
-            ) : (
-              <QueueList
-                entries={entries}
-                onStart={handleStart}
-                onComplete={handleComplete}
-                onCancel={handleCancel}
-              />
-            )}
+        {isLoading ? (
+          <div className="text-center py-12">Carregando...</div>
+        ) : isError ? (
+          <div className="text-center py-12 text-destructive">
+            Erro ao carregar fila. Tente recarregar a página.
+          </div>
+        ) : (
+          <QueueList
+            entries={entries}
+            onStart={handleStart}
+            onComplete={handleComplete}
+            onCancel={handleCancel}
+          />
+        )}
           </TabsContent>
 
           <TabsContent value="history" className="space-y-4">

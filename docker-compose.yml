@@ -44,10 +44,7 @@ services:
     build:
       context: ./packages/frontend
       dockerfile: Dockerfile
-      args:
-        NEXT_PUBLIC_API_URL: http://161.35.115.145:3002
     environment:
-      NEXT_PUBLIC_API_URL: http://161.35.115.145:3002
       NODE_ENV: production
     ports:
       - "3000:3000"
@@ -64,4 +61,3 @@ volumes:
 networks:
   vetqueue_network:
     driver: bridge
-

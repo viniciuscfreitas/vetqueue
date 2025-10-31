@@ -168,12 +168,12 @@ export default function Home() {
   const hasActiveFilters = historyFilters.tutorName || historyFilters.serviceType;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background max-w-full overflow-x-hidden">
       <Header />
 
-      <main className="container mx-auto px-4 py-6">
+      <main className="container mx-auto px-4 py-6 max-w-full">
         <Tabs defaultValue="queue" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 h-auto">
+          <TabsList className="grid w-full grid-cols-3 h-auto min-w-0">
             <TabsTrigger
               value="queue"
               className="data-[state=active]:font-semibold py-2.5 text-sm sm:text-base"

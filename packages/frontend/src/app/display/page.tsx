@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { queueApi, Status, Priority } from "@/lib/api";
 
@@ -12,8 +12,26 @@ function formatTime(date: Date): string {
   });
 }
 
+function playBeep() {
+  const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+  const oscillator = audioContext.createOscillator();
+  const gainNode = audioContext.createGain();
+
+  oscillator.connect(gainNode);
+  gainNode.connect(audioContext.destination);
+
+  oscillator.frequency.value = 800;
+  oscillator.type = "sine";
+  gainNode.gain.setValueAtTime(0.8, audioContext.currentTime);
+  gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+
+  oscillator.start(audioContext.currentTime);
+  oscillator.stop(audioContext.currentTime + 0.5);
+}
+
 export default function DisplayPage() {
   const [currentTime, setCurrentTime] = useState(new Date());
+  const previousCalledIdsRef = useRef<Set<string>>(new Set());
 
   const { data: entries = [], isLoading } = useQuery({
     queryKey: ["queue", "active"],
@@ -30,6 +48,21 @@ export default function DisplayPage() {
 
   const called = entries.filter((e) => e.status === Status.CALLED);
   const waiting = entries.filter((e) => e.status === Status.WAITING);
+
+  useEffect(() => {
+    if (isLoading) return;
+
+    const currentCalledIds = new Set(called.map((e) => e.id));
+    const hasNewCalled = Array.from(currentCalledIds).some(
+      (id) => !previousCalledIdsRef.current.has(id)
+    );
+
+    if (hasNewCalled && previousCalledIdsRef.current.size > 0) {
+      playBeep();
+    }
+
+    previousCalledIdsRef.current = currentCalledIds;
+  }, [called, isLoading]);
 
   return (
     <div className="min-h-screen bg-white p-12">

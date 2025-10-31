@@ -18,7 +18,7 @@ export default function Home() {
   const { data: entries = [], isLoading } = useQuery({
     queryKey: ["queue", "active"],
     queryFn: () => queueApi.listActive().then((res) => res.data),
-    refetchInterval: 3000,
+    refetchInterval: (query) => (query.state.error ? false : 3000),
   });
 
   const callNextMutation = useMutation({

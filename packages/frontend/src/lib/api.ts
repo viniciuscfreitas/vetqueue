@@ -5,23 +5,35 @@ const api = axios.create({
   timeout: 10000,
 });
 
+let lastLoggedError: string | null = null;
+let lastLoggedTime = 0;
+const LOG_THROTTLE_MS = 5000;
+
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.code === "ERR_NETWORK") {
-      console.error("Erro de rede:", {
-        message: error.message,
-        baseURL: api.defaults.baseURL,
-        url: error.config?.url,
-      });
-    } else if (error.response) {
-      console.error("Erro HTTP:", {
-        status: error.response.status,
-        data: error.response.data,
-        url: error.config?.url,
-      });
-    } else {
-      console.error("Erro na requisição:", error.message);
+    const errorKey = `${error.config?.url || "unknown"}-${error.response?.status || error.code}`;
+    const now = Date.now();
+    const shouldLog = errorKey !== lastLoggedError || now - lastLoggedTime > LOG_THROTTLE_MS;
+
+    if (shouldLog) {
+      if (error.code === "ERR_NETWORK") {
+        console.error("Erro de rede:", {
+          message: error.message,
+          baseURL: api.defaults.baseURL,
+          url: error.config?.url,
+        });
+      } else if (error.response) {
+        console.error("Erro HTTP:", {
+          status: error.response.status,
+          data: error.response.data,
+          url: error.config?.url,
+        });
+      } else {
+        console.error("Erro na requisição:", error.message);
+      }
+      lastLoggedError = errorKey;
+      lastLoggedTime = now;
     }
     return Promise.reject(error);
   }

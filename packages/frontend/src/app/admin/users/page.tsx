@@ -84,6 +84,25 @@ export default function UsersPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!editingUser && formData.password.length < 6) {
+      toast({
+        variant: "destructive",
+        title: "Erro de validação",
+        description: "Senha deve ter no mínimo 6 caracteres",
+      });
+      return;
+    }
+    
+    if (editingUser && formData.password && formData.password.length < 6) {
+      toast({
+        variant: "destructive",
+        title: "Erro de validação",
+        description: "Senha deve ter no mínimo 6 caracteres",
+      });
+      return;
+    }
+    
     if (editingUser) {
       updateMutation.mutate({
         id: editingUser.id,

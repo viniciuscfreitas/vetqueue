@@ -1,15 +1,36 @@
 import { AxiosError } from "axios";
 
+interface ZodErrorItem {
+  code: string;
+  message: string;
+  path: (string | number)[];
+}
+
+type ErrorResponse = {
+  message?: string;
+  error?: string | ZodErrorItem[];
+};
+
 export function getErrorMessage(error: unknown): string {
   if (error instanceof Error) {
-    const axiosError = error as AxiosError<{ message?: string; error?: string }>;
+    const axiosError = error as AxiosError<ErrorResponse>;
     
     if (axiosError.response?.data?.message) {
       return axiosError.response.data.message;
     }
     
-    if (axiosError.response?.data?.error) {
-      return axiosError.response.data.error;
+    const errorData = axiosError.response?.data?.error;
+    
+    if (errorData) {
+      if (Array.isArray(errorData)) {
+        return errorData
+          .map((err: ZodErrorItem) => err.message)
+          .join(". ");
+      }
+      
+      if (typeof errorData === "string") {
+        return errorData;
+      }
     }
     
     if (axiosError.message) {

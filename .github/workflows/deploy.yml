@@ -1,0 +1,45 @@
+name: Deploy VetQueue to Server
+
+on:
+  push:
+    branches: [ "main" ]
+
+concurrency:
+  group: deploy-vetqueue
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to VM
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -euo pipefail
+            
+            # 1. Entre no diretório do projeto
+            mkdir -p ~/www/vetqueue
+            cd ~/www/vetqueue
+            
+            # 2. Puxe as últimas mudanças
+            if [ ! -d .git ]; then
+              git clone https://github.com/viniciuscfreitas/vetqueue.git .
+            else
+              git fetch --all --prune
+              git reset --hard origin/main
+            fi
+            
+            # 3. Suba TUDO com Docker Compose
+            docker compose up -d --build
+            
+            # 4. Conecte ao Nginx Proxy Manager
+            docker network connect vetqueue_network nginx-proxy-manager-app-1 || true
+            
+            # 5. Limpe imagens antigas
+            docker image prune -f || true
+

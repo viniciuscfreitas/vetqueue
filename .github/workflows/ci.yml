@@ -33,7 +33,9 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: packages/backend/package-lock.json
+          cache-dependency-path: |
+            packages/backend/package-lock.json
+            package-lock.json
 
       - name: Install dependencies
         working-directory: packages/backend
@@ -68,7 +70,9 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: packages/frontend/package-lock.json
+          cache-dependency-path: |
+            packages/frontend/package-lock.json
+            package-lock.json
 
       - name: Install dependencies
         working-directory: packages/frontend

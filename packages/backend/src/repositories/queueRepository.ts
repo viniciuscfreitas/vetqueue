@@ -133,7 +133,10 @@ export class QueueRepository {
         status: {
           in: [Status.WAITING, Status.CALLED, Status.IN_PROGRESS],
         },
-        assignedVetId: assignedVetId,
+        OR: [
+          { assignedVetId: assignedVetId },
+          { assignedVetId: null }
+        ]
       },
       orderBy: [
         { priority: "asc" },

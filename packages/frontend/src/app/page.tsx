@@ -74,8 +74,10 @@ export default function Home() {
   const [reportsEndDate, setReportsEndDate] = useState(defaultDates.end);
 
   const { data: entries = [], isLoading, isError, error } = useQuery({
-    queryKey: ["queue", "active"],
-    queryFn: () => queueApi.listActive().then((res) => res.data),
+    queryKey: ["queue", "active", user?.role === "VET" ? user.id : undefined],
+    queryFn: () => queueApi.listActive(
+      user?.role === "VET" ? user.id : undefined
+    ).then((res) => res.data),
     refetchInterval: (query) => (query.state.error ? false : 3000),
     enabled: !authLoading && !!user,
   });

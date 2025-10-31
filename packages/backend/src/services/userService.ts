@@ -45,5 +45,43 @@ export class UserService {
       role: data.role,
     });
   }
+
+  async updateUser(
+    id: string,
+    data: { name?: string; role?: Role; password?: string }
+  ): Promise<User> {
+    const user = await this.repository.findById(id);
+    if (!user) {
+      throw new Error("Usuário não encontrado");
+    }
+
+    const updateData: any = {};
+    
+    if (data.name !== undefined) {
+      if (!data.name.trim()) {
+        throw new Error("Nome não pode ser vazio");
+      }
+      updateData.name = data.name;
+    }
+
+    if (data.role !== undefined) {
+      updateData.role = data.role;
+    }
+
+    if (data.password !== undefined) {
+      if (data.password && data.password.length < 6) {
+        throw new Error("Senha deve ter no mínimo 6 caracteres");
+      }
+      if (data.password) {
+        updateData.password = await bcrypt.hash(data.password, 10);
+      }
+    }
+
+    if (Object.keys(updateData).length === 0) {
+      throw new Error("Nenhum campo para atualizar");
+    }
+
+    return this.repository.update(id, updateData);
+  }
 }
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { roomApi } from "@/lib/api";
+import { roomApi, Room } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,6 +22,7 @@ export default function RoomsPage() {
   const { toast } = useToast();
   const handleError = createErrorHandler(toast);
   const [showForm, setShowForm] = useState(false);
+  const [editingRoom, setEditingRoom] = useState<Room | null>(null);
 
   useEffect(() => {
     if (!authLoading && (!user || user.role !== "RECEPCAO")) {
@@ -52,6 +53,22 @@ export default function RoomsPage() {
     onError: handleError,
   });
 
+  const updateMutation = useMutation({
+    mutationFn: (data: { id: string; name: string }) =>
+      roomApi.update(data.id, { name: data.name }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["rooms"] });
+      setEditingRoom(null);
+      setShowForm(false);
+      setRoomName("");
+      toast({
+        title: "Sucesso",
+        description: "Sala atualizada com sucesso",
+      });
+    },
+    onError: handleError,
+  });
+
   const deleteMutation = useMutation({
     mutationFn: (id: string) => roomApi.delete(id),
     onSuccess: () => {
@@ -68,7 +85,23 @@ export default function RoomsPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    createMutation.mutate(roomName);
+    if (editingRoom) {
+      updateMutation.mutate({ id: editingRoom.id, name: roomName });
+    } else {
+      createMutation.mutate(roomName);
+    }
+  };
+
+  const handleEdit = (room: Room) => {
+    setEditingRoom(room);
+    setRoomName(room.name);
+    setShowForm(true);
+  };
+
+  const handleCancel = () => {
+    setShowForm(false);
+    setEditingRoom(null);
+    setRoomName("");
   };
 
   return (
@@ -77,15 +110,17 @@ export default function RoomsPage() {
       <main className="container mx-auto px-4 py-6">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-semibold">Salas</h1>
-          <Button onClick={() => setShowForm(!showForm)}>
-            {showForm ? "Cancelar" : "Nova Sala"}
-          </Button>
+          {!showForm && (
+            <Button onClick={() => setShowForm(true)}>
+              Nova Sala
+            </Button>
+          )}
         </div>
 
         {showForm && (
           <Card className="mb-6">
             <CardHeader>
-              <CardTitle>Nova Sala</CardTitle>
+              <CardTitle>{editingRoom ? "Editar Sala" : "Nova Sala"}</CardTitle>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
@@ -98,9 +133,18 @@ export default function RoomsPage() {
                     required
                   />
                 </div>
-                <Button type="submit" disabled={createMutation.isPending}>
-                  {createMutation.isPending ? "Criando..." : "Criar Sala"}
-                </Button>
+                <div className="flex gap-2">
+                  <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
+                    {createMutation.isPending || updateMutation.isPending 
+                      ? "Salvando..." 
+                      : editingRoom 
+                      ? "Salvar Alterações" 
+                      : "Criar Sala"}
+                  </Button>
+                  <Button type="button" variant="outline" onClick={handleCancel}>
+                    Cancelar
+                  </Button>
+                </div>
               </form>
             </CardContent>
           </Card>
@@ -128,19 +172,30 @@ export default function RoomsPage() {
                         {room.isActive ? "Ativa" : "Desativada"}
                       </p>
                     </div>
-                    {room.isActive && (
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => {
-                          if (confirm(`Deseja desativar a sala ${room.name}?`)) {
-                            deleteMutation.mutate(room.id);
-                          }
-                        }}
-                      >
-                        Desativar
-                      </Button>
-                    )}
+                    <div className="flex gap-2">
+                      {room.isActive && (
+                        <>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEdit(room)}
+                          >
+                            Editar
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => {
+                              if (confirm(`Deseja desativar a sala ${room.name}?`)) {
+                                deleteMutation.mutate(room.id);
+                              }
+                            }}
+                          >
+                            Desativar
+                          </Button>
+                        </>
+                      )}
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -151,4 +206,3 @@ export default function RoomsPage() {
     </div>
   );
 }
-

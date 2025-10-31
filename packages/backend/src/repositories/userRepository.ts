@@ -51,5 +51,22 @@ export class UserRepository {
     });
     return mapPrismaToDomain(user);
   }
+
+  async update(id: string, data: {
+    name?: string;
+    role?: Role;
+    password?: string;
+  }): Promise<User> {
+    const updateData: any = {};
+    if (data.name) updateData.name = data.name;
+    if (data.role) updateData.role = data.role;
+    if (data.password) updateData.password = data.password;
+
+    const user = await prisma.user.update({
+      where: { id },
+      data: updateData,
+    });
+    return mapPrismaToDomain(user);
+  }
 }
 

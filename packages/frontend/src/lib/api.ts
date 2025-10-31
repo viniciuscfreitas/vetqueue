@@ -179,5 +179,8 @@ export const userApi = {
   
   create: (data: { username: string; password: string; name: string; role: Role }) =>
     api.post<User>("/api/users", data),
+  
+  update: (id: string, data: { name?: string; role?: Role; password?: string }) =>
+    api.patch<User>(`/api/users/${id}`, data),
 };
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { userApi, Role } from "@/lib/api";
+import { userApi, Role, User } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,6 +29,7 @@ export default function UsersPage() {
   const { toast } = useToast();
   const handleError = createErrorHandler(toast);
   const [showForm, setShowForm] = useState(false);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
 
   useEffect(() => {
     if (!authLoading && (!user || user.role !== "RECEPCAO")) {
@@ -59,6 +60,21 @@ export default function UsersPage() {
     onError: handleError,
   });
 
+  const updateMutation = useMutation({
+    mutationFn: (data: { id: string; name?: string; role?: Role; password?: string }) =>
+      userApi.update(data.id, { name: data.name, role: data.role, password: data.password }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      setEditingUser(null);
+      setShowForm(false);
+      toast({
+        title: "Sucesso",
+        description: "Usuário atualizado com sucesso",
+      });
+    },
+    onError: handleError,
+  });
+
   const [formData, setFormData] = useState({
     username: "",
     password: "",
@@ -68,7 +84,38 @@ export default function UsersPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    createMutation.mutate(formData);
+    if (editingUser) {
+      updateMutation.mutate({
+        id: editingUser.id,
+        name: formData.name,
+        role: formData.role,
+        password: formData.password || undefined,
+      });
+    } else {
+      createMutation.mutate(formData);
+    }
+  };
+
+  const handleEdit = (usr: User) => {
+    setEditingUser(usr);
+    setFormData({
+      username: usr.username,
+      password: "",
+      name: usr.name,
+      role: usr.role,
+    });
+    setShowForm(true);
+  };
+
+  const handleCancel = () => {
+    setShowForm(false);
+    setEditingUser(null);
+    setFormData({
+      username: "",
+      password: "",
+      name: "",
+      role: Role.VET,
+    });
   };
 
   return (
@@ -77,15 +124,17 @@ export default function UsersPage() {
       <main className="container mx-auto px-4 py-6">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-semibold">Usuários</h1>
-          <Button onClick={() => setShowForm(!showForm)}>
-            {showForm ? "Cancelar" : "Novo Usuário"}
-          </Button>
+          {!showForm && (
+            <Button onClick={() => setShowForm(true)}>
+              Novo Usuário
+            </Button>
+          )}
         </div>
 
         {showForm && (
           <Card className="mb-6">
             <CardHeader>
-              <CardTitle>Novo Usuário</CardTitle>
+              <CardTitle>{editingUser ? "Editar Usuário" : "Novo Usuário"}</CardTitle>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
@@ -98,21 +147,31 @@ export default function UsersPage() {
                       required
                     />
                   </div>
+                  {!editingUser && (
+                    <div>
+                      <Label>Username</Label>
+                      <Input
+                        value={formData.username}
+                        onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                        required
+                        disabled={!!editingUser}
+                      />
+                    </div>
+                  )}
+                  {editingUser && (
+                    <div>
+                      <Label>Username</Label>
+                      <Input value={editingUser.username} disabled />
+                    </div>
+                  )}
                   <div>
-                    <Label>Username</Label>
-                    <Input
-                      value={formData.username}
-                      onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label>Senha</Label>
+                    <Label>{editingUser ? "Nova Senha (deixe em branco para não alterar)" : "Senha"}</Label>
                     <Input
                       type="password"
                       value={formData.password}
                       onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                      required
+                      required={!editingUser}
+                      placeholder={editingUser ? "Deixe em branco para não alterar" : ""}
                     />
                   </div>
                   <div>
@@ -131,9 +190,18 @@ export default function UsersPage() {
                     </Select>
                   </div>
                 </div>
-                <Button type="submit" disabled={createMutation.isPending}>
-                  {createMutation.isPending ? "Criando..." : "Criar Usuário"}
-                </Button>
+                <div className="flex gap-2">
+                  <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
+                    {createMutation.isPending || updateMutation.isPending 
+                      ? "Salvando..." 
+                      : editingUser 
+                      ? "Salvar Alterações" 
+                      : "Criar Usuário"}
+                  </Button>
+                  <Button type="button" variant="outline" onClick={handleCancel}>
+                    Cancelar
+                  </Button>
+                </div>
               </form>
             </CardContent>
           </Card>
@@ -161,6 +229,9 @@ export default function UsersPage() {
                         @{usr.username} • {usr.role === Role.VET ? "Veterinário" : "Recepção"}
                       </p>
                     </div>
+                    <Button variant="outline" size="sm" onClick={() => handleEdit(usr)}>
+                      Editar
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
@@ -171,4 +242,3 @@ export default function UsersPage() {
     </div>
   );
 }
-

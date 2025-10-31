@@ -16,6 +16,12 @@ const createUserSchema = z.object({
   role: z.nativeEnum(Role),
 });
 
+const updateUserSchema = z.object({
+  name: z.string().min(1, "Nome é obrigatório").optional(),
+  role: z.nativeEnum(Role).optional(),
+  password: z.string().min(6, "Senha deve ter no mínimo 6 caracteres").optional(),
+});
+
 router.get("/", authMiddleware, requireRole(["RECEPCAO"]), async (req: Request, res: Response) => {
   try {
     const users = await userService.listUsers();
@@ -30,6 +36,20 @@ router.post("/", authMiddleware, requireRole(["RECEPCAO"]), async (req: Request,
     const data = createUserSchema.parse(req.body);
     const user = await userService.createUser(data);
     res.status(201).json(user);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      res.status(400).json({ error: error.errors });
+      return;
+    }
+    res.status(400).json({ error: (error as Error).message });
+  }
+});
+
+router.patch("/:id", authMiddleware, requireRole(["RECEPCAO"]), async (req: Request, res: Response) => {
+  try {
+    const data = updateUserSchema.parse(req.body);
+    const user = await userService.updateUser(req.params.id, data);
+    res.json(user);
   } catch (error) {
     if (error instanceof z.ZodError) {
       res.status(400).json({ error: error.errors });

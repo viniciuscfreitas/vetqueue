@@ -50,7 +50,7 @@ export default function UsersPage() {
     }
   }, [user, authLoading, router]);
 
-  const isAuthorized = !authLoading && user && user.role === "RECEPCAO";
+  const isAuthorized = !authLoading && !!user && user.role === "RECEPCAO";
 
   const { data: users = [], isLoading } = useQuery({
     queryKey: ["users"],

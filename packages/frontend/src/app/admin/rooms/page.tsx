@@ -38,7 +38,7 @@ export default function RoomsPage() {
     }
   }, [user, authLoading, router]);
 
-  const isAuthorized = !authLoading && user && user.role === "RECEPCAO";
+  const isAuthorized = !authLoading && !!user && user.role === "RECEPCAO";
 
   const { data: rooms = [], isLoading } = useQuery({
     queryKey: ["rooms", "all"],

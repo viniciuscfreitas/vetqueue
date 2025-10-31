@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
@@ -11,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
-import { ServiceType, Priority, queueApi } from "@/lib/api";
+import { ServiceType, Priority, queueApi, userApi, Role } from "@/lib/api";
 import { useToast } from "@/components/ui/use-toast";
 import { createErrorHandler } from "@/lib/errors";
 import { SERVICE_TYPE_OPTIONS } from "@/lib/constants";
@@ -29,6 +30,12 @@ export function AddQueueFormInline({ onSuccess }: AddQueueFormInlineProps) {
     tutorName: "",
     serviceType: "" as ServiceType | "",
     priority: Priority.NORMAL as Priority,
+    assignedVetId: "",
+  });
+
+  const { data: vets = [] } = useQuery({
+    queryKey: ["users", "vets"],
+    queryFn: () => userApi.list().then((res) => res.data.filter((u) => u.role === Role.VET)),
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -41,12 +48,14 @@ export function AddQueueFormInline({ onSuccess }: AddQueueFormInlineProps) {
         tutorName: formData.tutorName,
         serviceType: formData.serviceType as ServiceType,
         priority: formData.priority,
+        assignedVetId: formData.assignedVetId || undefined,
       });
       setFormData({
         patientName: "",
         tutorName: "",
         serviceType: "" as ServiceType | "",
         priority: Priority.NORMAL as Priority,
+        assignedVetId: "",
       });
       toast({
         title: "Sucesso",
@@ -62,7 +71,7 @@ export function AddQueueFormInline({ onSuccess }: AddQueueFormInlineProps) {
 
   return (
     <form onSubmit={handleSubmit} className="bg-card p-4 rounded-lg border space-y-4">
-      <div className="grid grid-cols-1 sm:grid-cols-7 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-8 gap-4">
         <div className="sm:col-span-2 space-y-2">
           <Label htmlFor="patientName" className="text-sm font-medium">
             Paciente
@@ -136,6 +145,30 @@ export function AddQueueFormInline({ onSuccess }: AddQueueFormInlineProps) {
               <SelectItem value={Priority.EMERGENCY.toString()}>
                 Emergência
               </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="sm:col-span-1 space-y-2">
+          <Label htmlFor="assignedVetId" className="text-sm font-medium">
+            Veterinário
+          </Label>
+          <Select
+            value={formData.assignedVetId}
+            onValueChange={(value) =>
+              setFormData({ ...formData, assignedVetId: value })
+            }
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Fila geral" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">Fila geral</SelectItem>
+              {vets.map((vet) => (
+                <SelectItem key={vet.id} value={vet.id}>
+                  {vet.name}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>

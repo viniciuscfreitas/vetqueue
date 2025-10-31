@@ -67,6 +67,13 @@ export function QueueCard({
               {status.label}
             </Badge>
           </div>
+          {entry.assignedVetId && (
+            <div>
+              <p className="text-xs text-muted-foreground">
+                Atribuído a veterinário
+              </p>
+            </div>
+          )}
           {entry.calledAt && (
             <div>
               <p className="text-xs text-muted-foreground">

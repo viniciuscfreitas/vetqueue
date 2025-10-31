@@ -50,7 +50,7 @@ router.get("/active", authMiddleware, async (req: AuthenticatedRequest, res: Res
 router.post("/call-next", authMiddleware, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const data = callNextSchema.parse(req.body);
-    const vetId = data.vetId || req.user?.id;
+    const vetId = data.vetId;
     const next = await queueService.callNext(vetId, data.roomId);
     if (!next) {
       res.status(200).json({ message: "Nenhuma entrada aguardando na fila" });

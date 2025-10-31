@@ -171,7 +171,7 @@ export default function Home() {
     <div className="min-h-screen bg-background">
       <Header />
 
-      <main className="container mx-auto px-4 py-6 overflow-y-scroll">
+      <main className="container mx-auto px-4 py-6">
         <Tabs defaultValue="queue" className="space-y-6">
           <TabsList className="grid w-full grid-cols-3 h-auto">
             <TabsTrigger

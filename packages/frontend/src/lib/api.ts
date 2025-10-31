@@ -127,7 +127,7 @@ export const queueApi = {
     api.get<QueueEntry[]>("/api/queue/active", { params: vetId !== undefined ? { vetId } : {} }),
 
   callNext: (roomId: string, vetId?: string) => 
-    api.post<QueueEntry>("/api/queue/call-next", { vetId, roomId }),
+    api.post<QueueEntry | { message: string }>("/api/queue/call-next", { vetId, roomId }),
 
   startService: (id: string) =>
     api.patch<QueueEntry>(`/api/queue/${id}/start`),

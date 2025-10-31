@@ -51,13 +51,13 @@ export function Header() {
                     <Link href="/admin/users" className="flex items-center cursor-pointer">
                       <User className="mr-2 h-4 w-4" />
                       Usuários
-                    </Link>
+                </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link href="/admin/rooms" className="flex items-center cursor-pointer">
                       <Settings className="mr-2 h-4 w-4" />
                       Salas
-                    </Link>
+                </Link>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -69,26 +69,29 @@ export function Header() {
                   <div className="text-right hidden sm:block">
                     <p className="text-xs font-medium truncate max-w-[100px]">{user.name}</p>
                     <p className="text-xs text-muted-foreground capitalize">{user.role.toLowerCase()}</p>
-                  </div>
+            </div>
                   <User className="h-4 w-4 sm:hidden" />
                   <ChevronDown className="h-3 w-3 hidden sm:block" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuLabel className="font-medium">
-                  {user.name}
+                <DropdownMenuLabel>
+                  <div className="flex flex-col">
+                    <span className="font-medium">{user.name}</span>
+                    <span className="text-xs text-muted-foreground capitalize">{user.role.toLowerCase()}</span>
+            </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
                   <Link href="/display" className="flex items-center cursor-pointer">
                     <Monitor className="mr-2 h-4 w-4" />
                     Display
-                  </Link>
+            </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout} className="flex items-center cursor-pointer text-red-600 focus:text-red-600">
                   <LogOut className="mr-2 h-4 w-4" />
-                  Sair
+              Sair
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

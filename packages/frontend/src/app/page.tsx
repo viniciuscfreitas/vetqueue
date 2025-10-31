@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { queueApi, ServiceType } from "@/lib/api";
+import { queueApi, ServiceType, Status } from "@/lib/api";
 import { QueueList } from "@/components/QueueList";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
@@ -108,7 +108,14 @@ export default function Home() {
 
   const callNextMutation = useMutation({
     mutationFn: (roomId: string) => queueApi.callNext(roomId).then((res) => res.data),
-    onSuccess: () => {
+    onSuccess: (data) => {
+      if ("message" in data) {
+        toast({
+          variant: "default",
+          title: "Fila vazia",
+          description: data.message,
+        });
+      }
       queryClient.invalidateQueries({ queryKey: ["queue"] });
       setShowRoomModal(false);
     },
@@ -184,6 +191,8 @@ export default function Home() {
 
   const hasActiveFilters = historyFilters.tutorName || historyFilters.serviceType;
 
+  const waitingCount = entries.filter((entry) => entry.status === Status.WAITING).length;
+
   if (authLoading || !user) {
     return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;
   }
@@ -239,7 +248,7 @@ export default function Home() {
                 </div>
                 <Button
                   onClick={handleCallNext}
-                  disabled={callNextMutation.isPending || entries.length === 0}
+                  disabled={callNextMutation.isPending || waitingCount === 0}
                   size="lg"
                 >
                   {callNextMutation.isPending ? "Chamando..." : "Chamar Próximo"}

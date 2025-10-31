@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { roomApi } from "@/lib/api";
 import {
@@ -19,12 +20,20 @@ interface RoomSelectModalProps {
 }
 
 export function RoomSelectModal({ open, onSelect, onCancel }: RoomSelectModalProps) {
+  const [selectedRoomId, setSelectedRoomId] = useState<string>("");
+  
   const { data: rooms = [] } = useQuery({
     queryKey: ["rooms"],
     queryFn: () => roomApi.list().then((res) => res.data),
   });
 
   if (!open) return null;
+
+  const handleConfirm = () => {
+    if (selectedRoomId) {
+      onSelect(selectedRoomId);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
@@ -33,7 +42,7 @@ export function RoomSelectModal({ open, onSelect, onCancel }: RoomSelectModalPro
         <div className="space-y-4">
           <div>
             <Label>Sala:</Label>
-            <Select onValueChange={onSelect}>
+            <Select onValueChange={setSelectedRoomId}>
               <SelectTrigger>
                 <SelectValue placeholder="Escolha uma sala" />
               </SelectTrigger>
@@ -49,6 +58,9 @@ export function RoomSelectModal({ open, onSelect, onCancel }: RoomSelectModalPro
           <div className="flex gap-2 justify-end">
             <Button variant="outline" onClick={onCancel}>
               Cancelar
+            </Button>
+            <Button onClick={handleConfirm} disabled={!selectedRoomId}>
+              Confirmar
             </Button>
           </div>
         </div>

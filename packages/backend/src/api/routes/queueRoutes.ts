@@ -53,7 +53,7 @@ router.post("/call-next", authMiddleware, async (req: AuthenticatedRequest, res:
     const vetId = data.vetId || req.user?.id;
     const next = await queueService.callNext(vetId, data.roomId);
     if (!next) {
-      res.status(404).json({ message: "Nenhuma entrada aguardando na fila" });
+      res.status(200).json({ message: "Nenhuma entrada aguardando na fila" });
       return;
     }
     res.json(next);

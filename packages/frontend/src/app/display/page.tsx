@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { queueApi, Status, Priority } from "@/lib/api";
+import { queueApi, Status, Priority, roomApi } from "@/lib/api";
 
 function formatTime(date: Date): string {
   return date.toLocaleTimeString("pt-BR", {
@@ -35,8 +35,13 @@ export default function DisplayPage() {
 
   const { data: entries = [], isLoading } = useQuery({
     queryKey: ["queue", "active"],
-    queryFn: () => queueApi.listActive().then((res) => res.data),
+    queryFn: () => queueApi.listActive(null).then((res) => res.data),
     refetchInterval: 3000,
+  });
+
+  const { data: rooms = [] } = useQuery({
+    queryKey: ["rooms"],
+    queryFn: () => roomApi.list().then((res) => res.data),
   });
 
   useEffect(() => {
@@ -48,6 +53,11 @@ export default function DisplayPage() {
 
   const called = entries.filter((e) => e.status === Status.CALLED);
   const waiting = entries.filter((e) => e.status === Status.WAITING);
+
+  const getRoomName = (roomId?: string | null) => {
+    if (!roomId) return null;
+    return rooms.find((r) => r.id === roomId)?.name || null;
+  };
 
   useEffect(() => {
     if (isLoading) return;
@@ -92,22 +102,30 @@ export default function DisplayPage() {
                     Nenhum chamado no momento
                   </div>
                 ) : (
-                  called.map((entry) => (
-                    <div
-                      key={entry.id}
-                      className="bg-blue-50 border-4 border-blue-600 rounded-xl p-8 shadow-lg animate-pulse"
-                    >
-                      <div className="text-5xl font-bold text-gray-900 mb-3">
-                        {entry.patientName}
+                  called.map((entry) => {
+                    const roomName = getRoomName(entry.roomId);
+                    return (
+                      <div
+                        key={entry.id}
+                        className="bg-blue-50 border-4 border-blue-600 rounded-xl p-8 shadow-lg animate-pulse"
+                      >
+                        <div className="text-5xl font-bold text-gray-900 mb-3">
+                          {entry.patientName}
+                        </div>
+                        <div className="text-3xl text-gray-700 mb-2">
+                          Tutor: {entry.tutorName}
+                        </div>
+                        <div className="text-3xl text-blue-700 mb-2">
+                          {entry.serviceType}
+                        </div>
+                        {roomName && (
+                          <div className="text-4xl font-bold text-blue-600">
+                            → {roomName}
+                          </div>
+                        )}
                       </div>
-                      <div className="text-3xl text-gray-700 mb-2">
-                        Tutor: {entry.tutorName}
-                      </div>
-                      <div className="text-3xl text-blue-700">
-                        {entry.serviceType}
-                      </div>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
             </div>

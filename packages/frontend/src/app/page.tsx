@@ -11,6 +11,7 @@ import { Header } from "@/components/Header";
 import { AddQueueFormInline } from "@/components/AddQueueFormInline";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
+import { RoomSelectModal } from "@/components/RoomSelectModal";
 import {
   Tabs,
   TabsContent,
@@ -42,10 +43,11 @@ import { SERVICE_TYPE_OPTIONS } from "@/lib/constants";
 
 export default function Home() {
   const router = useRouter();
-  const { user, isLoading: authLoading } = useAuth();
+  const { user, currentRoom, isLoading: authLoading } = useAuth();
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const handleError = createErrorHandler(toast);
+  const [showRoomModal, setShowRoomModal] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -70,9 +72,10 @@ export default function Home() {
   }, [isError, error, handleError]);
 
   const callNextMutation = useMutation({
-    mutationFn: () => queueApi.callNext().then((res) => res.data),
+    mutationFn: (roomId: string) => queueApi.callNext(undefined, roomId).then((res) => res.data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["queue"] });
+      setShowRoomModal(false);
     },
     onError: handleError,
   });
@@ -103,7 +106,11 @@ export default function Home() {
   });
 
   const handleCallNext = () => {
-    callNextMutation.mutate();
+    if (currentRoom) {
+      callNextMutation.mutate(currentRoom.id);
+    } else {
+      setShowRoomModal(true);
+    }
   };
 
   const handleStart = (id: string) => {
@@ -557,6 +564,12 @@ export default function Home() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <RoomSelectModal
+        open={showRoomModal}
+        onSelect={(roomId) => callNextMutation.mutate(roomId)}
+        onCancel={() => setShowRoomModal(false)}
+      />
     </div>
   );
 }

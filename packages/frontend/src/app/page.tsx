@@ -6,10 +6,14 @@ import { QueueList } from "@/components/QueueList";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/components/ui/use-toast";
+import { createErrorHandler } from "@/lib/errors";
 
 export default function Home() {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const handleError = createErrorHandler(toast);
 
   const { data: entries = [], isLoading } = useQuery({
     queryKey: ["queue", "active"],
@@ -22,6 +26,7 @@ export default function Home() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["queue"] });
     },
+    onError: handleError,
   });
 
   const startServiceMutation = useMutation({
@@ -29,6 +34,7 @@ export default function Home() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["queue"] });
     },
+    onError: handleError,
   });
 
   const completeServiceMutation = useMutation({
@@ -37,6 +43,7 @@ export default function Home() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["queue"] });
     },
+    onError: handleError,
   });
 
   const cancelEntryMutation = useMutation({
@@ -44,6 +51,7 @@ export default function Home() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["queue"] });
     },
+    onError: handleError,
   });
 
   const handleCallNext = () => {

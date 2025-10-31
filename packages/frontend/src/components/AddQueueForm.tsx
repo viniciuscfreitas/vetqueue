@@ -13,9 +13,13 @@ import {
 } from "./ui/select";
 import { ServiceType, Priority, queueApi } from "@/lib/api";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/components/ui/use-toast";
+import { createErrorHandler } from "@/lib/errors";
 
 export function AddQueueForm() {
   const router = useRouter();
+  const { toast } = useToast();
+  const handleError = createErrorHandler(toast);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     patientName: "",
@@ -38,8 +42,7 @@ export function AddQueueForm() {
       router.push("/");
       router.refresh();
     } catch (error) {
-      console.error("Erro ao adicionar à fila:", error);
-      alert("Erro ao adicionar à fila. Tente novamente.");
+      handleError(error);
     } finally {
       setLoading(false);
     }

@@ -22,6 +22,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const checkAuth = async () => {
+      if (typeof window === "undefined") {
+        setIsLoading(false);
+        return;
+      }
+      
       const token = localStorage.getItem("auth_token");
       if (token) {
         try {
@@ -40,13 +45,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = useCallback(async (username: string, password: string) => {
     const response = await authApi.login(username, password);
     setUser(response.data.user);
-    localStorage.setItem("auth_token", response.data.token);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("auth_token", response.data.token);
+    }
   }, []);
 
   const logout = useCallback(() => {
     setUser(null);
     setCurrentRoom(null);
-    localStorage.removeItem("auth_token");
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("auth_token");
+    }
   }, []);
 
   const setCurrentRoomCallback = useCallback((room: Room | null) => {

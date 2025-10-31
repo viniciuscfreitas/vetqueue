@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { createErrorHandler } from "@/lib/errors";
 
@@ -37,7 +37,7 @@ export default function HistoryPage() {
     serviceType: undefined as ServiceType | undefined,
   });
 
-  const { data: entries = [], isLoading } = useQuery({
+  const { data: entries = [], isLoading, isError, error } = useQuery({
     queryKey: ["queue", "history", startDate, endDate, filters],
     queryFn: () =>
       queueApi
@@ -48,8 +48,13 @@ export default function HistoryPage() {
           serviceType: filters.serviceType || undefined,
         })
         .then((res) => res.data),
-    onError: handleError,
   });
+
+  useEffect(() => {
+    if (isError && error) {
+      handleError(error);
+    }
+  }, [isError, error, handleError]);
 
   return (
     <div className="min-h-screen bg-background">

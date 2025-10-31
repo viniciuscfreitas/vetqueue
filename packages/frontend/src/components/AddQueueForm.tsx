@@ -1,0 +1,123 @@
+"use client";
+
+import { useState } from "react";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
+import { ServiceType, Priority, queueApi } from "@/lib/api";
+import { useRouter } from "next/navigation";
+
+export function AddQueueForm() {
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    patientName: "",
+    tutorName: "",
+    serviceType: "" as ServiceType | "",
+    priority: Priority.NORMAL as Priority,
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      await queueApi.add({
+        patientName: formData.patientName,
+        tutorName: formData.tutorName,
+        serviceType: formData.serviceType as ServiceType,
+        priority: formData.priority,
+      });
+      router.push("/");
+      router.refresh();
+    } catch (error) {
+      console.error("Erro ao adicionar à fila:", error);
+      alert("Erro ao adicionar à fila. Tente novamente.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4 max-w-md">
+      <div>
+        <Label htmlFor="patientName">Nome do Paciente</Label>
+        <Input
+          id="patientName"
+          value={formData.patientName}
+          onChange={(e) =>
+            setFormData({ ...formData, patientName: e.target.value })
+          }
+          required
+        />
+      </div>
+
+      <div>
+        <Label htmlFor="tutorName">Nome do Tutor</Label>
+        <Input
+          id="tutorName"
+          value={formData.tutorName}
+          onChange={(e) =>
+            setFormData({ ...formData, tutorName: e.target.value })
+          }
+          required
+        />
+      </div>
+
+      <div>
+        <Label htmlFor="serviceType">Tipo de Serviço</Label>
+        <Select
+          value={formData.serviceType}
+          onValueChange={(value) =>
+            setFormData({ ...formData, serviceType: value as ServiceType })
+          }
+          required
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Selecione o serviço" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ServiceType.CONSULTA}>Consulta</SelectItem>
+            <SelectItem value={ServiceType.VACINACAO}>Vacinação</SelectItem>
+            <SelectItem value={ServiceType.CIRURGIA}>Cirurgia</SelectItem>
+            <SelectItem value={ServiceType.EXAME}>Exame</SelectItem>
+            <SelectItem value={ServiceType.BANHO_TOSA}>Banho e Tosa</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div>
+        <Label htmlFor="priority">Prioridade</Label>
+        <Select
+          value={formData.priority.toString()}
+          onValueChange={(value) =>
+            setFormData({ ...formData, priority: parseInt(value) as Priority })
+          }
+        >
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={Priority.NORMAL.toString()}>Normal</SelectItem>
+            <SelectItem value={Priority.HIGH.toString()}>Alta</SelectItem>
+            <SelectItem value={Priority.EMERGENCY.toString()}>
+              Emergência
+            </SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <Button type="submit" disabled={loading} className="w-full">
+        {loading ? "Adicionando..." : "Adicionar à Fila"}
+      </Button>
+    </form>
+  );
+}
+

@@ -1,0 +1,26 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model QueueEntry {
+  id           String   @id @default(uuid())
+  patientName  String
+  tutorName    String
+  serviceType  String
+  priority     Int
+  status       String
+  createdAt    DateTime @default(now())
+  calledAt     DateTime?
+  completedAt  DateTime?
+
+  @@map("queue_entries")
+  @@index([status])
+  @@index([priority, createdAt])
+  @@index([serviceType])
+}
+

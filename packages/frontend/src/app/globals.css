@@ -30,10 +30,15 @@
 @layer base {
   * {
     @apply border-border;
+    box-sizing: border-box;
   }
   body {
     @apply bg-background text-foreground font-sans;
     overflow-y: scroll;
+  }
+  input[type="date"] {
+    max-width: 100%;
+    box-sizing: border-box;
   }
 }
 

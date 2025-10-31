@@ -324,11 +324,11 @@ export default function Home() {
                         Tipo de Serviço
                       </Label>
                       <Select
-                        value={historyFilters.serviceType || ""}
+                        value={historyFilters.serviceType || undefined}
                         onValueChange={(value) =>
                           setHistoryFilters({
                             ...historyFilters,
-                            serviceType: value ? (value as ServiceType) : undefined,
+                            serviceType: value as ServiceType,
                           })
                         }
                       >
@@ -336,7 +336,6 @@ export default function Home() {
                           <SelectValue placeholder="Todos" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">Todos</SelectItem>
                           {SERVICE_TYPE_OPTIONS.map((option) => (
                             <SelectItem key={option.value} value={option.value}>
                               {option.label}

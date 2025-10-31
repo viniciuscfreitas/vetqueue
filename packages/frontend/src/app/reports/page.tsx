@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { createErrorHandler } from "@/lib/errors";
 
@@ -33,8 +33,13 @@ export default function ReportsPage() {
           endDate,
         })
         .then((res) => res.data),
-    onError: handleError,
   });
+
+  useEffect(() => {
+    if (isError && error) {
+      handleError(error);
+    }
+  }, [isError, error, handleError]);
 
   return (
     <div className="min-h-screen bg-background">

@@ -309,7 +309,7 @@ export default function Home() {
               <Card>
                 <CardContent className="pt-6">
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div>
+                    <div className="min-w-0">
                       <Label htmlFor="historyStartDate" className="text-sm mb-2 block font-medium">
                         Data Inicial
                       </Label>
@@ -318,9 +318,10 @@ export default function Home() {
                         type="date"
                         value={historyStartDate}
                         onChange={(e) => setHistoryStartDate(e.target.value)}
+                        className="w-full"
                       />
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <Label htmlFor="historyEndDate" className="text-sm mb-2 block font-medium">
                         Data Final
                       </Label>
@@ -329,6 +330,7 @@ export default function Home() {
                         type="date"
                         value={historyEndDate}
                         onChange={(e) => setHistoryEndDate(e.target.value)}
+                        className="w-full"
                       />
                     </div>
                     <div>
@@ -435,7 +437,7 @@ export default function Home() {
               <Card>
                 <CardContent className="pt-6">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
+                    <div className="min-w-0">
                       <Label htmlFor="reportsStartDate" className="text-sm mb-2 block font-medium">
                         Data Inicial
                       </Label>
@@ -444,9 +446,10 @@ export default function Home() {
                         type="date"
                         value={reportsStartDate}
                         onChange={(e) => setReportsStartDate(e.target.value)}
+                        className="w-full"
                       />
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <Label htmlFor="reportsEndDate" className="text-sm mb-2 block font-medium">
                         Data Final
                       </Label>
@@ -455,6 +458,7 @@ export default function Home() {
                         type="date"
                         value={reportsEndDate}
                         onChange={(e) => setReportsEndDate(e.target.value)}
+                        className="w-full"
                       />
                     </div>
                   </div>

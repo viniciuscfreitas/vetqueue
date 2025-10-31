@@ -29,8 +29,8 @@ export function RoomSelector() {
   if (user?.role !== "VET") return null;
 
   return (
-    <div className="flex items-center gap-2">
-      <Label>Sala:</Label>
+    <div className="flex items-center gap-2 min-w-0 flex-shrink">
+      <Label className="hidden sm:block">Sala:</Label>
       <Select
         value={currentRoom?.id || ""}
         onValueChange={(value) => {
@@ -38,8 +38,8 @@ export function RoomSelector() {
           setCurrentRoom(room || null);
         }}
       >
-        <SelectTrigger className="w-40">
-          <SelectValue placeholder="Selecione a sala" />
+        <SelectTrigger className="w-32 sm:w-40">
+          <SelectValue placeholder="Sala" />
         </SelectTrigger>
         <SelectContent>
           {rooms.map((room) => (

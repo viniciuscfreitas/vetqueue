@@ -41,6 +41,16 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { SERVICE_TYPE_OPTIONS } from "@/lib/constants";
 
+function getDefaultDates() {
+  const today = new Date();
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(today.getDate() - 30);
+  return {
+    start: thirtyDaysAgo.toISOString().split("T")[0],
+    end: today.toISOString().split("T")[0],
+  };
+}
+
 export default function Home() {
   const router = useRouter();
   const { user, currentRoom, isLoading: authLoading } = useAuth();
@@ -49,16 +59,9 @@ export default function Home() {
   const handleError = createErrorHandler(toast);
   const [showRoomModal, setShowRoomModal] = useState(false);
 
-  const [historyStartDate, setHistoryStartDate] = useState(() => {
-    const date = new Date();
-    date.setDate(date.getDate() - 30);
-    return date.toISOString().split("T")[0];
-  });
-
-  const [historyEndDate, setHistoryEndDate] = useState(() => {
-    return new Date().toISOString().split("T")[0];
-  });
-
+  const defaultDates = getDefaultDates();
+  const [historyStartDate, setHistoryStartDate] = useState(defaultDates.start);
+  const [historyEndDate, setHistoryEndDate] = useState(defaultDates.end);
   const [historyFilters, setHistoryFilters] = useState({
     tutorName: "",
     serviceType: undefined as ServiceType | undefined,
@@ -67,15 +70,8 @@ export default function Home() {
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [entryToCancel, setEntryToCancel] = useState<string | null>(null);
 
-  const [reportsStartDate, setReportsStartDate] = useState(() => {
-    const date = new Date();
-    date.setDate(date.getDate() - 30);
-    return date.toISOString().split("T")[0];
-  });
-
-  const [reportsEndDate, setReportsEndDate] = useState(() => {
-    return new Date().toISOString().split("T")[0];
-  });
+  const [reportsStartDate, setReportsStartDate] = useState(defaultDates.start);
+  const [reportsEndDate, setReportsEndDate] = useState(defaultDates.end);
 
   const { data: entries = [], isLoading, isError, error } = useQuery({
     queryKey: ["queue", "active"],

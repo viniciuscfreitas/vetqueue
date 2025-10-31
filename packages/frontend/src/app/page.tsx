@@ -49,28 +49,66 @@ export default function Home() {
   const handleError = createErrorHandler(toast);
   const [showRoomModal, setShowRoomModal] = useState(false);
 
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push("/login");
-    }
-  }, [user, authLoading, router]);
+  const [historyStartDate, setHistoryStartDate] = useState(() => {
+    const date = new Date();
+    date.setDate(date.getDate() - 30);
+    return date.toISOString().split("T")[0];
+  });
 
-  if (authLoading || !user) {
-    return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;
-  }
+  const [historyEndDate, setHistoryEndDate] = useState(() => {
+    return new Date().toISOString().split("T")[0];
+  });
+
+  const [historyFilters, setHistoryFilters] = useState({
+    tutorName: "",
+    serviceType: undefined as ServiceType | undefined,
+  });
+
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [entryToCancel, setEntryToCancel] = useState<string | null>(null);
+
+  const [reportsStartDate, setReportsStartDate] = useState(() => {
+    const date = new Date();
+    date.setDate(date.getDate() - 30);
+    return date.toISOString().split("T")[0];
+  });
+
+  const [reportsEndDate, setReportsEndDate] = useState(() => {
+    return new Date().toISOString().split("T")[0];
+  });
 
   const { data: entries = [], isLoading, isError, error } = useQuery({
     queryKey: ["queue", "active"],
     queryFn: () => queueApi.listActive().then((res) => res.data),
     refetchInterval: (query) => (query.state.error ? false : 3000),
+    enabled: !authLoading && !!user,
   });
 
-  useEffect(() => {
-    if (isError && error) {
-      handleError(error);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isError, error]);
+  const { data: historyEntries = [], isLoading: isLoadingHistory } = useQuery({
+    queryKey: ["queue", "history", historyStartDate, historyEndDate, historyFilters],
+    queryFn: () =>
+      queueApi
+        .getHistory({
+          startDate: historyStartDate,
+          endDate: historyEndDate,
+          tutorName: historyFilters.tutorName || undefined,
+          serviceType: historyFilters.serviceType || undefined,
+        })
+        .then((res) => res.data),
+    enabled: !authLoading && !!user,
+  });
+
+  const { data: stats, isLoading: isLoadingReports } = useQuery({
+    queryKey: ["queue", "reports", reportsStartDate, reportsEndDate],
+    queryFn: () =>
+      queueApi
+        .getReports({
+          startDate: reportsStartDate,
+          endDate: reportsEndDate,
+        })
+        .then((res) => res.data),
+    enabled: !authLoading && !!user,
+  });
 
   const callNextMutation = useMutation({
     mutationFn: (roomId: string) => queueApi.callNext(roomId).then((res) => res.data),
@@ -106,6 +144,19 @@ export default function Home() {
     onError: handleError,
   });
 
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push("/login");
+    }
+  }, [user, authLoading, router]);
+
+  useEffect(() => {
+    if (isError && error) {
+      handleError(error);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isError, error]);
+
   const handleCallNext = () => {
     if (currentRoom) {
       callNextMutation.mutate(currentRoom.id);
@@ -135,59 +186,11 @@ export default function Home() {
     }
   };
 
-  const [historyStartDate, setHistoryStartDate] = useState(() => {
-    const date = new Date();
-    date.setDate(date.getDate() - 30);
-    return date.toISOString().split("T")[0];
-  });
-
-  const [historyEndDate, setHistoryEndDate] = useState(() => {
-    return new Date().toISOString().split("T")[0];
-  });
-
-  const [historyFilters, setHistoryFilters] = useState({
-    tutorName: "",
-    serviceType: undefined as ServiceType | undefined,
-  });
-
-  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
-  const [entryToCancel, setEntryToCancel] = useState<string | null>(null);
-
-  const { data: historyEntries = [], isLoading: isLoadingHistory } = useQuery({
-    queryKey: ["queue", "history", historyStartDate, historyEndDate, historyFilters],
-    queryFn: () =>
-      queueApi
-        .getHistory({
-          startDate: historyStartDate,
-          endDate: historyEndDate,
-          tutorName: historyFilters.tutorName || undefined,
-          serviceType: historyFilters.serviceType || undefined,
-        })
-        .then((res) => res.data),
-  });
-
-  const [reportsStartDate, setReportsStartDate] = useState(() => {
-    const date = new Date();
-    date.setDate(date.getDate() - 30);
-    return date.toISOString().split("T")[0];
-  });
-
-  const [reportsEndDate, setReportsEndDate] = useState(() => {
-    return new Date().toISOString().split("T")[0];
-  });
-
-  const { data: stats, isLoading: isLoadingReports } = useQuery({
-    queryKey: ["queue", "reports", reportsStartDate, reportsEndDate],
-    queryFn: () =>
-      queueApi
-        .getReports({
-          startDate: reportsStartDate,
-          endDate: reportsEndDate,
-        })
-        .then((res) => res.data),
-  });
-
   const hasActiveFilters = historyFilters.tutorName || historyFilters.serviceType;
+
+  if (authLoading || !user) {
+    return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;
+  }
 
   return (
     <div className="min-h-screen bg-background">

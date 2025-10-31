@@ -79,27 +79,27 @@ export default function DisplayPage() {
       <main className="container mx-auto px-4 py-6">
         <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-16">
-          <h1 className="text-7xl font-bold text-gray-900">
+          <h1 className="text-7xl font-bold text-gray-800 tracking-tight">
             Fila de Atendimento
           </h1>
-          <div className="text-5xl font-mono text-gray-900 bg-gray-100 border-2 border-gray-300 px-8 py-4 rounded-lg">
+          <div className="text-5xl font-mono text-gray-800 bg-gray-50 border-2 border-gray-300 px-8 py-4 rounded-lg tracking-tight">
             {formatTime(currentTime)}
           </div>
         </div>
 
         {isLoading ? (
-          <div className="text-center text-6xl py-32 text-gray-600">
+          <div className="text-center text-6xl py-32 text-gray-600 tracking-tight">
             Carregando...
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-12">
             <div>
-              <h2 className="text-5xl font-bold mb-8 text-blue-600">
+              <h2 className="text-5xl font-bold mb-8 text-blue-600 tracking-tight">
                 Chamados
               </h2>
               <div className="space-y-6">
                 {called.length === 0 ? (
-                  <div className="text-4xl text-gray-500 p-12 text-center bg-gray-50 border-2 border-gray-200 rounded-lg">
+                  <div className="text-4xl text-gray-500 p-12 text-center bg-gray-50 border-2 border-gray-200 rounded-lg tracking-tight">
                     Nenhum chamado no momento
                   </div>
                 ) : (
@@ -108,9 +108,9 @@ export default function DisplayPage() {
                     return (
                       <div
                         key={entry.id}
-                        className="bg-blue-50 border-4 border-blue-600 rounded-xl p-8 shadow-lg animate-pulse"
+                        className="bg-blue-50 border-4 border-blue-600 rounded-xl p-8 shadow-[0_10px_20px_rgba(0,0,0,0.1)] animate-pulse"
                       >
-                        <div className="text-5xl font-bold text-gray-900 mb-3">
+                        <div className="text-5xl font-bold text-gray-800 mb-3 tracking-tight">
                           {entry.patientName}
                         </div>
                         <div className="text-3xl text-gray-700 mb-2">
@@ -132,12 +132,12 @@ export default function DisplayPage() {
             </div>
 
             <div>
-              <h2 className="text-5xl font-bold mb-8 text-amber-600">
+              <h2 className="text-5xl font-bold mb-8 text-amber-600 tracking-tight">
                 Aguardando
               </h2>
               <div className="space-y-6">
                 {waiting.length === 0 ? (
-                  <div className="text-4xl text-gray-500 p-12 text-center bg-gray-50 border-2 border-gray-200 rounded-lg">
+                  <div className="text-4xl text-gray-500 p-12 text-center bg-gray-50 border-2 border-gray-200 rounded-lg tracking-tight">
                     Nenhum aguardando
                   </div>
                 ) : (
@@ -154,12 +154,12 @@ export default function DisplayPage() {
                       return (
                         <div
                           key={entry.id}
-                          className="bg-amber-50 border-4 border-amber-600 rounded-xl p-8 shadow-lg"
+                          className="bg-amber-50 border-4 border-amber-600 rounded-xl p-8 shadow-[0_10px_20px_rgba(0,0,0,0.1)]"
                         >
-                          <div className="text-4xl font-bold text-amber-700 mb-3">
+                          <div className="text-4xl font-bold text-amber-700 mb-3 tracking-tight">
                             {position}º na fila
                           </div>
-                          <div className="text-5xl font-bold text-gray-900 mb-3">
+                          <div className="text-5xl font-bold text-gray-800 mb-3 tracking-tight">
                             {entry.patientName}
                           </div>
                           <div className="text-3xl text-gray-700 mb-2">

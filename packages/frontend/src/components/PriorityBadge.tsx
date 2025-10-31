@@ -8,15 +8,15 @@ interface PriorityBadgeProps {
 const priorityConfig = {
   [Priority.EMERGENCY]: {
     label: "Emergência",
-    className: "bg-red-500 text-white",
+    className: "bg-red-500 text-gray-50",
   },
   [Priority.HIGH]: {
     label: "Alta",
-    className: "bg-orange-500 text-white",
+    className: "bg-orange-500 text-gray-50",
   },
   [Priority.NORMAL]: {
     label: "Normal",
-    className: "bg-blue-500 text-white",
+    className: "bg-blue-500 text-gray-50",
   },
 };
 

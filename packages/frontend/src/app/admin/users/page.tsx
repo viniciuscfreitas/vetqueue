@@ -32,18 +32,30 @@ export default function UsersPage() {
   const [editingUser, setEditingUser] = useState<User | null>(null);
 
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      console.log("[UsersPage] Render - authLoading:", authLoading, "user:", user?.username, "role:", user?.role);
+    }
+  }, [authLoading, user]);
+
+  const [formData, setFormData] = useState({
+    username: "",
+    password: "",
+    name: "",
+    role: Role.VET as Role,
+  });
+
+  useEffect(() => {
     if (!authLoading && (!user || user.role !== "RECEPCAO")) {
       router.push("/");
     }
   }, [user, authLoading, router]);
 
-  if (authLoading || !user || user.role !== "RECEPCAO") {
-    return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;
-  }
+  const isAuthorized = !authLoading && user && user.role === "RECEPCAO";
 
   const { data: users = [], isLoading } = useQuery({
     queryKey: ["users"],
     queryFn: () => userApi.list().then((res) => res.data),
+    enabled: isAuthorized,
   });
 
   const createMutation = useMutation({
@@ -75,12 +87,9 @@ export default function UsersPage() {
     onError: handleError,
   });
 
-  const [formData, setFormData] = useState({
-    username: "",
-    password: "",
-    name: "",
-    role: Role.VET as Role,
-  });
+  if (authLoading || !user || user.role !== "RECEPCAO") {
+    return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

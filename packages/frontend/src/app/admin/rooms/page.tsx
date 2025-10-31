@@ -25,18 +25,25 @@ export default function RoomsPage() {
   const [editingRoom, setEditingRoom] = useState<Room | null>(null);
 
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      console.log("[RoomsPage] Render - authLoading:", authLoading, "user:", user?.username, "role:", user?.role);
+    }
+  }, [authLoading, user]);
+
+  const [roomName, setRoomName] = useState("");
+
+  useEffect(() => {
     if (!authLoading && (!user || user.role !== "RECEPCAO")) {
       router.push("/");
     }
   }, [user, authLoading, router]);
 
-  if (authLoading || !user || user.role !== "RECEPCAO") {
-    return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;
-  }
+  const isAuthorized = !authLoading && user && user.role === "RECEPCAO";
 
   const { data: rooms = [], isLoading } = useQuery({
     queryKey: ["rooms", "all"],
     queryFn: () => roomApi.listAll().then((res) => res.data),
+    enabled: isAuthorized,
   });
 
   const createMutation = useMutation({
@@ -81,7 +88,9 @@ export default function RoomsPage() {
     onError: handleError,
   });
 
-  const [roomName, setRoomName] = useState("");
+  if (authLoading || !user || user.role !== "RECEPCAO") {
+    return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

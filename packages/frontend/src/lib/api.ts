@@ -2,7 +2,30 @@ import axios from "axios";
 
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001",
+  timeout: 10000,
 });
+
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.code === "ERR_NETWORK") {
+      console.error("Erro de rede:", {
+        message: error.message,
+        baseURL: api.defaults.baseURL,
+        url: error.config?.url,
+      });
+    } else if (error.response) {
+      console.error("Erro HTTP:", {
+        status: error.response.status,
+        data: error.response.data,
+        url: error.config?.url,
+      });
+    } else {
+      console.error("Erro na requisição:", error.message);
+    }
+    return Promise.reject(error);
+  }
+);
 
 export enum Priority {
   EMERGENCY = 1,

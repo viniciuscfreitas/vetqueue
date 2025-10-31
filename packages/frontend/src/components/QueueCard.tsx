@@ -2,6 +2,7 @@ import { QueueEntry, Status } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { PriorityBadge } from "./PriorityBadge";
 import { Badge } from "./ui/badge";
+import { Button } from "./ui/button";
 
 interface QueueCardProps {
   entry: QueueEntry;
@@ -80,35 +81,41 @@ export function QueueCard({
               </p>
             </div>
           )}
-          {(canStart || canComplete) && 
-           (onStart || onComplete || onCancel) && (
-            <div className="flex gap-2 pt-2">
-              {canStart && onStart && (
-                <button
+          {onStart || onComplete || onCancel ? (
+            <div className="flex gap-2 pt-2 flex-wrap">
+              {entry.status === Status.CALLED && onStart && (
+                <Button
                   onClick={() => onStart(entry.id)}
-                  className="rounded bg-blue-600 px-3 py-1 text-sm text-white hover:bg-blue-700"
+                  size="sm"
+                  className="flex-1 min-w-[80px]"
                 >
                   Iniciar
-                </button>
+                </Button>
               )}
-              {canComplete && onComplete && (
-                <button
+              {entry.status === Status.IN_PROGRESS && onComplete && (
+                <Button
                   onClick={() => onComplete(entry.id)}
-                  className="rounded bg-green-600 px-3 py-1 text-sm text-white hover:bg-green-700"
+                  size="sm"
+                  variant="default"
+                  className="flex-1 min-w-[80px] bg-green-600 hover:bg-green-700"
                 >
                   Finalizar
-                </button>
+                </Button>
               )}
-              {entry.status !== Status.COMPLETED && entry.status !== Status.CANCELLED && onCancel && (
-                <button
-                  onClick={() => onCancel(entry.id)}
-                  className="rounded bg-red-600 px-3 py-1 text-sm text-white hover:bg-red-700"
-                >
-                  Cancelar
-                </button>
-              )}
+              {entry.status !== Status.COMPLETED &&
+                entry.status !== Status.CANCELLED &&
+                onCancel && (
+                  <Button
+                    onClick={() => onCancel(entry.id)}
+                    size="sm"
+                    variant="destructive"
+                    className="flex-1 min-w-[80px]"
+                  >
+                    Cancelar
+                  </Button>
+                )}
             </div>
-          )}
+          ) : null}
         </div>
       </CardContent>
     </Card>

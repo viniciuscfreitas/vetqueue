@@ -251,19 +251,25 @@ export default function Home() {
               </div>
 
               {isLoading ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {[1, 2, 3].map((i) => (
-                    <Card key={i}>
-                      <CardHeader>
-                        <Skeleton className="h-6 w-32" />
-                      </CardHeader>
-                      <CardContent className="space-y-2">
-                        <Skeleton className="h-4 w-full" />
-                        <Skeleton className="h-4 w-3/4" />
-                        <Skeleton className="h-8 w-20" />
-                      </CardContent>
-                    </Card>
-                  ))}
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                  {[1, 2, 3].map((i, index) => {
+                    const isLast = index === 2;
+                    const colSpan = isLast ? "md:col-span-1" : "md:col-span-2";
+                    return (
+                      <div key={i} className={colSpan}>
+                        <Card>
+                          <CardHeader>
+                            <Skeleton className="h-6 w-32" />
+                          </CardHeader>
+                          <CardContent className="space-y-2">
+                            <Skeleton className="h-4 w-full" />
+                            <Skeleton className="h-4 w-3/4" />
+                            <Skeleton className="h-8 w-20" />
+                          </CardContent>
+                        </Card>
+                      </div>
+                    );
+                  })}
                 </div>
               ) : isError ? (
                 <Card>
@@ -308,8 +314,8 @@ export default function Home() {
 
               <Card>
                 <CardContent className="pt-6 overflow-hidden">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 min-w-0">
-                    <div className="min-w-0 w-full">
+                  <div className="grid grid-cols-1 sm:grid-cols-7 gap-4 min-w-0">
+                    <div className="sm:col-span-2 min-w-0 w-full">
                       <Label htmlFor="historyStartDate" className="text-sm mb-2 block font-medium">
                         Data Inicial
                       </Label>
@@ -321,7 +327,7 @@ export default function Home() {
                         className="w-full max-w-full"
                       />
                     </div>
-                    <div className="min-w-0 w-full">
+                    <div className="sm:col-span-2 min-w-0 w-full">
                       <Label htmlFor="historyEndDate" className="text-sm mb-2 block font-medium">
                         Data Final
                       </Label>
@@ -333,7 +339,7 @@ export default function Home() {
                         className="w-full max-w-full"
                       />
                     </div>
-                    <div>
+                    <div className="sm:col-span-2">
                       <Label htmlFor="historyTutorName" className="text-sm mb-2 block font-medium">
                         Tutor
                       </Label>
@@ -346,7 +352,7 @@ export default function Home() {
                         }
                       />
                     </div>
-                    <div>
+                    <div className="sm:col-span-1">
                       <Label htmlFor="historyServiceType" className="text-sm mb-2 block font-medium">
                         Tipo de Serviço
                       </Label>
@@ -390,18 +396,24 @@ export default function Home() {
             </div>
 
             {isLoadingHistory ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {[1, 2, 3].map((i) => (
-                  <Card key={i}>
-                    <CardHeader>
-                      <Skeleton className="h-6 w-32" />
-                    </CardHeader>
-                    <CardContent className="space-y-2">
-                      <Skeleton className="h-4 w-full" />
-                      <Skeleton className="h-4 w-3/4" />
-                    </CardContent>
-                  </Card>
-                ))}
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                {[1, 2, 3].map((i, index) => {
+                  const isLast = index === 2;
+                  const colSpan = isLast ? "md:col-span-1" : "md:col-span-2";
+                  return (
+                    <div key={i} className={colSpan}>
+                      <Card>
+                        <CardHeader>
+                          <Skeleton className="h-6 w-32" />
+                        </CardHeader>
+                        <CardContent className="space-y-2">
+                          <Skeleton className="h-4 w-full" />
+                          <Skeleton className="h-4 w-3/4" />
+                        </CardContent>
+                      </Card>
+                    </div>
+                  );
+                })}
               </div>
             ) : (
               <div className="space-y-4">
@@ -436,8 +448,8 @@ export default function Home() {
 
               <Card>
                 <CardContent className="pt-6 overflow-hidden">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 min-w-0">
-                    <div className="min-w-0 w-full">
+                  <div className="grid grid-cols-1 sm:grid-cols-5 gap-4 min-w-0">
+                    <div className="sm:col-span-2 min-w-0 w-full">
                       <Label htmlFor="reportsStartDate" className="text-sm mb-2 block font-medium">
                         Data Inicial
                       </Label>
@@ -449,7 +461,7 @@ export default function Home() {
                         className="w-full max-w-full"
                       />
                     </div>
-                    <div className="min-w-0 w-full">
+                    <div className="sm:col-span-3 min-w-0 w-full">
                       <Label htmlFor="reportsEndDate" className="text-sm mb-2 block font-medium">
                         Data Final
                       </Label>
@@ -467,16 +479,18 @@ export default function Home() {
             </div>
 
             {isLoadingReports ? (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                 {[1, 2, 3].map((i) => (
-                  <Card key={i}>
-                    <CardHeader>
-                      <Skeleton className="h-6 w-32" />
-                    </CardHeader>
-                    <CardContent>
-                      <Skeleton className="h-10 w-24" />
-                    </CardContent>
-                  </Card>
+                  <div key={i} className={i === 1 ? "md:col-span-2" : i === 2 ? "md:col-span-2" : "md:col-span-1"}>
+                    <Card>
+                      <CardHeader>
+                        <Skeleton className="h-6 w-32" />
+                      </CardHeader>
+                      <CardContent>
+                        <Skeleton className="h-10 w-24" />
+                      </CardContent>
+                    </Card>
+                  </div>
                 ))}
               </div>
             ) : (
@@ -493,57 +507,63 @@ export default function Home() {
                   </Card>
                 ) : (
                   <div className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <Card>
-                        <CardHeader>
-                          <CardTitle className="text-base">Total de Atendimentos</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <p className="text-3xl font-bold">{stats?.total || 0}</p>
-                          <p className="text-xs text-muted-foreground mt-2">
-                            Período selecionado
-                          </p>
-                        </CardContent>
-                      </Card>
+                    <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                      <div className="md:col-span-2">
+                        <Card>
+                          <CardHeader>
+                            <CardTitle className="text-base">Total de Atendimentos</CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <p className="text-3xl font-bold">{stats?.total || 0}</p>
+                            <p className="text-xs text-muted-foreground mt-2">
+                              Período selecionado
+                            </p>
+                          </CardContent>
+                        </Card>
+                      </div>
 
-                      <Card>
-                        <CardHeader>
-                          <CardTitle className="text-base">Tempo Médio de Espera</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <p className="text-3xl font-bold">
-                            {stats?.avgWaitTimeMinutes || 0}
-                            <span className="text-lg text-muted-foreground ml-1">min</span>
-                          </p>
-                          <p className="text-xs text-muted-foreground mt-2">
-                            Média entre todos os atendimentos
-                          </p>
-                        </CardContent>
-                      </Card>
+                      <div className="md:col-span-2">
+                        <Card>
+                          <CardHeader>
+                            <CardTitle className="text-base">Tempo Médio de Espera</CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <p className="text-3xl font-bold">
+                              {stats?.avgWaitTimeMinutes || 0}
+                              <span className="text-lg text-muted-foreground ml-1">min</span>
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-2">
+                              Média entre todos os atendimentos
+                            </p>
+                          </CardContent>
+                        </Card>
+                      </div>
 
-                      <Card>
-                        <CardHeader>
-                          <CardTitle className="text-base">Distribuição por Serviço</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="space-y-3">
-                            {stats?.byService &&
-                              Object.entries(stats.byService)
-                                .sort(([, a], [, b]) => (b as number) - (a as number))
-                                .map(([service, count]) => (
-                                  <div
-                                    key={service}
-                                    className="flex items-center justify-between pb-2 border-b last:border-0"
-                                  >
-                                    <span className="text-sm">{service}</span>
-                                    <span className="text-lg font-semibold">
-                                      {count as number}
-                                    </span>
-                                  </div>
-                                ))}
-                          </div>
-                        </CardContent>
-                      </Card>
+                      <div className="md:col-span-1">
+                        <Card>
+                          <CardHeader>
+                            <CardTitle className="text-base">Distribuição por Serviço</CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="space-y-3">
+                              {stats?.byService &&
+                                Object.entries(stats.byService)
+                                  .sort(([, a], [, b]) => (b as number) - (a as number))
+                                  .map(([service, count]) => (
+                                    <div
+                                      key={service}
+                                      className="flex items-center justify-between pb-2 border-b last:border-0"
+                                    >
+                                      <span className="text-sm">{service}</span>
+                                      <span className="text-lg font-semibold">
+                                        {count as number}
+                                      </span>
+                                    </div>
+                                  ))}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </div>
                     </div>
                   </div>
                 )}

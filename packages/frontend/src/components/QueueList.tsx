@@ -25,16 +25,21 @@ export function QueueList({
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {entries.map((entry) => (
-        <QueueCard
-          key={entry.id}
-          entry={entry}
-          onStart={onStart}
-          onComplete={onComplete}
-          onCancel={onCancel}
-        />
-      ))}
+    <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      {entries.map((entry, index) => {
+        const isLast = index === entries.length - 1;
+        const colSpan = isLast && entries.length % 2 === 1 ? "md:col-span-1" : "md:col-span-2";
+        return (
+          <div key={entry.id} className={colSpan}>
+            <QueueCard
+              entry={entry}
+              onStart={onStart}
+              onComplete={onComplete}
+              onCancel={onCancel}
+            />
+          </div>
+        );
+      })}
     </div>
   );
 }

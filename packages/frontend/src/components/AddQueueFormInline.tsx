@@ -62,8 +62,8 @@ export function AddQueueFormInline({ onSuccess }: AddQueueFormInlineProps) {
 
   return (
     <form onSubmit={handleSubmit} className="bg-card p-4 rounded-lg border space-y-4">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="space-y-2">
+      <div className="grid grid-cols-1 sm:grid-cols-7 gap-4">
+        <div className="sm:col-span-2 space-y-2">
           <Label htmlFor="patientName" className="text-sm font-medium">
             Paciente
           </Label>
@@ -78,7 +78,7 @@ export function AddQueueFormInline({ onSuccess }: AddQueueFormInlineProps) {
           />
         </div>
 
-        <div className="space-y-2">
+        <div className="sm:col-span-2 space-y-2">
           <Label htmlFor="tutorName" className="text-sm font-medium">
             Tutor
           </Label>
@@ -93,7 +93,7 @@ export function AddQueueFormInline({ onSuccess }: AddQueueFormInlineProps) {
           />
         </div>
 
-        <div className="space-y-2">
+        <div className="sm:col-span-2 space-y-2">
           <Label htmlFor="serviceType" className="text-sm font-medium">
             Serviço
           </Label>
@@ -117,7 +117,7 @@ export function AddQueueFormInline({ onSuccess }: AddQueueFormInlineProps) {
           </Select>
         </div>
 
-        <div className="space-y-2">
+        <div className="sm:col-span-1 space-y-2">
           <Label htmlFor="priority" className="text-sm font-medium">
             Prioridade
           </Label>

@@ -1,25 +1,30 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { queueApi, QueueEntry } from "@/lib/api";
+import { queueApi } from "@/lib/api";
 import { QueueList } from "@/components/QueueList";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/use-toast";
 import { createErrorHandler } from "@/lib/errors";
+import { useEffect } from "react";
 
 export default function Home() {
-  const router = useRouter();
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const handleError = createErrorHandler(toast);
 
-  const { data: entries = [], isLoading } = useQuery({
+  const { data: entries = [], isLoading, isError, error } = useQuery({
     queryKey: ["queue", "active"],
     queryFn: () => queueApi.listActive().then((res) => res.data),
     refetchInterval: (query) => (query.state.error ? false : 3000),
   });
+
+  useEffect(() => {
+    if (isError && error) {
+      handleError(error);
+    }
+  }, [isError, error, handleError]);
 
   const callNextMutation = useMutation({
     mutationFn: () => queueApi.callNext().then((res) => res.data),
@@ -109,6 +114,10 @@ export default function Home() {
 
         {isLoading ? (
           <div className="text-center py-12">Carregando...</div>
+        ) : isError ? (
+          <div className="text-center py-12 text-destructive">
+            Erro ao carregar fila. Tente recarregar a página.
+          </div>
         ) : (
           <QueueList
             entries={entries}

@@ -80,7 +80,7 @@ export function QueueCard({
               </p>
             </div>
           )}
-          {(canStart || canComplete || entry.status === Status.WAITING) && 
+          {(canStart || canComplete) && 
            (onStart || onComplete || onCancel) && (
             <div className="flex gap-2 pt-2">
               {canStart && onStart && (

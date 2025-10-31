@@ -61,6 +61,12 @@ export interface QueueEntry {
   completedAt?: string | null;
 }
 
+export interface ReportStats {
+  total: number;
+  avgWaitTimeMinutes: number;
+  byService: Record<string, number>;
+}
+
 export const queueApi = {
   add: (data: {
     patientName: string;
@@ -92,6 +98,6 @@ export const queueApi = {
   getReports: (filters?: {
     startDate?: string;
     endDate?: string;
-  }) => api.get("/api/queue/reports", { params: filters }),
+  }) => api.get<ReportStats>("/api/queue/reports", { params: filters }),
 };
 

@@ -5,11 +5,35 @@ import { queueApi } from "@/lib/api";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { useState } from "react";
+import { useToast } from "@/components/ui/use-toast";
+import { createErrorHandler } from "@/lib/errors";
 
 export default function ReportsPage() {
-  const { data: stats, isLoading } = useQuery({
-    queryKey: ["queue", "reports"],
-    queryFn: () => queueApi.getReports().then((res) => res.data),
+  const { toast } = useToast();
+  const handleError = createErrorHandler(toast);
+
+  const [startDate, setStartDate] = useState(() => {
+    const date = new Date();
+    date.setDate(date.getDate() - 30);
+    return date.toISOString().split("T")[0];
+  });
+  
+  const [endDate, setEndDate] = useState(() => {
+    return new Date().toISOString().split("T")[0];
+  });
+
+  const { data: stats, isLoading, isError, error } = useQuery({
+    queryKey: ["queue", "reports", startDate, endDate],
+    queryFn: () =>
+      queueApi
+        .getReports({
+          startDate,
+          endDate,
+        })
+        .then((res) => res.data),
+    onError: handleError,
   });
 
   return (
@@ -28,10 +52,36 @@ export default function ReportsPage() {
       <main className="container mx-auto px-4 py-8">
         <h2 className="text-3xl font-bold mb-6">Relatórios</h2>
 
+        <div className="mb-6 flex gap-4 items-end">
+          <div className="max-w-xs">
+            <label className="text-sm font-medium mb-2 block">Data Inicial</label>
+            <Input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+            />
+          </div>
+          <div className="max-w-xs">
+            <label className="text-sm font-medium mb-2 block">Data Final</label>
+            <Input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+            />
+          </div>
+        </div>
+
         {isLoading ? (
           <div className="text-center py-12">Carregando...</div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <>
+            {stats?.total === 0 && (
+              <div className="text-center py-12 text-muted-foreground">
+                Nenhum atendimento encontrado no período selecionado
+              </div>
+            )}
+            {stats && stats.total > 0 && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card>
               <CardHeader>
                 <CardTitle>Total de Atendimentos</CardTitle>
@@ -69,6 +119,8 @@ export default function ReportsPage() {
               </CardContent>
             </Card>
           </div>
+        )}
+          </>
         )}
       </main>
     </div>

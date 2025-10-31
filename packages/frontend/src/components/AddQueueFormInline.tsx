@@ -61,10 +61,12 @@ export function AddQueueFormInline({ onSuccess }: AddQueueFormInlineProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="bg-card p-4 rounded-lg border space-y-3">
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div>
-          <Label htmlFor="patientName" className="text-xs">Paciente</Label>
+    <form onSubmit={handleSubmit} className="bg-card p-4 rounded-lg border space-y-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="patientName" className="text-sm font-medium">
+            Paciente
+          </Label>
           <Input
             id="patientName"
             value={formData.patientName}
@@ -72,13 +74,14 @@ export function AddQueueFormInline({ onSuccess }: AddQueueFormInlineProps) {
               setFormData({ ...formData, patientName: e.target.value })
             }
             required
-            className="h-9"
             placeholder="Nome do paciente"
           />
         </div>
 
-        <div>
-          <Label htmlFor="tutorName" className="text-xs">Tutor</Label>
+        <div className="space-y-2">
+          <Label htmlFor="tutorName" className="text-sm font-medium">
+            Tutor
+          </Label>
           <Input
             id="tutorName"
             value={formData.tutorName}
@@ -86,13 +89,14 @@ export function AddQueueFormInline({ onSuccess }: AddQueueFormInlineProps) {
               setFormData({ ...formData, tutorName: e.target.value })
             }
             required
-            className="h-9"
             placeholder="Nome do tutor"
           />
         </div>
 
-        <div>
-          <Label htmlFor="serviceType" className="text-xs">Serviço</Label>
+        <div className="space-y-2">
+          <Label htmlFor="serviceType" className="text-sm font-medium">
+            Serviço
+          </Label>
           <Select
             value={formData.serviceType}
             onValueChange={(value) =>
@@ -100,8 +104,8 @@ export function AddQueueFormInline({ onSuccess }: AddQueueFormInlineProps) {
             }
             required
           >
-            <SelectTrigger className="h-9">
-              <SelectValue placeholder="Serviço" />
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione o serviço" />
             </SelectTrigger>
             <SelectContent>
               {SERVICE_TYPE_OPTIONS.map((option) => (
@@ -113,15 +117,17 @@ export function AddQueueFormInline({ onSuccess }: AddQueueFormInlineProps) {
           </Select>
         </div>
 
-        <div>
-          <Label htmlFor="priority" className="text-xs">Prioridade</Label>
+        <div className="space-y-2">
+          <Label htmlFor="priority" className="text-sm font-medium">
+            Prioridade
+          </Label>
           <Select
             value={formData.priority.toString()}
             onValueChange={(value) =>
               setFormData({ ...formData, priority: parseInt(value) as Priority })
             }
           >
-            <SelectTrigger className="h-9">
+            <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

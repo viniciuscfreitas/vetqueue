@@ -69,7 +69,8 @@ export default function Home() {
     if (isError && error) {
       handleError(error);
     }
-  }, [isError, error, handleError]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isError, error]);
 
   const callNextMutation = useMutation({
     mutationFn: (roomId: string) => queueApi.callNext(roomId).then((res) => res.data),

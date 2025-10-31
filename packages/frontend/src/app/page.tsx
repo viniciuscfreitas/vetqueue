@@ -206,25 +206,29 @@ export default function Home() {
 
       <main className="container mx-auto px-4 py-6">
         <Tabs defaultValue="queue" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 h-auto">
+          <TabsList className={`grid w-full h-auto ${user?.role === Role.RECEPCAO ? 'grid-cols-3' : 'grid-cols-1'}`}>
             <TabsTrigger
               value="queue"
               className="data-[state=active]:font-semibold py-2.5 text-sm sm:text-base"
             >
               Fila
             </TabsTrigger>
-            <TabsTrigger
-              value="history"
-              className="data-[state=active]:font-semibold py-2.5 text-sm sm:text-base"
-            >
-              Histórico
-            </TabsTrigger>
-            <TabsTrigger
-              value="reports"
-              className="data-[state=active]:font-semibold py-2.5 text-sm sm:text-base"
-            >
-              Relatórios
-            </TabsTrigger>
+            {user?.role === Role.RECEPCAO && (
+              <>
+                <TabsTrigger
+                  value="history"
+                  className="data-[state=active]:font-semibold py-2.5 text-sm sm:text-base"
+                >
+                  Histórico
+                </TabsTrigger>
+                <TabsTrigger
+                  value="reports"
+                  className="data-[state=active]:font-semibold py-2.5 text-sm sm:text-base"
+                >
+                  Relatórios
+                </TabsTrigger>
+              </>
+            )}
           </TabsList>
 
           <TabsContent value="queue" className="space-y-6">
@@ -307,7 +311,9 @@ export default function Home() {
             </div>
           </TabsContent>
 
-          <TabsContent value="history" className="space-y-6">
+          {user?.role === Role.RECEPCAO && (
+            <>
+              <TabsContent value="history" className="space-y-6">
             <div className="space-y-4">
               <div>
                 <h2 className="text-xl font-semibold">Histórico de Atendimentos</h2>
@@ -568,6 +574,8 @@ export default function Home() {
               </>
             )}
           </TabsContent>
+            </>
+          )}
         </Tabs>
       </main>
 

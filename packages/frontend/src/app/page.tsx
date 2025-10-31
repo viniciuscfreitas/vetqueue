@@ -306,7 +306,6 @@ export default function Home() {
                   onStart={handleStart}
                   onComplete={handleComplete}
                   onCancel={user?.role === Role.RECEPCAO ? handleCancel : undefined}
-                  userRole={user?.role}
                 />
               )}
             </div>
@@ -437,7 +436,6 @@ export default function Home() {
                       ? "Nenhum atendimento encontrado com os filtros aplicados"
                       : "Nenhum atendimento concluído no período selecionado"
                   }
-                  userRole={user?.role}
                 />
               </div>
             )}

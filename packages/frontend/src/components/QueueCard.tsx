@@ -9,6 +9,7 @@ interface QueueCardProps {
   onStart?: (id: string) => void;
   onComplete?: (id: string) => void;
   onCancel?: (id: string) => void;
+  userRole?: string;
 }
 
 const statusConfig = {
@@ -39,39 +40,42 @@ export function QueueCard({
   onStart,
   onComplete,
   onCancel,
+  userRole,
 }: QueueCardProps) {
   const status = statusConfig[entry.status];
   const canStart = entry.status === Status.CALLED || entry.status === Status.WAITING;
   const canComplete = entry.status === Status.IN_PROGRESS || entry.status === Status.CALLED;
+  const isVet = userRole === "VET";
 
   return (
-    <Card>
-      <CardHeader>
+    <Card className={isVet ? "border-2 border-blue-500 shadow-lg" : ""}>
+      <CardHeader className={isVet ? "bg-blue-50 border-b-2 border-blue-200" : ""}>
         <div className="flex items-center justify-between">
-          <CardTitle className="text-lg">{entry.patientName}</CardTitle>
+          <CardTitle className={`${isVet ? "text-xl font-bold text-blue-900" : "text-lg"}`}>
+            {entry.patientName}
+          </CardTitle>
           <PriorityBadge priority={entry.priority} />
         </div>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-2">
+      <CardContent className={isVet ? "bg-blue-50/50" : ""}>
+        <div className={isVet ? "space-y-3" : "space-y-2"}>
           <div>
-            <p className="text-sm text-muted-foreground">Tutor</p>
-            <p className="font-medium">{entry.tutorName}</p>
+            <p className={`${isVet ? "text-xs font-semibold text-blue-700" : "text-sm text-muted-foreground"}`}>Tutor</p>
+            <p className={`${isVet ? "font-bold text-base" : "font-medium"}`}>{entry.tutorName}</p>
           </div>
           <div>
-            <p className="text-sm text-muted-foreground">Serviço</p>
-            <p className="font-medium">{entry.serviceType}</p>
+            <p className={`${isVet ? "text-xs font-semibold text-blue-700" : "text-sm text-muted-foreground"}`}>Serviço</p>
+            <p className={`${isVet ? "font-bold text-base" : "font-medium"}`}>{entry.serviceType}</p>
           </div>
           <div>
             <Badge className={status.className} variant="outline">
               {status.label}
             </Badge>
           </div>
-          {entry.assignedVetId && (
-            <div>
-              <p className="text-xs text-muted-foreground">
-                Atribuído a veterinário
-              </p>
+          {entry.assignedVet && (
+            <div className={isVet ? "bg-blue-100 p-2 rounded-md border border-blue-300" : ""}>
+              <p className={`${isVet ? "text-xs font-bold text-blue-800" : "text-xs text-muted-foreground"}`}>Veterinário</p>
+              <p className={`${isVet ? "font-bold text-sm text-blue-900" : "font-medium text-sm"}`}>{entry.assignedVet.name}</p>
             </div>
           )}
           {entry.calledAt && (

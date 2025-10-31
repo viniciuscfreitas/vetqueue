@@ -50,7 +50,7 @@ router.get("/active", authMiddleware, async (req: AuthenticatedRequest, res: Res
 router.post("/call-next", authMiddleware, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const data = callNextSchema.parse(req.body);
-    const vetId = data.vetId;
+    const vetId = data.vetId || (req.user?.role === "VET" ? req.user.id : undefined);
     const next = await queueService.callNext(vetId, data.roomId);
     if (!next) {
       res.status(200).json({ message: "Nenhuma entrada aguardando na fila" });
@@ -62,7 +62,7 @@ router.post("/call-next", authMiddleware, async (req: AuthenticatedRequest, res:
       res.status(400).json({ error: error.errors });
       return;
     }
-    res.status(500).json({ error: (error as Error).message });
+    res.status(400).json({ error: (error as Error).message });
   }
 });
 
@@ -93,7 +93,7 @@ router.patch("/:id/complete", authMiddleware, async (req: Request, res: Response
   }
 });
 
-router.patch("/:id/cancel", authMiddleware, async (req: Request, res: Response) => {
+router.patch("/:id/cancel", authMiddleware, requireRole(["RECEPCAO"]), async (req: Request, res: Response) => {
   try {
     const entry = await queueService.cancelEntry(req.params.id);
     res.json(entry);
@@ -148,6 +148,16 @@ router.get("/reports", authMiddleware, async (req: Request, res: Response) => {
 
     const stats = await queueService.getReports(startDate, endDate);
     res.json(stats);
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+router.get("/room-occupations", authMiddleware, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const vetId = req.user?.id;
+    const occupations = await queueService.getRoomOccupations(vetId);
+    res.json(occupations);
   } catch (error) {
     res.status(500).json({ error: (error as Error).message });
   }

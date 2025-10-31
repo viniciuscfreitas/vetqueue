@@ -7,6 +7,7 @@ interface QueueListProps {
   onComplete?: (id: string) => void;
   onCancel?: (id: string) => void;
   emptyMessage?: string;
+  userRole?: string;
 }
 
 export function QueueList({
@@ -15,6 +16,7 @@ export function QueueList({
   onComplete,
   onCancel,
   emptyMessage = "Nenhuma entrada na fila no momento",
+  userRole,
 }: QueueListProps) {
   if (entries.length === 0) {
     return (
@@ -33,6 +35,7 @@ export function QueueList({
           onStart={onStart}
           onComplete={onComplete}
           onCancel={onCancel}
+          userRole={userRole}
         />
       ))}
     </div>

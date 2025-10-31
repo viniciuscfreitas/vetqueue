@@ -110,7 +110,7 @@ export default function Home() {
   });
 
   const callNextMutation = useMutation({
-    mutationFn: (roomId: string) => queueApi.callNext(roomId).then((res) => res.data),
+    mutationFn: (roomId: string) => queueApi.callNext(roomId, user?.role === Role.VET ? user.id : undefined).then((res) => res.data),
     onSuccess: (data) => {
       if ("message" in data) {
         toast({
@@ -305,7 +305,8 @@ export default function Home() {
                   entries={entries}
                   onStart={handleStart}
                   onComplete={handleComplete}
-                  onCancel={handleCancel}
+                  onCancel={user?.role === Role.RECEPCAO ? handleCancel : undefined}
+                  userRole={user?.role}
                 />
               )}
             </div>
@@ -436,6 +437,7 @@ export default function Home() {
                       ? "Nenhum atendimento encontrado com os filtros aplicados"
                       : "Nenhum atendimento concluído no período selecionado"
                   }
+                  userRole={user?.role}
                 />
               </div>
             )}

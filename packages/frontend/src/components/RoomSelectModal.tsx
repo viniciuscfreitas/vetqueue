@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { roomApi } from "@/lib/api";
+import { roomApi, queueApi } from "@/lib/api";
 import {
   Select,
   SelectContent,
@@ -12,6 +12,7 @@ import {
 } from "./ui/select";
 import { Label } from "./ui/label";
 import { Button } from "./ui/button";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface RoomSelectModalProps {
   open: boolean;
@@ -21,16 +22,28 @@ interface RoomSelectModalProps {
 
 export function RoomSelectModal({ open, onSelect, onCancel }: RoomSelectModalProps) {
   const [selectedRoomId, setSelectedRoomId] = useState<string>("");
+  const { user } = useAuth();
+  const isVet = user?.role === "VET";
   
   const { data: rooms = [] } = useQuery({
     queryKey: ["rooms"],
     queryFn: () => roomApi.list().then((res) => res.data),
   });
 
+  const { data: occupations = {} } = useQuery({
+    queryKey: ["room-occupations"],
+    queryFn: () => queueApi.getRoomOccupations().then((res) => res.data),
+    enabled: isVet && open,
+  });
+
   if (!open) return null;
 
   const handleConfirm = () => {
     if (selectedRoomId) {
+      const occupation = occupations[selectedRoomId];
+      if (isVet && occupation) {
+        return;
+      }
       onSelect(selectedRoomId);
     }
   };
@@ -47,11 +60,21 @@ export function RoomSelectModal({ open, onSelect, onCancel }: RoomSelectModalPro
                 <SelectValue placeholder="Escolha uma sala" />
               </SelectTrigger>
               <SelectContent>
-                {rooms.map((room) => (
-                  <SelectItem key={room.id} value={room.id}>
-                    {room.name}
-                  </SelectItem>
-                ))}
+                {rooms.map((room) => {
+                  const occupation = occupations[room.id];
+                  const isDisabled = isVet && !!occupation;
+                  return (
+                    <SelectItem 
+                      key={room.id} 
+                      value={room.id}
+                      disabled={isDisabled}
+                      className={isDisabled ? "opacity-50 cursor-not-allowed" : ""}
+                    >
+                      {room.name}
+                      {isDisabled && ` (Ocupada por ${occupation.vetName})`}
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
           </div>

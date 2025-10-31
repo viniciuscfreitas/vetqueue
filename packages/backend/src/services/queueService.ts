@@ -27,6 +27,13 @@ export class QueueService {
   }
 
   async callNext(vetId?: string, roomId?: string): Promise<QueueEntry | null> {
+    if (vetId && roomId) {
+      const roomOccupied = await this.repository.isRoomOccupiedByOtherVet(roomId, vetId);
+      if (roomOccupied) {
+        throw new Error(`Sala já está ocupada por veterinário ${roomOccupied.vetName}`);
+      }
+    }
+
     const next = vetId
       ? await this.repository.findNextWaiting(vetId)
       : await this.repository.findNextWaitingGeneral();
@@ -127,6 +134,10 @@ export class QueueService {
 
   async getReports(startDate: Date, endDate: Date) {
     return this.repository.getStats(startDate, endDate);
+  }
+
+  async getRoomOccupations(currentVetId?: string) {
+    return this.repository.getRoomOccupations(currentVetId);
   }
 }
 

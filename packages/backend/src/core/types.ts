@@ -36,6 +36,7 @@ export interface QueueEntry {
   calledAt?: Date | null;
   completedAt?: Date | null;
   assignedVetId?: string | null;
+  assignedVet?: User | null;
   roomId?: string | null;
 }
 

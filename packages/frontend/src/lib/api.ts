@@ -92,6 +92,7 @@ export interface QueueEntry {
   calledAt?: string | null;
   completedAt?: string | null;
   assignedVetId?: string | null;
+  assignedVet?: User | null;
   roomId?: string | null;
 }
 
@@ -154,6 +155,9 @@ export const queueApi = {
     startDate?: string;
     endDate?: string;
   }) => api.get<ReportStats>("/api/queue/reports", { params: filters }),
+
+  getRoomOccupations: () => 
+    api.get<Record<string, { vetId: string; vetName: string } | null>>("/api/queue/room-occupations"),
 };
 
 export const authApi = {

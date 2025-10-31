@@ -22,18 +22,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const checkAuth = async () => {
-      if (typeof window === "undefined") {
-        setIsLoading(false);
-        return;
-      }
-      
-      const token = localStorage.getItem("auth_token");
+      const token = typeof window !== "undefined" ? localStorage.getItem("auth_token") : null;
       if (token) {
         try {
           const response = await authApi.me();
           setUser(response.data.user);
         } catch (error) {
-          localStorage.removeItem("auth_token");
+          if (typeof window !== "undefined") {
+            localStorage.removeItem("auth_token");
+          }
         }
       }
       setIsLoading(false);

@@ -83,10 +83,14 @@ router.get("/history", async (req: Request, res: Response) => {
     const filters: any = {};
 
     if (req.query.startDate) {
-      filters.startDate = new Date(req.query.startDate as string);
+      const dateStr = req.query.startDate as string;
+      const date = new Date(dateStr + "T00:00:00-03:00");
+      filters.startDate = date;
     }
     if (req.query.endDate) {
-      filters.endDate = new Date(req.query.endDate as string);
+      const dateStr = req.query.endDate as string;
+      const date = new Date(dateStr + "T23:59:59.999-03:00");
+      filters.endDate = date;
     }
     if (req.query.tutorName) {
       filters.tutorName = req.query.tutorName as string;
@@ -105,10 +109,10 @@ router.get("/history", async (req: Request, res: Response) => {
 router.get("/reports", async (req: Request, res: Response) => {
   try {
     const startDate = req.query.startDate
-      ? new Date(req.query.startDate as string)
+      ? new Date((req.query.startDate as string) + "T00:00:00-03:00")
       : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
     const endDate = req.query.endDate
-      ? new Date(req.query.endDate as string)
+      ? new Date((req.query.endDate as string) + "T23:59:59.999-03:00")
       : new Date();
 
     const stats = await queueService.getReports(startDate, endDate);

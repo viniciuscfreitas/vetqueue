@@ -75,8 +75,9 @@ export default function DisplayPage() {
   }, [called, isLoading]);
 
   return (
-    <div className="min-h-screen bg-white p-12">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-background">
+      <main className="container mx-auto px-4 py-6">
+        <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-16">
           <h1 className="text-7xl font-bold text-gray-900">
             Fila de Atendimento
@@ -176,7 +177,8 @@ export default function DisplayPage() {
             </div>
           </div>
         )}
-      </div>
+        </div>
+      </main>
     </div>
   );
 }

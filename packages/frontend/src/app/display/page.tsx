@@ -1,54 +1,77 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { queueApi, Status } from "@/lib/api";
+import { queueApi, Status, Priority } from "@/lib/api";
+
+function formatTime(date: Date): string {
+  return date.toLocaleTimeString("pt-BR", {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  });
+}
 
 export default function DisplayPage() {
+  const [currentTime, setCurrentTime] = useState(new Date());
+
   const { data: entries = [], isLoading } = useQuery({
     queryKey: ["queue", "active"],
     queryFn: () => queueApi.listActive().then((res) => res.data),
     refetchInterval: 3000,
   });
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
   const inProgress = entries.filter((e) => e.status === Status.IN_PROGRESS);
   const called = entries.filter((e) => e.status === Status.CALLED);
   const waiting = entries.filter((e) => e.status === Status.WAITING);
 
   return (
-    <div className="min-h-screen bg-white p-8">
+    <div className="min-h-screen bg-gray-900 p-12">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-6xl font-bold text-center mb-12 text-gray-900">
-          Fila de Atendimento
-        </h1>
+        <div className="flex justify-between items-center mb-16">
+          <h1 className="text-7xl font-bold text-white">
+            Fila de Atendimento
+          </h1>
+          <div className="text-5xl font-mono text-white bg-gray-800 px-8 py-4 rounded-lg">
+            {formatTime(currentTime)}
+          </div>
+        </div>
 
         {isLoading ? (
-          <div className="text-center text-4xl py-20 text-gray-600">
+          <div className="text-center text-6xl py-32 text-gray-400">
             Carregando...
           </div>
         ) : (
-          <div className="grid grid-cols-3 gap-8">
+          <div className="grid grid-cols-3 gap-12">
             <div>
-              <h2 className="text-4xl font-bold mb-6 text-green-700">
+              <h2 className="text-5xl font-bold mb-8 text-green-400">
                 Em Atendimento
               </h2>
-              <div className="space-y-4">
+              <div className="space-y-6">
                 {inProgress.length === 0 ? (
-                  <div className="text-2xl text-gray-400 p-8 text-center">
+                  <div className="text-4xl text-gray-500 p-12 text-center bg-gray-800 rounded-lg">
                     Nenhum atendimento em andamento
                   </div>
                 ) : (
                   inProgress.map((entry) => (
                     <div
                       key={entry.id}
-                      className="bg-green-100 border-4 border-green-500 rounded-lg p-6 shadow-lg"
+                      className="bg-green-800 border-4 border-green-400 rounded-xl p-8 shadow-2xl"
                     >
-                      <div className="text-3xl font-bold text-green-900 mb-2">
+                      <div className="text-5xl font-bold text-white mb-3">
                         {entry.patientName}
                       </div>
-                      <div className="text-xl text-green-800 mb-1">
+                      <div className="text-3xl text-green-200 mb-2">
                         Tutor: {entry.tutorName}
                       </div>
-                      <div className="text-xl text-green-700">
+                      <div className="text-3xl text-green-300">
                         {entry.serviceType}
                       </div>
                     </div>
@@ -58,27 +81,27 @@ export default function DisplayPage() {
             </div>
 
             <div>
-              <h2 className="text-4xl font-bold mb-6 text-blue-700">
+              <h2 className="text-5xl font-bold mb-8 text-blue-400">
                 Chamados
               </h2>
-              <div className="space-y-4">
+              <div className="space-y-6">
                 {called.length === 0 ? (
-                  <div className="text-2xl text-gray-400 p-8 text-center">
+                  <div className="text-4xl text-gray-500 p-12 text-center bg-gray-800 rounded-lg">
                     Nenhum chamado no momento
                   </div>
                 ) : (
                   called.map((entry) => (
                     <div
                       key={entry.id}
-                      className="bg-blue-100 border-4 border-blue-500 rounded-lg p-6 shadow-lg animate-pulse"
+                      className="bg-blue-800 border-4 border-blue-400 rounded-xl p-8 shadow-2xl animate-pulse"
                     >
-                      <div className="text-3xl font-bold text-blue-900 mb-2">
+                      <div className="text-5xl font-bold text-white mb-3">
                         {entry.patientName}
                       </div>
-                      <div className="text-xl text-blue-800 mb-1">
+                      <div className="text-3xl text-blue-200 mb-2">
                         Tutor: {entry.tutorName}
                       </div>
-                      <div className="text-xl text-blue-700">
+                      <div className="text-3xl text-blue-300">
                         {entry.serviceType}
                       </div>
                     </div>
@@ -88,31 +111,46 @@ export default function DisplayPage() {
             </div>
 
             <div>
-              <h2 className="text-4xl font-bold mb-6 text-yellow-700">
+              <h2 className="text-5xl font-bold mb-8 text-yellow-400">
                 Aguardando
               </h2>
-              <div className="space-y-4">
+              <div className="space-y-6">
                 {waiting.length === 0 ? (
-                  <div className="text-2xl text-gray-400 p-8 text-center">
+                  <div className="text-4xl text-gray-500 p-12 text-center bg-gray-800 rounded-lg">
                     Nenhum aguardando
                   </div>
                 ) : (
-                  waiting.map((entry) => (
-                    <div
-                      key={entry.id}
-                      className="bg-yellow-100 border-4 border-yellow-500 rounded-lg p-6 shadow-lg"
-                    >
-                      <div className="text-3xl font-bold text-yellow-900 mb-2">
-                        {entry.patientName}
-                      </div>
-                      <div className="text-xl text-yellow-800 mb-1">
-                        Tutor: {entry.tutorName}
-                      </div>
-                      <div className="text-xl text-yellow-700">
-                        {entry.serviceType}
-                      </div>
-                    </div>
-                  ))
+                  (() => {
+                    const sortedWaiting = [...waiting].sort((a, b) => {
+                      if (a.priority !== b.priority) {
+                        return a.priority - b.priority;
+                      }
+                      return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+                    });
+                    
+                    return sortedWaiting.map((entry, index) => {
+                      const position = index + 1;
+                      return (
+                        <div
+                          key={entry.id}
+                          className="bg-yellow-800 border-4 border-yellow-400 rounded-xl p-8 shadow-2xl"
+                        >
+                          <div className="text-4xl font-bold text-yellow-300 mb-3">
+                            {position}º na fila
+                          </div>
+                          <div className="text-5xl font-bold text-white mb-3">
+                            {entry.patientName}
+                          </div>
+                          <div className="text-3xl text-yellow-200 mb-2">
+                            Tutor: {entry.tutorName}
+                          </div>
+                          <div className="text-3xl text-yellow-300">
+                            {entry.serviceType}
+                          </div>
+                        </div>
+                      );
+                    });
+                  })()
                 )}
               </div>
             </div>

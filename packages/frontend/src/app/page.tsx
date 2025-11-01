@@ -35,6 +35,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { QueueTab } from "@/components/QueueTab";
 import { HistoryTab } from "@/components/HistoryTab";
 import { ReportsTab } from "@/components/ReportsTab";
+import { AuditTab } from "@/components/AuditTab";
 import { useQueueMutations } from "@/hooks/useQueueMutations";
 import { Spinner } from "@/components/ui/spinner";
 
@@ -182,7 +183,7 @@ export default function Home() {
 
       <main className="container mx-auto px-4 py-8">
         <Tabs defaultValue="queue" className="space-y-8">
-          <TabsList className={`grid w-full h-auto ${user?.role === Role.RECEPCAO ? 'grid-cols-3' : 'grid-cols-1'}`}>
+          <TabsList className={`grid w-full h-auto ${user?.role === Role.RECEPCAO ? 'grid-cols-4' : 'grid-cols-1'}`}>
             <TabsTrigger
               value="queue"
               className="data-[state=active]:font-semibold py-2.5 text-sm sm:text-base"
@@ -202,6 +203,12 @@ export default function Home() {
                   className="data-[state=active]:font-semibold py-2.5 text-sm sm:text-base"
                 >
                   Relatórios
+                </TabsTrigger>
+                <TabsTrigger
+                  value="audit"
+                  className="data-[state=active]:font-semibold py-2.5 text-sm sm:text-base"
+                >
+                  Auditoria
                 </TabsTrigger>
               </>
             )}
@@ -231,6 +238,10 @@ export default function Home() {
 
               <TabsContent value="reports" className="space-y-6 mt-6">
                 <ReportsTab authLoading={authLoading} />
+              </TabsContent>
+
+              <TabsContent value="audit" className="space-y-6 mt-6">
+                <AuditTab authLoading={authLoading} />
               </TabsContent>
             </>
           )}

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/components/ui/use-toast";
@@ -45,13 +44,10 @@ export default function LoginPage() {
       <Card className="w-full max-w-md border-2 shadow-lg" style={{ borderColor: '#5B96B7' }}>
         <CardHeader className="space-y-4">
           <div className="flex justify-center">
-            <Image 
+            <img 
               src="/logo.png" 
               alt="Fisiopet" 
-              width={200} 
-              height={80} 
               className="h-20 w-auto"
-              priority
             />
           </div>
           <CardTitle className="text-2xl text-center" style={{ color: '#3B3839' }}>Acesso ao Sistema</CardTitle>

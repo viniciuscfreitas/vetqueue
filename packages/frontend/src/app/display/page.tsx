@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import Image from "next/image";
 import { useQuery } from "@tanstack/react-query";
 import { queueApi, Status, Priority, roomApi } from "@/lib/api";
 
@@ -80,13 +79,10 @@ export default function DisplayPage() {
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-7xl mx-auto">
           <div className="flex justify-center mb-8">
-            <Image 
+            <img 
               src="/logo.png" 
               alt="Fisiopet" 
-              width={300} 
-              height={100} 
               className="h-24 w-auto md:h-32"
-              priority
             />
           </div>
           <div className="flex justify-between items-center mb-12">

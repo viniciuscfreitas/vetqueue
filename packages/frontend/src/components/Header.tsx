@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
@@ -30,13 +29,10 @@ export function Header() {
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between gap-4">
           <Link href="/" className="flex items-center gap-2 hover:opacity-80">
-            <Image 
+            <img 
               src="/logo.png" 
               alt="Fisiopet" 
-              width={120} 
-              height={40} 
               className="h-8 w-auto sm:h-10"
-              priority
             />
           </Link>
           

@@ -79,7 +79,7 @@ export class UserRepository {
       });
 
       if (existingUserInRoom) {
-        throw new Error("Sala já está ocupada por outro veterinário");
+        throw new Error(`Sala já está ocupada por ${existingUserInRoom.name}`);
       }
 
       const user = await tx.user.update({

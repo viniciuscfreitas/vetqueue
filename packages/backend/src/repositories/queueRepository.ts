@@ -588,5 +588,32 @@ export class QueueRepository {
         roomName: vet.currentRoom!.name,
       }));
   }
+
+  async findScheduledEntriesNeedingUpgrade(): Promise<QueueEntry[]> {
+    const now = new Date();
+    const toleranceMs = 15 * 60 * 1000;
+    const cutoffTime = new Date(now.getTime() - toleranceMs);
+
+    const entries = await prisma.queueEntry.findMany({
+      where: {
+        status: Status.WAITING,
+        hasScheduledAppointment: true,
+        priority: { not: Priority.HIGH },
+        scheduledAt: { lte: cutoffTime },
+      },
+      include: { assignedVet: true, room: true },
+    });
+
+    return entries.map(mapPrismaToDomain);
+  }
+
+  async updatePriority(entryId: string, priority: Priority): Promise<QueueEntry> {
+    const entry = await prisma.queueEntry.update({
+      where: { id: entryId },
+      data: { priority },
+      include: { assignedVet: true, room: true },
+    });
+    return mapPrismaToDomain(entry);
+  }
 }
 

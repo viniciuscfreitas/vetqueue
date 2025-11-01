@@ -286,5 +286,14 @@ router.get("/room-occupations", authMiddleware, async (req: AuthenticatedRequest
   }
 });
 
+router.post("/upgrade-priorities", authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const upgradedEntries = await queueService.upgradeScheduledPriorities();
+    res.json({ upgraded: upgradedEntries.map(e => e.id), entries: upgradedEntries });
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
 export default router;
 

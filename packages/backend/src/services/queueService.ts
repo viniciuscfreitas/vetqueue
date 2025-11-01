@@ -18,7 +18,17 @@ export class QueueService {
     hasScheduledAppointment?: boolean;
     scheduledAt?: Date;
   }): Promise<QueueEntry> {
-    const priority = data.priority || Priority.NORMAL;
+    let priority = data.priority || Priority.NORMAL;
+
+    if (data.hasScheduledAppointment && data.scheduledAt) {
+      const scheduledTime = new Date(data.scheduledAt).getTime();
+      const now = Date.now();
+      const toleranceMs = 15 * 60 * 1000;
+      
+      if (now >= scheduledTime + toleranceMs) {
+        priority = Priority.HIGH;
+      }
+    }
 
     if (!data.patientName.trim() || !data.tutorName.trim()) {
       throw new Error("Nome do paciente e tutor são obrigatórios");
@@ -239,5 +249,17 @@ export class QueueService {
 
   async getRoomOccupations(currentVetId?: string) {
     return this.repository.getRoomOccupations(currentVetId);
+  }
+
+  async upgradeScheduledPriorities(): Promise<QueueEntry[]> {
+    const entriesNeedingUpgrade = await this.repository.findScheduledEntriesNeedingUpgrade();
+    
+    const upgradedEntries: QueueEntry[] = [];
+    for (const entry of entriesNeedingUpgrade) {
+      const upgraded = await this.repository.updatePriority(entry.id, Priority.HIGH);
+      upgradedEntries.push(upgraded);
+    }
+    
+    return upgradedEntries;
   }
 }

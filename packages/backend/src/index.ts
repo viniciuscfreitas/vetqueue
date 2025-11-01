@@ -6,6 +6,7 @@ import roomRoutes from "./api/routes/roomRoutes";
 import userRoutes from "./api/routes/userRoutes";
 import serviceRoutes from "./api/routes/serviceRoutes";
 import { checkInactiveUsers } from "./jobs/inactivityCheck";
+import { checkAndUpgradePriorities } from "./jobs/priorityUpgradeCheck";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -52,4 +53,5 @@ app.listen(Number(PORT), HOST, () => {
 });
 
 setInterval(checkInactiveUsers, 5 * 60 * 1000);
+setInterval(checkAndUpgradePriorities, 1 * 60 * 1000);
 

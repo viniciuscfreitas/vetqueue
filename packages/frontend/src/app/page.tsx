@@ -1,8 +1,8 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { queueApi, Status, Role } from "@/lib/api";
-import { useEffect, useState } from "react";
+import { queueApi, Status, Role, Priority } from "@/lib/api";
+import { useEffect, useState, useRef } from "react";
 import { Header } from "@/components/Header";
 import { AddQueueFormInline } from "@/components/AddQueueFormInline";
 import { useAuth } from "@/contexts/AuthContext";
@@ -50,6 +50,8 @@ export default function Home() {
   const [entryToCancel, setEntryToCancel] = useState<string | null>(null);
   const [callNextConfirmDialogOpen, setCallNextConfirmDialogOpen] = useState(false);
 
+  const previousEntriesRef = useRef<any[]>([]);
+
   const { data: entries = [] } = useQuery({
     queryKey: ["queue", "active", user?.role === "VET" ? user.id : undefined],
     queryFn: () => queueApi.listActive(
@@ -72,6 +74,27 @@ export default function Home() {
       router.push("/login");
     }
   }, [user, authLoading, router]);
+
+  useEffect(() => {
+    if (entries.length > 0 && previousEntriesRef.current.length > 0) {
+      entries.forEach((newEntry) => {
+        const oldEntry = previousEntriesRef.current.find((e) => e.id === newEntry.id);
+        if (
+          oldEntry &&
+          oldEntry.priority !== Priority.HIGH &&
+          newEntry.priority === Priority.HIGH &&
+          newEntry.hasScheduledAppointment
+        ) {
+          toast({
+            variant: "default",
+            title: "Prioridade Atualizada",
+            description: `${newEntry.patientName} agora tem prioridade ALTA (horário agendado)`,
+          });
+        }
+      });
+    }
+    previousEntriesRef.current = entries;
+  }, [entries, toast]);
 
   const handleCallNext = () => {
     if (user?.role !== Role.RECEPCAO) {
@@ -100,11 +123,25 @@ export default function Home() {
     if (currentRoom) {
       queueMutations.callPatient({ entryId, roomId: currentRoom.id });
     } else {
-      toast({
-        variant: "destructive",
-        title: "Erro",
-        description: "Você precisa fazer check-in em uma sala primeiro",
-      });
+      const entry = entries.find(e => e.id === entryId);
+      if (user?.role === Role.RECEPCAO) {
+        if (entry?.assignedVet) {
+          toast({
+            variant: "destructive",
+            title: "Erro",
+            description: `Veterinário ${entry.assignedVet.name} deve fazer check-in na sala primeiro`,
+          });
+        } else {
+          setShowRoomModal(true);
+          setEntryToCall(entryId);
+        }
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Erro",
+          description: "Você precisa fazer check-in em uma sala primeiro",
+        });
+      }
     }
   };
 

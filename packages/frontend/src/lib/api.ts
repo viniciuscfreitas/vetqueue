@@ -240,8 +240,6 @@ export const userApi = {
   
   checkOutRoom: () => api.post<User>("/api/users/rooms/check-out"),
   
-  keepAlive: () => api.post("/api/users/rooms/keep-alive"),
-  
   checkOutRoomForVet: (vetId: string) => api.post<User>(`/api/users/${vetId}/rooms/check-out`),
   
   create: (data: { username: string; password: string; name: string; role: Role }) =>

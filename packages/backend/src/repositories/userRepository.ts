@@ -117,21 +117,5 @@ export class UserRepository {
       },
     });
   }
-
-  async findInactiveVets(thresholdMinutes: number): Promise<User[]> {
-    const thresholdDate = new Date();
-    thresholdDate.setMinutes(thresholdDate.getMinutes() - thresholdMinutes);
-
-    const users = await prisma.user.findMany({
-      where: {
-        currentRoomId: { not: null },
-        lastActivityAt: {
-          lt: thresholdDate,
-        },
-      },
-    });
-
-    return users.map(mapPrismaToDomain);
-  }
 }
 

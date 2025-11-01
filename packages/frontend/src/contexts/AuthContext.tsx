@@ -80,6 +80,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await userApi.checkOutRoom();
       } catch (error) {
         console.error("Erro ao fazer checkout no logout:", error);
+        // Continue with logout but show warning
+        if (typeof window !== "undefined") {
+          console.warn("Não foi possível liberar a sala. Contate a recepção se necessário.");
+        }
       }
     }
     setUser(null);

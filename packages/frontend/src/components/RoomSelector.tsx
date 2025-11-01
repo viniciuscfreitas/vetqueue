@@ -43,7 +43,7 @@ export function RoomSelector() {
       if (room) {
         setCurrentRoom(room);
       }
-      queryClient.invalidateQueries({ queryKey: ["user"] });
+      queryClient.invalidateQueries({ queryKey: ["users", "active-vets"] });
       toast({
         title: "Check-in realizado",
         description: `Você entrou na ${room?.name}`,
@@ -62,7 +62,7 @@ export function RoomSelector() {
     mutationFn: () => userApi.checkOutRoom().then((res) => res.data),
     onSuccess: () => {
       setCurrentRoom(null);
-      queryClient.invalidateQueries({ queryKey: ["user"] });
+      queryClient.invalidateQueries({ queryKey: ["users", "active-vets"] });
       toast({
         title: "Check-out realizado",
         description: "Você saiu da sala",
@@ -90,10 +90,14 @@ export function RoomSelector() {
 
   const confirmRoomChange = async () => {
     if (newRoomId) {
-      await checkOutMutation.mutateAsync();
-      checkInMutation.mutate(newRoomId);
-      setShowChangeModal(false);
-      setNewRoomId(null);
+      try {
+        await checkOutMutation.mutateAsync();
+        await checkInMutation.mutateAsync(newRoomId);
+        setShowChangeModal(false);
+        setNewRoomId(null);
+      } catch (error) {
+        console.error("Erro ao trocar de sala:", error);
+      }
     }
   };
 

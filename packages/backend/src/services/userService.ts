@@ -91,16 +91,5 @@ export class UserService {
   async checkOutRoom(vetId: string): Promise<User> {
     return this.repository.checkOutRoom(vetId);
   }
-
-  async keepAlive(vetId: string): Promise<void> {
-    return this.repository.updateLastActivity(vetId);
-  }
-
-  async checkInactiveVets(): Promise<void> {
-    const inactiveVets = await this.repository.findInactiveVets(45);
-    for (const vet of inactiveVets) {
-      await this.repository.checkOutRoom(vet.id);
-    }
-  }
 }
 

@@ -46,8 +46,17 @@ export class QueueService {
   }
 
   async callNext(vetId?: string, roomId?: string): Promise<QueueEntry | null> {
+    // If vet is calling, ensure they're checked into a room
+    if (vetId && !roomId) {
+      const vet = await this.userRepository.findById(vetId);
+      if (!vet?.currentRoomId) {
+        throw new Error("Você deve fazer check-in em uma sala primeiro");
+      }
+      roomId = vet.currentRoomId;
+    }
+    
     if (vetId && roomId) {
-      const roomOccupied = await this.repository.isRoomOccupiedByOtherVet(roomId, vetId);
+      const roomOccupied = await this.repository.hasOtherVetActivePatient(roomId, vetId);
       if (roomOccupied) {
         throw new Error(`Sala já está ocupada por veterinário ${roomOccupied.vetName}`);
       }
@@ -96,7 +105,7 @@ export class QueueService {
     }
 
     if (vetId && roomId) {
-      const roomOccupied = await this.repository.isRoomOccupiedByOtherVet(roomId, vetId);
+      const roomOccupied = await this.repository.hasOtherVetActivePatient(roomId, vetId);
       if (roomOccupied) {
         throw new Error(`Sala já está ocupada por veterinário ${roomOccupied.vetName}`);
       }

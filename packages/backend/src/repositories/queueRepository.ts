@@ -466,7 +466,7 @@ export class QueueRepository {
     };
   }
 
-  async isRoomOccupiedByOtherVet(roomId: string, currentVetId: string): Promise<{ vetId: string; vetName: string } | null> {
+  async hasOtherVetActivePatient(roomId: string, currentVetId: string): Promise<{ vetId: string; vetName: string } | null> {
     const occupiedEntry = await prisma.queueEntry.findFirst({
       where: {
         roomId,

@@ -98,20 +98,6 @@ router.post("/rooms/check-out", authMiddleware, requireRole(["VET"]), async (req
   }
 });
 
-router.post("/rooms/keep-alive", authMiddleware, requireRole(["VET"]), async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const vetId = req.user?.id;
-    if (!vetId) {
-      res.status(401).json({ error: "Não autenticado" });
-      return;
-    }
-    await userService.keepAlive(vetId);
-    res.json({ success: true });
-  } catch (error) {
-    res.status(400).json({ error: (error as Error).message });
-  }
-});
-
 router.post("/:vetId/rooms/check-out", authMiddleware, requireRole(["RECEPCAO"]), async (req: Request, res: Response) => {
   try {
     const user = await userService.checkOutRoom(req.params.vetId);

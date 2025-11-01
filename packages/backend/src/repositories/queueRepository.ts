@@ -71,8 +71,16 @@ export class QueueRepository {
   async findNextWaiting(assignedVetId?: string | null): Promise<QueueEntry | null> {
     const whereClause: any = {
       status: Status.WAITING,
-      assignedVetId: assignedVetId || null,
     };
+
+    if (assignedVetId) {
+      whereClause.OR = [
+        { assignedVetId: assignedVetId },
+        { assignedVetId: null }
+      ];
+    } else {
+      whereClause.assignedVetId = null;
+    }
 
     const entry = await prisma.queueEntry.findFirst({
       where: whereClause,

@@ -54,13 +54,16 @@ function getDefaultDates() {
 
 function getDateRangePreset(preset: string) {
   const today = new Date();
-  const end = today.toISOString().split("T")[0];
+  const todayStr = today.toISOString().split("T")[0];
   let start = new Date();
   
   switch (preset) {
     case "today":
-      start = today;
-      break;
+      start = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      return {
+        start: todayStr,
+        end: todayStr,
+      };
     case "7days":
       start.setDate(today.getDate() - 7);
       break;
@@ -76,7 +79,7 @@ function getDateRangePreset(preset: string) {
   
   return {
     start: start.toISOString().split("T")[0],
-    end,
+    end: todayStr,
   };
 }
 

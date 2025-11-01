@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
-import { authApi, User, Room, roomApi } from "@/lib/api";
+import { authApi, User, Room, roomApi, userApi } from "@/lib/api";
 
 interface AuthContextType {
   user: User | null;
@@ -74,13 +74,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
+    if (user?.currentRoomId && user?.role === "VET") {
+      try {
+        await userApi.checkOutRoom();
+      } catch (error) {
+        console.error("Erro ao fazer checkout no logout:", error);
+      }
+    }
     setUser(null);
     setCurrentRoom(null);
     if (typeof window !== "undefined") {
       localStorage.removeItem("auth_token");
     }
-  }, []);
+  }, [user]);
 
   const setCurrentRoomCallback = useCallback((room: Room | null) => {
     setCurrentRoom(room);

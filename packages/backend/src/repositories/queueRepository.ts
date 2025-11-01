@@ -499,16 +499,35 @@ export class QueueRepository {
   }
 
   async hasVetInRoom(roomId: string): Promise<boolean> {
-    const entry = await prisma.queueEntry.findFirst({
+    const vet = await prisma.user.findFirst({
       where: {
-        roomId,
-        assignedVetId: { not: null },
-        status: {
-          in: [Status.CALLED, Status.IN_PROGRESS],
-        },
+        currentRoomId: roomId,
+        role: "VET",
       },
     });
-    return !!entry;
+    return !!vet;
+  }
+
+  async getVetInRoom(roomId: string): Promise<{ vetId: string; vetName: string } | null> {
+    const vet = await prisma.user.findFirst({
+      where: {
+        currentRoomId: roomId,
+        role: "VET",
+      },
+      select: {
+        id: true,
+        name: true,
+      },
+    });
+    
+    if (!vet) {
+      return null;
+    }
+    
+    return {
+      vetId: vet.id,
+      vetName: vet.name,
+    };
   }
 
   async getRoomOccupations(currentVetId?: string): Promise<Record<string, { vetId: string; vetName: string } | null>> {

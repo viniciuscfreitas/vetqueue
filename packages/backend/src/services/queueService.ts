@@ -66,8 +66,9 @@ export class QueueService {
       roomId
     );
 
-    if (vetId) {
-      this.userRepository.updateLastActivity(vetId).catch(console.error);
+    const actualVetId = vetId || (next.assignedVetId || undefined);
+    if (actualVetId) {
+      this.userRepository.updateLastActivity(actualVetId).catch(console.error);
     }
 
     return result;
@@ -94,6 +95,9 @@ export class QueueService {
     if (!vetId && roomId) {
       const hasVet = await this.repository.hasVetInRoom(roomId);
       if (!hasVet) {
+        if (entry.assignedVetId && entry.assignedVet) {
+          throw new Error(`Veterinário ${entry.assignedVet.name} deve fazer check-in na sala primeiro`);
+        }
         throw new Error("A sala selecionada não possui veterinário ativo");
       }
     }

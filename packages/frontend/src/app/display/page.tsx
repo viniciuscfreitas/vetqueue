@@ -76,47 +76,49 @@ export default function DisplayPage() {
   }, [called, isLoading]);
 
   return (
-    <div className="min-h-screen" style={{ background: 'linear-gradient(to bottom right, #259DE3, #5B96B7)' }} role="application" aria-label="Tela de exibição da fila de atendimento">
+    <div className="min-h-screen bg-gray-50" role="application" aria-label="Tela de exibição da fila de atendimento">
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-7xl mx-auto">
-          <div className="flex justify-center mb-8">
-            <Image 
-              src="/logo.png" 
-              alt="Logo Fisiopet" 
-              width={379} 
-              height={130} 
-              className="h-24 w-auto md:h-32"
-              priority
-            />
-          </div>
-          <div className="flex justify-between items-center mb-12">
-            <h1 className="text-6xl md:text-7xl font-bold tracking-tight text-white">
+          <div className="bg-white shadow-sm rounded-lg px-8 py-6 mb-8">
+            <div className="flex justify-between items-center">
+              <div className="flex justify-center flex-1">
+                <Image 
+                  src="/logo.png" 
+                  alt="Logo Fisiopet" 
+                  width={379} 
+                  height={130} 
+                  className="h-20 w-auto md:h-28"
+                  priority
+                />
+              </div>
+              <div 
+                className="text-4xl md:text-5xl font-mono text-gray-800 bg-gray-50 border-2 border-gray-300 px-6 py-3 rounded-lg shadow-sm tracking-tight"
+                role="timer"
+                aria-live="polite"
+                aria-atomic="true"
+                aria-label={`Horário atual: ${formatTime(currentTime)}`}
+              >
+                {formatTime(currentTime)}
+              </div>
+            </div>
+            <h1 className="text-5xl md:text-6xl font-bold tracking-tight text-center mt-6 text-gray-800">
               Fila de Atendimento
             </h1>
-            <div 
-              className="text-4xl md:text-5xl font-mono text-gray-900 bg-white border-2 border-gray-400 px-6 py-3 rounded-lg shadow-md tracking-tight"
-              role="timer"
-              aria-live="polite"
-              aria-atomic="true"
-              aria-label={`Horário atual: ${formatTime(currentTime)}`}
-            >
-              {formatTime(currentTime)}
-            </div>
           </div>
 
           {isLoading ? (
-            <div className="text-center text-5xl md:text-6xl py-32 text-gray-600 tracking-tight">
+            <div className="text-center text-5xl md:text-6xl py-32 text-gray-600 tracking-tight bg-white rounded-lg">
               Carregando...
             </div>
           ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <section aria-labelledby="chamados-heading">
-                <h2 id="chamados-heading" className="text-4xl md:text-5xl font-bold mb-6 tracking-tight text-white">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <section aria-labelledby="chamados-heading" className="bg-white rounded-lg shadow-sm p-6">
+                <h2 id="chamados-heading" className="text-4xl md:text-5xl font-bold mb-6 tracking-tight text-gray-800 border-b-4 border-green-500 pb-3">
                   Chamados
                 </h2>
-                <div className="space-y-5">
+                <div className="space-y-4">
                   {called.length === 0 ? (
-                    <div className="text-3xl md:text-4xl p-10 text-center bg-white rounded-xl tracking-tight shadow-sm" style={{ color: '#1a1a1a', borderColor: '#259DE3', borderWidth: '2px' }}>
+                    <div className="text-3xl md:text-4xl p-10 text-center bg-gray-50 rounded-lg tracking-tight border-2 border-gray-200 text-gray-500">
                       Nenhum chamado no momento
                     </div>
                   ) : (
@@ -125,25 +127,20 @@ export default function DisplayPage() {
                       return (
                         <article
                           key={entry.id}
-                          className="rounded-xl p-7 shadow-lg transition-all duration-500 hover:shadow-xl animate-[pulse-subtle_3s_ease-in-out_infinite]"
-                          style={{
-                            background: `linear-gradient(to bottom right, rgba(37, 157, 227, 0.1), rgba(91, 150, 183, 0.1))`,
-                            borderColor: '#259DE3',
-                            borderWidth: '4px'
-                          }}
+                          className="bg-white rounded-lg p-6 shadow-md border-l-4 border-green-500 transition-all duration-300 hover:shadow-lg animate-[pulse-subtle_3s_ease-in-out_infinite]"
                           aria-label={`Paciente ${entry.patientName} chamado para ${roomName || 'atendimento'}`}
                         >
-                          <h3 className="text-4xl md:text-5xl font-bold mb-3 tracking-tight" style={{ color: '#1a1a1a' }}>
+                          <h3 className="text-4xl md:text-5xl font-bold mb-3 tracking-tight text-gray-900">
                             {entry.patientName}
                           </h3>
-                          <div className="text-2xl md:text-3xl mb-2 font-medium" style={{ color: '#1a1a1a' }}>
+                          <div className="text-2xl md:text-3xl mb-2 font-medium text-gray-700">
                             Tutor: {entry.tutorName}
                           </div>
-                          <div className="text-2xl md:text-3xl mb-2 font-semibold" style={{ color: '#259DE3' }}>
+                          <div className="text-2xl md:text-3xl mb-2 font-semibold text-green-600">
                             {entry.serviceType}
                           </div>
                           {roomName && (
-                            <div className="text-3xl md:text-4xl font-bold mt-3" style={{ color: '#259DE3' }}>
+                            <div className="text-3xl md:text-4xl font-bold mt-3 text-green-600">
                               → {roomName}
                             </div>
                           )}
@@ -154,13 +151,13 @@ export default function DisplayPage() {
                 </div>
               </section>
 
-              <section aria-labelledby="aguardando-heading">
-                <h2 id="aguardando-heading" className="text-4xl md:text-5xl font-bold mb-6 tracking-tight text-white">
+              <section aria-labelledby="aguardando-heading" className="bg-white rounded-lg shadow-sm p-6">
+                <h2 id="aguardando-heading" className="text-4xl md:text-5xl font-bold mb-6 tracking-tight text-gray-800 border-b-4 border-gray-400 pb-3">
                   Aguardando
                 </h2>
-                <div className="space-y-5">
+                <div className="space-y-4">
                   {waiting.length === 0 ? (
-                    <div className="text-3xl md:text-4xl p-10 text-center bg-white rounded-xl tracking-tight shadow-sm" style={{ color: '#1a1a1a', borderColor: '#B78844', borderWidth: '2px' }}>
+                    <div className="text-3xl md:text-4xl p-10 text-center bg-gray-50 rounded-lg tracking-tight border-2 border-gray-200 text-gray-500">
                       Nenhum aguardando
                     </div>
                   ) : (
@@ -177,24 +174,19 @@ export default function DisplayPage() {
                         return (
                           <article
                             key={entry.id}
-                            className="rounded-xl p-7 shadow-lg transition-all duration-300 hover:shadow-xl"
-                            style={{
-                              background: `linear-gradient(to bottom right, rgba(183, 136, 68, 0.15), rgba(195, 189, 164, 0.15))`,
-                              borderColor: '#B78844',
-                              borderWidth: '4px'
-                            }}
+                            className="bg-white rounded-lg p-6 shadow-md border-l-4 border-gray-400 transition-all duration-300 hover:shadow-lg"
                             aria-label={`${entry.patientName} na posição ${position} da fila`}
                           >
-                            <div className="text-3xl md:text-4xl font-bold mb-3 tracking-tight" style={{ color: '#B78844' }}>
+                            <div className="text-3xl md:text-4xl font-bold mb-3 tracking-tight text-gray-600">
                               {position}º na fila
                             </div>
-                            <h3 className="text-4xl md:text-5xl font-bold mb-3 tracking-tight" style={{ color: '#1a1a1a' }}>
+                            <h3 className="text-4xl md:text-5xl font-bold mb-3 tracking-tight text-gray-900">
                               {entry.patientName}
                             </h3>
-                            <div className="text-2xl md:text-3xl mb-2 font-medium" style={{ color: '#1a1a1a' }}>
+                            <div className="text-2xl md:text-3xl mb-2 font-medium text-gray-700">
                               Tutor: {entry.tutorName}
                             </div>
-                            <div className="text-2xl md:text-3xl font-semibold" style={{ color: '#B78844' }}>
+                            <div className="text-2xl md:text-3xl font-semibold text-gray-600">
                               {entry.serviceType}
                             </div>
                           </article>

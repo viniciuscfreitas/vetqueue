@@ -33,6 +33,11 @@ export function Header() {
               src="/logo.png" 
               alt="Fisiopet" 
               className="h-8 w-auto sm:h-10"
+              onError={(e) => {
+                console.error('Erro ao carregar logo:', e);
+                const target = e.target as HTMLImageElement;
+                target.style.display = 'none';
+              }}
             />
           </Link>
           

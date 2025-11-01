@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import { useQuery } from "@tanstack/react-query";
 import { queueApi, Status, Priority, roomApi } from "@/lib/api";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Volume2 } from "lucide-react";
 
 function formatTime(date: Date): string {
   return date.toLocaleTimeString("pt-BR", {
@@ -19,36 +19,58 @@ function getWaitMinutes(createdAt: string): number {
   return Math.floor((Date.now() - new Date(createdAt).getTime()) / 60000);
 }
 
-function playBeep() {
-  const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-  const oscillator = audioContext.createOscillator();
-  const gainNode = audioContext.createGain();
-
-  oscillator.connect(gainNode);
-  gainNode.connect(audioContext.destination);
-
-  oscillator.frequency.value = 800;
-  oscillator.type = "sine";
-  gainNode.gain.setValueAtTime(0.8, audioContext.currentTime);
-  gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-
-  oscillator.start(audioContext.currentTime);
-  oscillator.stop(audioContext.currentTime + 0.5);
-}
-
-function playBeepSequence() {
-  try {
-    for (let i = 0; i < 3; i++) {
-      setTimeout(() => playBeep(), i * 600);
-    }
-  } catch (e) {
-    console.error("Audio failed:", e);
-  }
-}
-
 export default function DisplayPage() {
   const [currentTime, setCurrentTime] = useState<Date | null>(null);
+  const [soundEnabled, setSoundEnabled] = useState(false);
   const previousCalledIdsRef = useRef<Set<string>>(new Set());
+  const audioContextRef = useRef<AudioContext | null>(null);
+
+  const getAudioContext = useCallback(() => {
+    if (!audioContextRef.current) {
+      audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+    }
+    return audioContextRef.current;
+  }, []);
+
+  const playBeep = useCallback(() => {
+    try {
+      const audioContext = getAudioContext();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+
+      oscillator.frequency.value = 800;
+      oscillator.type = "sine";
+      gainNode.gain.setValueAtTime(0.8, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.5);
+    } catch (e) {
+      console.error("Audio failed:", e);
+    }
+  }, [getAudioContext]);
+
+  const playBeepSequence = useCallback(() => {
+    try {
+      for (let i = 0; i < 3; i++) {
+        setTimeout(() => playBeep(), i * 600);
+      }
+    } catch (e) {
+      console.error("Audio sequence failed:", e);
+    }
+  }, [playBeep]);
+
+  const enableSound = useCallback(() => {
+    getAudioContext();
+    playBeepSequence();
+    setSoundEnabled(true);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('vetqueue_audio_enabled', 'true');
+    }
+  }, [getAudioContext, playBeepSequence]);
 
   const { data: entries = [], isLoading } = useQuery({
     queryKey: ["queue", "active"],
@@ -69,6 +91,13 @@ export default function DisplayPage() {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const enabled = localStorage.getItem('vetqueue_audio_enabled') === 'true';
+      setSoundEnabled(enabled);
+    }
+  }, []);
+
   const called = entries.filter((e) => e.status === Status.CALLED);
   const waiting = entries.filter((e) => e.status === Status.WAITING);
 
@@ -85,12 +114,12 @@ export default function DisplayPage() {
       (id) => !previousCalledIdsRef.current.has(id)
     );
 
-    if (hasNewCalled && previousCalledIdsRef.current.size > 0) {
+    if (hasNewCalled && previousCalledIdsRef.current.size > 0 && soundEnabled) {
       playBeepSequence();
     }
 
     previousCalledIdsRef.current = currentCalledIds;
-  }, [called, isLoading]);
+  }, [called, isLoading, soundEnabled]);
 
   return (
     <div className="min-h-screen bg-gray-50" role="application" aria-label="Tela de exibição da fila de atendimento">
@@ -274,6 +303,15 @@ export default function DisplayPage() {
           )}
         </div>
       </main>
+      {!soundEnabled && (
+        <button 
+          className="fixed bottom-4 right-4 bg-gray-800 text-white p-3 rounded-full shadow-lg opacity-70 hover:opacity-100 transition-opacity z-50"
+          onClick={enableSound}
+          aria-label="Ativar som"
+        >
+          <Volume2 className="h-6 w-6" />
+        </button>
+      )}
     </div>
   );
 }

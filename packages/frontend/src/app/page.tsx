@@ -40,6 +40,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 
 function formatDateLocal(date: Date): string {
@@ -59,34 +65,6 @@ function getDefaultDates() {
   };
 }
 
-function getDateRangePreset(preset: string) {
-  const today = new Date();
-  const end = formatDateLocal(today);
-  let start = new Date();
-  
-  switch (preset) {
-    case "today":
-      start = new Date(today);
-      break;
-    case "7days":
-      start.setDate(today.getDate() - 7);
-      break;
-    case "30days":
-      start.setDate(today.getDate() - 30);
-      break;
-    case "90days":
-      start.setDate(today.getDate() - 90);
-      break;
-    default:
-      return getDefaultDates();
-  }
-  
-  return {
-    start: formatDateLocal(start),
-    end,
-  };
-}
-
 export default function Home() {
   const router = useRouter();
   const { user, currentRoom, isLoading: authLoading } = useAuth();
@@ -94,6 +72,7 @@ export default function Home() {
   const { toast } = useToast();
   const handleError = createErrorHandler(toast);
   const [showRoomModal, setShowRoomModal] = useState(false);
+  const [showAddQueueModal, setShowAddQueueModal] = useState(false);
 
   const defaultDates = getDefaultDates();
   const [historyStartDate, setHistoryStartDate] = useState(defaultDates.start);
@@ -303,24 +282,6 @@ export default function Home() {
           </TabsList>
 
           <TabsContent value="queue" className="space-y-6 mt-6">
-            {user?.role === Role.RECEPCAO && (
-              <div className="space-y-5">
-                <div>
-                  <h2 className="text-xl font-semibold mb-4">Adicionar à Fila</h2>
-                  <AddQueueFormInline
-                    onSuccess={() => {
-                      queryClient.invalidateQueries({ queryKey: ["queue"] });
-                      toast({
-                        variant: "default",
-                        title: "Sucesso",
-                        description: "Entrada adicionada à fila com sucesso",
-                      });
-                    }}
-                  />
-                </div>
-              </div>
-            )}
-
             <div className="space-y-4">
               <div className="flex items-center justify-between gap-4">
                 <div>
@@ -336,25 +297,36 @@ export default function Home() {
                     </p>
                   )}
                 </div>
-                <Button
-                  onClick={handleCallNext}
-                  disabled={callNextMutation.isPending || waitingCount === 0}
-                  size="lg"
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-6 text-base shadow-lg hover:shadow-xl transition-all"
-                >
-                  {callNextMutation.isPending ? (
-                    "Chamando..."
-                  ) : waitingCount > 0 ? (
-                    <span className="flex items-center gap-2">
-                      <span>Chamar Próximo</span>
-                      <span className="bg-white/20 px-2 py-0.5 rounded-full text-sm font-bold">
-                        {waitingCount}
-                      </span>
-                    </span>
-                  ) : (
-                    "Nenhum aguardando"
+                <div className="flex gap-2">
+                  {user?.role === Role.RECEPCAO && (
+                    <Button
+                      onClick={() => setShowAddQueueModal(true)}
+                      variant="outline"
+                      size="lg"
+                    >
+                      ➕ Adicionar
+                    </Button>
                   )}
-                </Button>
+                  <Button
+                    onClick={handleCallNext}
+                    disabled={callNextMutation.isPending || waitingCount === 0}
+                    size="lg"
+                    className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-6 text-base shadow-lg hover:shadow-xl transition-all"
+                  >
+                    {callNextMutation.isPending ? (
+                      "Chamando..."
+                    ) : waitingCount > 0 ? (
+                      <span className="flex items-center gap-2">
+                        <span>Chamar Próximo</span>
+                        <span className="bg-white/20 px-2 py-0.5 rounded-full text-sm font-bold">
+                          {waitingCount}
+                        </span>
+                      </span>
+                    ) : (
+                      "Nenhum aguardando"
+                    )}
+                  </Button>
+                </div>
               </div>
 
               {isLoading ? (
@@ -416,141 +388,84 @@ export default function Home() {
               </div>
 
               <Card>
-                <CardContent className="pt-6 overflow-hidden">
-                  <div className="space-y-4">
-                    <div>
-                      <Label className="text-sm mb-2 block font-medium">Período</Label>
-                      <div className="flex flex-wrap gap-2 mb-3">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            const dates = getDateRangePreset("today");
-                            setHistoryStartDate(dates.start);
-                            setHistoryEndDate(dates.end);
-                          }}
-                        >
-                          Hoje
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            const dates = getDateRangePreset("7days");
-                            setHistoryStartDate(dates.start);
-                            setHistoryEndDate(dates.end);
-                          }}
-                        >
-                          Últimos 7 dias
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            const dates = getDateRangePreset("30days");
-                            setHistoryStartDate(dates.start);
-                            setHistoryEndDate(dates.end);
-                          }}
-                        >
-                          Último mês
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            const dates = getDateRangePreset("90days");
-                            setHistoryStartDate(dates.start);
-                            setHistoryEndDate(dates.end);
-                          }}
-                        >
-                          Últimos 3 meses
-                        </Button>
-                      </div>
+                <CardContent className="pt-4">
+                  <div className="flex flex-wrap gap-3 items-end">
+                    <div className="min-w-0">
+                      <Label htmlFor="historyStartDate" className="text-xs mb-1 block text-muted-foreground">
+                        Inicial
+                      </Label>
+                      <Input
+                        id="historyStartDate"
+                        type="date"
+                        value={historyStartDate}
+                        onChange={(e) => setHistoryStartDate(e.target.value)}
+                        className="w-[130px]"
+                      />
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-5 gap-4">
-                      <div className="sm:col-span-2 min-w-0 w-full">
-                        <Label htmlFor="historyStartDate" className="text-sm mb-2 block font-medium">
-                          Data Inicial
-                        </Label>
-                        <Input
-                          id="historyStartDate"
-                          type="date"
-                          value={historyStartDate}
-                          onChange={(e) => setHistoryStartDate(e.target.value)}
-                          className="w-full max-w-full"
-                        />
-                      </div>
-                      <div className="sm:col-span-2 min-w-0 w-full">
-                        <Label htmlFor="historyEndDate" className="text-sm mb-2 block font-medium">
-                          Data Final
-                        </Label>
-                        <Input
-                          id="historyEndDate"
-                          type="date"
-                          value={historyEndDate}
-                          onChange={(e) => setHistoryEndDate(e.target.value)}
-                          className="w-full max-w-full"
-                        />
-                      </div>
-                      <div className="sm:col-span-1">
-                        <Label htmlFor="historyServiceType" className="text-sm mb-2 block font-medium">
-                          Serviço
-                        </Label>
-                        <Select
-                          value={historyFilters.serviceType}
-                          onValueChange={(value) =>
-                            setHistoryFilters({
-                              ...historyFilters,
-                              serviceType: value,
-                            })
-                          }
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Todos" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="__ALL__">Todos</SelectItem>
-                            {services.map((service) => (
-                              <SelectItem key={service.id} value={service.name}>
-                                {service.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
+                    <div className="min-w-0">
+                      <Label htmlFor="historyEndDate" className="text-xs mb-1 block text-muted-foreground">
+                        Final
+                      </Label>
+                      <Input
+                        id="historyEndDate"
+                        type="date"
+                        value={historyEndDate}
+                        onChange={(e) => setHistoryEndDate(e.target.value)}
+                        className="w-[130px]"
+                      />
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-6 gap-4">
-                      <div className="sm:col-span-3">
-                        <Label htmlFor="historyTutorName" className="text-sm mb-2 block font-medium">
-                          Tutor
-                        </Label>
-                        <Input
-                          id="historyTutorName"
-                          placeholder="Nome do tutor..."
-                          value={historyFilters.tutorName}
-                          onChange={(e) =>
-                            setHistoryFilters({ ...historyFilters, tutorName: e.target.value })
-                          }
-                        />
-                      </div>
-                      {hasActiveFilters && (
-                        <div className="sm:col-span-3 flex items-end">
-                          <Button
-                            variant="ghost"
-                            size="sm"
+                    <div className="min-w-0">
+                      <Label htmlFor="historyServiceType" className="text-xs mb-1 block text-muted-foreground">
+                        Serviço
+                      </Label>
+                      <Select
+                        value={historyFilters.serviceType}
+                        onValueChange={(value) =>
+                          setHistoryFilters({
+                            ...historyFilters,
+                            serviceType: value,
+                          })
+                        }
+                      >
+                        <SelectTrigger className="w-[140px]">
+                          <SelectValue placeholder="Todos" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__ALL__">Todos</SelectItem>
+                          {services.map((service) => (
+                            <SelectItem key={service.id} value={service.name}>
+                              {service.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="min-w-0 flex-1 min-w-[180px]">
+                      <Label htmlFor="historyTutorName" className="text-xs mb-1 block text-muted-foreground">
+                        Tutor
+                      </Label>
+                      <Input
+                        id="historyTutorName"
+                        placeholder="Nome do tutor..."
+                        value={historyFilters.tutorName}
+                        onChange={(e) =>
+                          setHistoryFilters({ ...historyFilters, tutorName: e.target.value })
+                        }
+                        className="w-full"
+                      />
+                    </div>
+                    {hasActiveFilters && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() =>
                           setHistoryFilters({ tutorName: "", serviceType: "__ALL__" })
                         }
-                          >
-                            Limpar filtros
-                          </Button>
-                        </div>
-                      )}
-                    </div>
+                        className="h-10"
+                      >
+                        Limpar
+                      </Button>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -609,86 +524,31 @@ export default function Home() {
               </div>
 
               <Card>
-                <CardContent className="pt-6 overflow-hidden">
-                  <div className="space-y-4">
-                    <div>
-                      <Label className="text-sm mb-2 block font-medium">Período</Label>
-                      <div className="flex flex-wrap gap-2 mb-3">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            const dates = getDateRangePreset("today");
-                            setReportsStartDate(dates.start);
-                            setReportsEndDate(dates.end);
-                          }}
-                        >
-                          Hoje
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            const dates = getDateRangePreset("7days");
-                            setReportsStartDate(dates.start);
-                            setReportsEndDate(dates.end);
-                          }}
-                        >
-                          Últimos 7 dias
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            const dates = getDateRangePreset("30days");
-                            setReportsStartDate(dates.start);
-                            setReportsEndDate(dates.end);
-                          }}
-                        >
-                          Último mês
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            const dates = getDateRangePreset("90days");
-                            setReportsStartDate(dates.start);
-                            setReportsEndDate(dates.end);
-                          }}
-                        >
-                          Últimos 3 meses
-                        </Button>
-                      </div>
+                <CardContent className="pt-4">
+                  <div className="flex flex-wrap gap-3 items-end">
+                    <div className="min-w-0">
+                      <Label htmlFor="reportsStartDate" className="text-xs mb-1 block text-muted-foreground">
+                        Data Inicial
+                      </Label>
+                      <Input
+                        id="reportsStartDate"
+                        type="date"
+                        value={reportsStartDate}
+                        onChange={(e) => setReportsStartDate(e.target.value)}
+                        className="w-[140px]"
+                      />
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="min-w-0 w-full">
-                        <Label htmlFor="reportsStartDate" className="text-sm mb-2 block font-medium">
-                          Data Inicial
-                        </Label>
-                        <Input
-                          id="reportsStartDate"
-                          type="date"
-                          value={reportsStartDate}
-                          onChange={(e) => setReportsStartDate(e.target.value)}
-                          className="w-full max-w-full"
-                        />
-                      </div>
-                      <div className="min-w-0 w-full">
-                        <Label htmlFor="reportsEndDate" className="text-sm mb-2 block font-medium">
-                          Data Final
-                        </Label>
-                        <Input
-                          id="reportsEndDate"
-                          type="date"
-                          value={reportsEndDate}
-                          onChange={(e) => setReportsEndDate(e.target.value)}
-                          className="w-full max-w-full"
-                        />
-                      </div>
+                    <div className="min-w-0">
+                      <Label htmlFor="reportsEndDate" className="text-xs mb-1 block text-muted-foreground">
+                        Data Final
+                      </Label>
+                      <Input
+                        id="reportsEndDate"
+                        type="date"
+                        value={reportsEndDate}
+                        onChange={(e) => setReportsEndDate(e.target.value)}
+                        className="w-[140px]"
+                      />
                     </div>
                   </div>
                 </CardContent>
@@ -817,6 +677,26 @@ export default function Home() {
         onSelect={(roomId) => callNextMutation.mutate(roomId)}
         onCancel={() => setShowRoomModal(false)}
       />
+
+      <Dialog open={showAddQueueModal} onOpenChange={setShowAddQueueModal}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Adicionar à Fila</DialogTitle>
+          </DialogHeader>
+          <AddQueueFormInline
+            inline={false}
+            onSuccess={() => {
+              queryClient.invalidateQueries({ queryKey: ["queue"] });
+              toast({
+                variant: "default",
+                title: "Sucesso",
+                description: "Entrada adicionada à fila com sucesso",
+              });
+            }}
+            onClose={() => setShowAddQueueModal(false)}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

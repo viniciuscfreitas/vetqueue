@@ -19,9 +19,11 @@ import { useAuth } from "@/contexts/AuthContext";
 
 interface AddQueueFormInlineProps {
   onSuccess?: () => void;
+  onClose?: () => void;
+  inline?: boolean;
 }
 
-export function AddQueueFormInline({ onSuccess }: AddQueueFormInlineProps) {
+export function AddQueueFormInline({ onSuccess, onClose, inline = true }: AddQueueFormInlineProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   const handleError = createErrorHandler(toast);
@@ -71,6 +73,7 @@ export function AddQueueFormInline({ onSuccess }: AddQueueFormInlineProps) {
         description: "Entrada adicionada à fila",
       });
       onSuccess?.();
+      onClose?.();
     } catch (error) {
       handleError(error);
     } finally {
@@ -79,7 +82,7 @@ export function AddQueueFormInline({ onSuccess }: AddQueueFormInlineProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="bg-card p-5 rounded-lg border space-y-5">
+    <form onSubmit={handleSubmit} className={inline ? "bg-card p-5 rounded-lg border space-y-5" : "space-y-5"}>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="patientName" className="text-sm font-medium">

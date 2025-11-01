@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
@@ -29,15 +30,13 @@ export function Header() {
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between gap-4">
           <Link href="/" className="flex items-center gap-2 hover:opacity-80">
-            <img 
+            <Image 
               src="/logo.png" 
               alt="Fisiopet" 
+              width={379} 
+              height={130} 
               className="h-8 w-auto sm:h-10"
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                console.error('Erro ao carregar logo. Src:', target.src, 'Natural width:', target.naturalWidth, 'Natural height:', target.naturalHeight);
-                console.error('HTTP Status pode ser verificado no Network tab');
-              }}
+              priority
             />
           </Link>
           

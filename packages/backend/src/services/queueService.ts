@@ -162,6 +162,11 @@ export class QueueService {
 
   async startService(id: string, userRole?: string): Promise<QueueEntry> {
     console.log(`[QUEUE] startService - EntryId: ${id}`);
+    
+    if (userRole === "RECEPCAO") {
+      throw new Error("Recepção não pode iniciar atendimento");
+    }
+
     const entry = await this.repository.findById(id);
 
     if (!entry) {
@@ -172,10 +177,6 @@ export class QueueService {
     if (entry.status !== Status.CALLED && entry.status !== Status.WAITING) {
       console.error(`[QUEUE] ✗ Status inválido para iniciar - EntryId: ${id}, Status atual: ${entry.status}`);
       throw new Error("Apenas entradas chamadas ou aguardando podem iniciar atendimento");
-    }
-
-    if (userRole === "RECEPCAO" && !entry.assignedVetId) {
-      throw new Error("Não é possível iniciar atendimento sem veterinário atribuído");
     }
 
     const result = entry.status === Status.WAITING && !entry.calledAt

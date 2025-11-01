@@ -15,7 +15,7 @@ interface QueueTabProps {
   authLoading: boolean;
   onShowRoomModal: () => void;
   onShowAddQueueModal: () => void;
-  onStart: (id: string) => void;
+  onStart?: (id: string) => void;
   onComplete: (id: string) => void;
   onCancel?: (id: string) => void;
   onCall?: (entryId: string) => void;

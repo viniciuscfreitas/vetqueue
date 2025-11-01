@@ -221,7 +221,7 @@ export default function Home() {
               authLoading={authLoading}
               onShowRoomModal={() => setShowRoomModal(true)}
               onShowAddQueueModal={() => setShowAddQueueModal(true)}
-              onStart={handleStart}
+              onStart={user?.role === Role.VET ? handleStart : undefined}
               onComplete={handleComplete}
               onCancel={user?.role === Role.RECEPCAO ? handleCancel : undefined}
               onCall={(user?.role === Role.RECEPCAO || user?.role === Role.VET) ? handleCall : undefined}

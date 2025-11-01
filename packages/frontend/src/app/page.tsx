@@ -88,6 +88,8 @@ export default function Home() {
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [entryToCancel, setEntryToCancel] = useState<string | null>(null);
 
+  const [callNextConfirmDialogOpen, setCallNextConfirmDialogOpen] = useState(false);
+
   const [reportsStartDate, setReportsStartDate] = useState(defaultDates.start);
   const [reportsEndDate, setReportsEndDate] = useState(defaultDates.end);
 
@@ -213,6 +215,13 @@ export default function Home() {
   }, [isError, error]);
 
   const handleCallNext = () => {
+    const inProgressEntryLocal = entries.find((e) => e.status === Status.IN_PROGRESS);
+    
+    if (inProgressEntryLocal) {
+      setCallNextConfirmDialogOpen(true);
+      return;
+    }
+
     if (currentRoom) {
       callNextMutation.mutate(currentRoom.id);
     } else {
@@ -241,6 +250,15 @@ export default function Home() {
     }
   };
 
+  const handleConfirmCallNext = () => {
+    setCallNextConfirmDialogOpen(false);
+    if (currentRoom) {
+      callNextMutation.mutate(currentRoom.id);
+    } else {
+      setShowRoomModal(true);
+    }
+  };
+
   useEffect(() => {
     setHistoryPage(1);
   }, [historyStartDate, historyEndDate, historyFilters]);
@@ -248,6 +266,7 @@ export default function Home() {
   const hasActiveFilters = historyFilters.tutorName || historyFilters.patientName || (historyFilters.serviceType && historyFilters.serviceType !== "__ALL__");
 
   const waitingCount = entries.filter((entry) => entry.status === Status.WAITING).length;
+  const inProgressEntry = entries.find((e) => e.status === Status.IN_PROGRESS);
 
   if (authLoading || !user) {
     return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;
@@ -686,6 +705,23 @@ export default function Home() {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Cancelar entrada
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={callNextConfirmDialogOpen} onOpenChange={setCallNextConfirmDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Paciente em atendimento</AlertDialogTitle>
+            <AlertDialogDescription>
+              Você está atendendo <strong>{inProgressEntry?.patientName}</strong>. Deseja chamar o próximo paciente?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmCallNext}>
+              Chamar Próximo
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

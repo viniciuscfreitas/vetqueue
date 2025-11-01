@@ -65,7 +65,7 @@ export default function Home() {
   const [historyEndDate, setHistoryEndDate] = useState(defaultDates.end);
   const [historyFilters, setHistoryFilters] = useState({
     tutorName: "",
-    serviceType: undefined as string | undefined,
+    serviceType: "",
   });
   const [historyPage, setHistoryPage] = useState(1);
 
@@ -382,7 +382,7 @@ export default function Home() {
                         Tipo de Serviço
                       </Label>
                       <Select
-                        value={historyFilters.serviceType || undefined}
+                        value={historyFilters.serviceType}
                         onValueChange={(value) =>
                           setHistoryFilters({
                             ...historyFilters,
@@ -394,6 +394,7 @@ export default function Home() {
                           <SelectValue placeholder="Todos" />
                         </SelectTrigger>
                         <SelectContent>
+                          <SelectItem value="">Todos</SelectItem>
                           {services.map((service) => (
                             <SelectItem key={service.id} value={service.name}>
                               {service.name}
@@ -409,7 +410,7 @@ export default function Home() {
                         variant="ghost"
                         size="sm"
                         onClick={() =>
-                          setHistoryFilters({ tutorName: "", serviceType: undefined })
+                          setHistoryFilters({ tutorName: "", serviceType: "" })
                         }
                       >
                         Limpar filtros

@@ -3,7 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { roomApi, userApi } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Select,
   SelectContent,
@@ -77,6 +77,34 @@ export function RoomSelector() {
     },
   });
 
+  const changeRoomMutation = useMutation({
+    mutationFn: async (roomId: string) => {
+      await userApi.checkOutRoom();
+      const updatedUser = await userApi.checkInRoom(roomId);
+      return updatedUser.data;
+    },
+    onSuccess: (updatedUser) => {
+      const room = rooms.find((r) => r.id === updatedUser.currentRoomId);
+      if (room) {
+        setCurrentRoom(room);
+      }
+      queryClient.invalidateQueries({ queryKey: ["users", "active-vets"] });
+      toast({
+        title: "Sala alterada",
+        description: `Você trocou para ${room?.name}`,
+      });
+      setShowChangeModal(false);
+      setNewRoomId(null);
+    },
+    onError: (error: any) => {
+      toast({
+        variant: "destructive",
+        title: "Erro ao trocar de sala",
+        description: error.response?.data?.error || "Erro desconhecido",
+      });
+    },
+  });
+
   const handleRoomChange = (value: string) => {
     if (!currentRoom) {
       checkInMutation.mutate(value);
@@ -88,16 +116,9 @@ export function RoomSelector() {
     }
   };
 
-  const confirmRoomChange = async () => {
+  const confirmRoomChange = () => {
     if (newRoomId) {
-      try {
-        await checkOutMutation.mutateAsync();
-        await checkInMutation.mutateAsync(newRoomId);
-        setShowChangeModal(false);
-        setNewRoomId(null);
-      } catch (error) {
-        console.error("Erro ao trocar de sala:", error);
-      }
+      changeRoomMutation.mutate(newRoomId);
     }
   };
 
@@ -109,10 +130,10 @@ export function RoomSelector() {
     <>
       <div className="flex items-center gap-2 min-w-0 flex-shrink">
         <Label className="hidden sm:block">Sala:</Label>
-        <Select
+          <Select
           value={currentRoom?.id || ""}
           onValueChange={handleRoomChange}
-          disabled={checkInMutation.isPending || checkOutMutation.isPending}
+          disabled={checkInMutation.isPending || checkOutMutation.isPending || changeRoomMutation.isPending}
         >
           <SelectTrigger className="w-32 sm:w-40">
             <SelectValue placeholder={currentRoom ? "Sala" : "Fazer check-in"} />
@@ -146,7 +167,7 @@ export function RoomSelector() {
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmRoomChange}
-              disabled={checkInMutation.isPending || checkOutMutation.isPending}
+              disabled={changeRoomMutation.isPending}
             >
               Trocar
             </AlertDialogAction>

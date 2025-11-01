@@ -30,26 +30,39 @@ export class QueueService {
       }
     }
 
-    if (!data.patientName.trim() || !data.tutorName.trim()) {
-      throw new Error("Nome do paciente e tutor são obrigatórios");
-    }
+    console.log(`[QUEUE] addToQueue - Paciente: ${data.patientName}, Tutor: ${data.tutorName}, Serviço: ${data.serviceType}, Prioridade: ${priority}`);
+    
+    try {
+      if (!data.patientName.trim() || !data.tutorName.trim()) {
+        throw new Error("Nome do paciente e tutor são obrigatórios");
+      }
 
-    return this.repository.create({
-      patientName: data.patientName.trim(),
-      tutorName: data.tutorName.trim(),
-      serviceType: data.serviceType,
-      priority,
-      assignedVetId: data.assignedVetId,
-      hasScheduledAppointment: data.hasScheduledAppointment,
-      scheduledAt: data.scheduledAt,
-    });
+      const entry = await this.repository.create({
+        patientName: data.patientName.trim(),
+        tutorName: data.tutorName.trim(),
+        serviceType: data.serviceType,
+        priority,
+        assignedVetId: data.assignedVetId,
+        hasScheduledAppointment: data.hasScheduledAppointment,
+        scheduledAt: data.scheduledAt,
+      });
+      
+      console.log(`[QUEUE] ✓ Criado - ID: ${entry.id}, Posição na fila calculada`);
+      return entry;
+    } catch (error) {
+      console.error(`[QUEUE] ✗ Erro ao criar entrada:`, error);
+      throw error;
+    }
   }
 
   async callNext(vetId?: string, roomId?: string): Promise<QueueEntry | null> {
+    console.log(`[QUEUE] callNext - vetId: ${vetId || 'none'}, roomId: ${roomId || 'none'}`);
+    
     // If vet is calling, ensure they're checked into a room
     if (vetId && !roomId) {
       const vet = await this.userRepository.findById(vetId);
       if (!vet?.currentRoomId) {
+        console.error(`[QUEUE] ✗ Vet ${vetId} tentou chamar sem check-in em sala`);
         throw new Error("Você deve fazer check-in em uma sala primeiro");
       }
       roomId = vet.currentRoomId;
@@ -58,6 +71,7 @@ export class QueueService {
     if (vetId && roomId) {
       const roomOccupied = await this.repository.hasOtherVetActivePatient(roomId, vetId);
       if (roomOccupied) {
+        console.error(`[QUEUE] ✗ Sala ${roomId} ocupada por outro veterinário`);
         throw new Error(`Sala já está ocupada por veterinário ${roomOccupied.vetName}`);
       }
     }
@@ -74,6 +88,7 @@ export class QueueService {
       : await this.repository.findNextWaitingGeneral();
 
     if (!next) {
+      console.log(`[QUEUE] Nenhuma entrada disponível na fila para vet: ${vetId}`);
       return null;
     }
 
@@ -94,6 +109,7 @@ export class QueueService {
       this.userRepository.updateLastActivity(actualVetId).catch(console.error);
     }
 
+    console.log(`[QUEUE] ✓ Chamando - Paciente: ${next.patientName} (${next.id}), Sala: ${roomId}`);
     return result;
   }
 
@@ -145,13 +161,16 @@ export class QueueService {
   }
 
   async startService(id: string, userRole?: string): Promise<QueueEntry> {
+    console.log(`[QUEUE] startService - EntryId: ${id}`);
     const entry = await this.repository.findById(id);
 
     if (!entry) {
+      console.error(`[QUEUE] ✗ Entrada ${id} não encontrada`);
       throw new Error("Entrada não encontrada");
     }
 
     if (entry.status !== Status.CALLED && entry.status !== Status.WAITING) {
+      console.error(`[QUEUE] ✗ Status inválido para iniciar - EntryId: ${id}, Status atual: ${entry.status}`);
       throw new Error("Apenas entradas chamadas ou aguardando podem iniciar atendimento");
     }
 
@@ -167,13 +186,16 @@ export class QueueService {
       this.userRepository.updateLastActivity(entry.assignedVetId).catch(console.error);
     }
 
+    console.log(`[QUEUE] ✓ Iniciado atendimento - Paciente: ${entry.patientName}`);
     return result;
   }
 
   async completeService(id: string, userRole?: string): Promise<QueueEntry> {
+    console.log(`[QUEUE] completeService - EntryId: ${id}`);
     const entry = await this.repository.findById(id);
 
     if (!entry) {
+      console.error(`[QUEUE] ✗ Entrada ${id} não encontrada para completar`);
       throw new Error("Entrada não encontrada");
     }
 
@@ -191,6 +213,7 @@ export class QueueService {
       this.userRepository.updateLastActivity(entry.assignedVetId).catch(console.error);
     }
 
+    console.log(`[QUEUE] ✓ Completado - Paciente: ${entry.patientName}, Vet: ${entry.assignedVet?.name || 'N/A'}`);
     return result;
   }
 

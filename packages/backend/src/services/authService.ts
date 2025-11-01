@@ -15,17 +15,21 @@ export interface LoginResult {
 
 export class AuthService {
   async login(username: string, password: string): Promise<LoginResult> {
+    console.log(`[AUTH] Tentativa de login - Username: ${username}`);
+    
     const user = await prisma.user.findUnique({
       where: { username },
     });
 
     if (!user) {
+      console.warn(`[AUTH] ✗ Login falhou - Usuário não encontrado: ${username}`);
       throw new Error("Credenciais inválidas");
     }
 
     const passwordMatch = await bcrypt.compare(password, user.password);
 
     if (!passwordMatch) {
+      console.warn(`[AUTH] ✗ Login falhou - Senha incorreta para: ${username}`);
       throw new Error("Credenciais inválidas");
     }
 
@@ -40,6 +44,8 @@ export class AuthService {
       { expiresIn: JWT_EXPIRES_IN }
     );
 
+    console.log(`[AUTH] ✓ Login bem-sucedido - ${user.name} (${user.role})`);
+    
     return {
       user: {
         id: user.id,

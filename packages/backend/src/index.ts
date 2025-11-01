@@ -1,11 +1,14 @@
-import express from "express";
+import express, { Request, Response, NextFunction } from "express";
 import cors from "cors";
+import { PrismaClient } from "@prisma/client";
 import queueRoutes from "./api/routes/queueRoutes";
 import authRoutes from "./api/routes/authRoutes";
 import roomRoutes from "./api/routes/roomRoutes";
 import userRoutes from "./api/routes/userRoutes";
 import serviceRoutes from "./api/routes/serviceRoutes";
 import { checkAndUpgradePriorities } from "./jobs/priorityUpgradeCheck";
+
+const prisma = new PrismaClient();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -37,8 +40,22 @@ app.use((req, res, next) => {
   next();
 });
 
-app.get("/health", (req, res) => {
-  res.json({ status: "ok" });
+app.get("/health", async (req, res) => {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    
+    res.json({ 
+      status: "ok",
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+    });
+  } catch (error) {
+    console.error('[HEALTH] ✗ Healthcheck falhou:', error);
+    res.status(503).json({ 
+      status: "error",
+      message: "Database connection failed",
+    });
+  }
 });
 
 app.use("/api/auth", authRoutes);
@@ -46,6 +63,21 @@ app.use("/api/rooms", roomRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/queue", queueRoutes);
 app.use("/api/services", serviceRoutes);
+
+app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+  console.error(`[ERROR] ${req.method} ${req.path}`, {
+    error: err.message,
+    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
+    body: req.body,
+    user: (req as any).user?.id,
+  });
+  
+  res.status(500).json({ 
+    error: process.env.NODE_ENV === 'production' 
+      ? 'Erro interno do servidor' 
+      : err.message 
+  });
+});
 
 app.listen(Number(PORT), HOST, () => {
   console.log(`Server running on http://${HOST}:${PORT}`);

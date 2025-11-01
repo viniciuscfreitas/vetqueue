@@ -85,11 +85,45 @@ export class UserService {
   }
 
   async checkInRoom(vetId: string, roomId: string): Promise<User> {
-    return this.repository.checkInRoom(vetId, roomId);
+    console.log(`[ROOM] checkIn - UserId: ${vetId}, RoomId: ${roomId}`);
+    
+    try {
+      const user = await this.repository.findById(vetId);
+      if (!user) {
+        console.error(`[ROOM] ✗ Usuário ${vetId} não encontrado`);
+        throw new Error("Usuário não encontrado");
+      }
+      
+      if (user.currentRoomId) {
+        console.warn(`[ROOM] ⚠ Usuário ${user.name} já estava em sala ${user.currentRoomId}, fazendo checkout automático`);
+      }
+      
+      const result = await this.repository.checkInRoom(vetId, roomId);
+      console.log(`[ROOM] ✓ Check-in - ${result.name} → Sala ${roomId}`);
+      return result;
+    } catch (error) {
+      console.error(`[ROOM] ✗ Erro no check-in:`, error);
+      throw error;
+    }
   }
 
   async checkOutRoom(vetId: string): Promise<User> {
-    return this.repository.checkOutRoom(vetId);
+    console.log(`[ROOM] checkOut - UserId: ${vetId}`);
+    
+    try {
+      const user = await this.repository.findById(vetId);
+      if (!user || !user.currentRoomId) {
+        console.warn(`[ROOM] ⚠ Usuário tentou checkout sem estar em sala`);
+        throw new Error("Usuário não está em nenhuma sala");
+      }
+      
+      const result = await this.repository.checkOutRoom(vetId);
+      console.log(`[ROOM] ✓ Check-out - ${result.name} saiu da sala`);
+      return result;
+    } catch (error) {
+      console.error(`[ROOM] ✗ Erro no check-out:`, error);
+      throw error;
+    }
   }
 }
 

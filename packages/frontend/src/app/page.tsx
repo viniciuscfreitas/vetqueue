@@ -125,20 +125,15 @@ export default function Home() {
     if (currentRoom) {
       queueMutations.callPatient({ entryId, roomId: currentRoom.id });
     } else {
-      const entry = entries.find(e => e.id === entryId);
       if (user?.role === Role.RECEPCAO) {
-        if (entry?.assignedVet) {
-          toast({
-            variant: "destructive",
-            title: "Check-in necessário",
-            description: `O veterinário ${entry.assignedVet.name} precisa fazer check-in em uma sala antes de chamar este paciente. Você pode chamar o paciente diretamente selecionando uma sala.`,
-          });
-        }
         setShowRoomModal(true);
         setEntryToCall(entryId);
       } else {
-        setShowRoomModal(true);
-        setEntryToCall(entryId);
+        toast({
+          variant: "destructive",
+          title: "Check-in necessário",
+          description: "Você precisa fazer check-in em uma sala antes de chamar pacientes.",
+        });
       }
     }
   };

@@ -34,9 +34,9 @@ export function Header() {
               alt="Fisiopet" 
               className="h-8 w-auto sm:h-10"
               onError={(e) => {
-                console.error('Erro ao carregar logo:', e);
                 const target = e.target as HTMLImageElement;
-                target.style.display = 'none';
+                console.error('Erro ao carregar logo. Src:', target.src, 'Natural width:', target.naturalWidth, 'Natural height:', target.naturalHeight);
+                console.error('HTTP Status pode ser verificado no Network tab');
               }}
             />
           </Link>

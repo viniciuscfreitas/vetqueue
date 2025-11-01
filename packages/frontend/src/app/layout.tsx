@@ -9,8 +9,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "VetQueue - Sistema de Fila Hospital Veterinário",
-  description: "Sistema de gestão de fila para hospital veterinário",
+  title: "Fisiopet - Sistema de Fila de Atendimento",
+  description: "Sistema de fila de atendimento da Fisiopet",
   icons: {
     icon: [
       { url: "/icon.svg", type: "image/svg+xml" },

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/components/ui/use-toast";
@@ -8,7 +9,7 @@ import { createErrorHandler } from "@/lib/errors";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -35,13 +36,25 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl">VetQueue</CardTitle>
-          <CardDescription>
-            Sistema de gestão de fila para hospital veterinário
-          </CardDescription>
+    <div 
+      className="min-h-screen flex items-center justify-center p-4"
+      style={{
+        background: `linear-gradient(to bottom right, #259DE3, #5B96B7)`
+      }}
+    >
+      <Card className="w-full max-w-md border-2 shadow-lg" style={{ borderColor: '#5B96B7' }}>
+        <CardHeader className="space-y-4">
+          <div className="flex justify-center">
+            <Image 
+              src="/logo.png" 
+              alt="Fisiopet" 
+              width={200} 
+              height={80} 
+              className="h-20 w-auto"
+              priority
+            />
+          </div>
+          <CardTitle className="text-2xl text-center" style={{ color: '#3B3839' }}>Acesso ao Sistema</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -68,7 +81,12 @@ export default function LoginPage() {
               />
             </div>
 
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button 
+              type="submit" 
+              className="w-full text-white hover:opacity-90 transition-opacity" 
+              style={{ backgroundColor: '#259DE3' }}
+              disabled={loading}
+            >
               {loading ? "Entrando..." : "Entrar"}
             </Button>
           </form>

@@ -47,6 +47,9 @@ export class AuthService {
         name: user.name,
         role: user.role as Role,
         createdAt: user.createdAt,
+        currentRoomId: user.currentRoomId,
+        roomCheckedInAt: user.roomCheckedInAt,
+        lastActivityAt: user.lastActivityAt,
       },
       token,
     };

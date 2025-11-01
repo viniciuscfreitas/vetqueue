@@ -5,7 +5,7 @@ import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { calculateWaitTime, calculateServiceTime } from "@/lib/utils";
 import { useState, useEffect } from "react";
-import { Clock, User, Stethoscope, CheckCircle2, XCircle, UserCircle } from "lucide-react";
+import { Clock, User, Stethoscope, CheckCircle2, XCircle, UserCircle, DoorOpen } from "lucide-react";
 
 interface QueueCardProps {
   entry: QueueEntry;
@@ -130,9 +130,17 @@ export function QueueCard({
           </div>
 
           {entry.assignedVet && (
-            <div className="pt-1 border-t">
-              <p className="text-xs text-muted-foreground mb-1">Veterinário</p>
-              <p className="font-medium text-sm">{entry.assignedVet.name}</p>
+            <div className="pt-1 border-t space-y-2">
+              <div>
+                <p className="text-xs text-muted-foreground mb-1">Veterinário</p>
+                <p className="font-medium text-sm">{entry.assignedVet.name}</p>
+              </div>
+              {entry.room && (
+                <div className="flex items-center gap-2">
+                  <DoorOpen className="h-3 w-3 text-muted-foreground" />
+                  <p className="text-xs text-muted-foreground">Sala: <span className="font-medium">{entry.room.name}</span></p>
+                </div>
+              )}
             </div>
           )}
         </div>

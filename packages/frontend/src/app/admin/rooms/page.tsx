@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { roomApi, Room } from "@/lib/api";
+import { roomApi, Room, userApi, ActiveVet } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,16 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Header } from "@/components/Header";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function RoomsPage() {
   const router = useRouter();
@@ -23,6 +33,8 @@ export default function RoomsPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingRoom, setEditingRoom] = useState<Room | null>(null);
   const [roomName, setRoomName] = useState("");
+  const [vetToRelease, setVetToRelease] = useState<ActiveVet | null>(null);
+  const [showReleaseDialog, setShowReleaseDialog] = useState(false);
 
   useEffect(() => {
     if (!authLoading && (!user || user.role !== "RECEPCAO")) {
@@ -36,6 +48,26 @@ export default function RoomsPage() {
     queryKey: ["rooms", "all"],
     queryFn: () => roomApi.listAll().then((res) => res.data),
     enabled: isAuthorized,
+  });
+
+  const { data: activeVets = [], isLoading: isLoadingVets } = useQuery({
+    queryKey: ["users", "active-vets"],
+    queryFn: () => userApi.getActiveVets().then((res) => res.data),
+    enabled: isAuthorized,
+  });
+
+  const releaseVetMutation = useMutation({
+    mutationFn: (vetId: string) => userApi.checkOutRoomForVet(vetId).then((res) => res.data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["users", "active-vets"] });
+      setShowReleaseDialog(false);
+      setVetToRelease(null);
+      toast({
+        title: "Sucesso",
+        description: "Veterinário liberado da sala",
+      });
+    },
+    onError: handleError,
   });
 
   const createMutation = useMutation({
@@ -213,6 +245,80 @@ export default function RoomsPage() {
             ))}
           </div>
         )}
+
+        <Card className="mt-8">
+          <CardHeader>
+            <CardTitle>Veterinários Ativos</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isLoadingVets ? (
+              <div className="space-y-4">
+                {[1, 2].map((i) => (
+                  <Skeleton key={i} className="h-16 w-full" />
+                ))}
+              </div>
+            ) : activeVets.length === 0 ? (
+              <p className="text-muted-foreground">Nenhum veterinário em sala no momento</p>
+            ) : (
+              <div className="space-y-4">
+                {activeVets.map((vet) => (
+                  <div
+                    key={vet.vetId}
+                    className="flex justify-between items-center p-4 border rounded-lg"
+                  >
+                    <div>
+                      <p className="font-semibold">{vet.vetName}</p>
+                      <p className="text-sm text-muted-foreground">
+                        Sala: {vet.roomName}
+                      </p>
+                    </div>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => {
+                        setVetToRelease(vet);
+                        setShowReleaseDialog(true);
+                      }}
+                    >
+                      Liberar Sala
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <AlertDialog open={showReleaseDialog} onOpenChange={setShowReleaseDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Liberar Veterinário?</AlertDialogTitle>
+              <AlertDialogDescription>
+                {vetToRelease && (
+                  <>
+                    Deseja liberar <strong>{vetToRelease.vetName}</strong> da sala{" "}
+                    <strong>{vetToRelease.roomName}</strong>?
+                  </>
+                )}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setVetToRelease(null)}>
+                Cancelar
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => {
+                  if (vetToRelease) {
+                    releaseVetMutation.mutate(vetToRelease.vetId);
+                  }
+                }}
+                disabled={releaseVetMutation.isPending}
+              >
+                {releaseVetMutation.isPending ? "Processando..." : "Liberar"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </main>
     </div>
   );

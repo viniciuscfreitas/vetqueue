@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
-import { authApi, User, Room } from "@/lib/api";
+import { authApi, User, Room, roomApi } from "@/lib/api";
 
 interface AuthContextType {
   user: User | null;
@@ -32,6 +32,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         try {
           const response = await authApi.me();
           setUser(response.data.user);
+          
+          if (response.data.user.currentRoomId) {
+            try {
+              const roomsResponse = await roomApi.list();
+              const room = roomsResponse.data.find(r => r.id === response.data.user.currentRoomId);
+              if (room) {
+                setCurrentRoom(room);
+              }
+            } catch (error) {
+              console.error("Erro ao buscar sala:", error);
+            }
+          }
         } catch (error) {
           localStorage.removeItem("auth_token");
         }
@@ -47,6 +59,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(response.data.user);
     if (typeof window !== "undefined") {
       localStorage.setItem("auth_token", response.data.token);
+    }
+    
+    if (response.data.user.currentRoomId) {
+      try {
+        const roomsResponse = await roomApi.list();
+        const room = roomsResponse.data.find(r => r.id === response.data.user.currentRoomId);
+        if (room) {
+          setCurrentRoom(room);
+        }
+      } catch (error) {
+        console.error("Erro ao buscar sala:", error);
+      }
     }
   }, []);
 

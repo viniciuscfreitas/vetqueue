@@ -3,7 +3,7 @@ import { QueueEntry, Priority, Status, User, Role } from "../core/types";
 
 const prisma = new PrismaClient();
 
-function mapPrismaToDomain(entry: PrismaQueueEntry & { assignedVet?: { id: string; username: string; name: string; role: string; createdAt: Date } | null }): QueueEntry {
+function mapPrismaToDomain(entry: PrismaQueueEntry & { assignedVet?: { id: string; username: string; name: string; role: string; createdAt: Date } | null; room?: { id: string; name: string; isActive: boolean; createdAt: Date } | null }): QueueEntry {
   return {
     id: entry.id,
     patientName: entry.patientName,
@@ -23,6 +23,12 @@ function mapPrismaToDomain(entry: PrismaQueueEntry & { assignedVet?: { id: strin
       createdAt: entry.assignedVet.createdAt,
     } : null,
     roomId: entry.roomId,
+    room: entry.room ? {
+      id: entry.room.id,
+      name: entry.room.name,
+      isActive: entry.room.isActive,
+      createdAt: entry.room.createdAt,
+    } : null,
     hasScheduledAppointment: entry.hasScheduledAppointment,
     scheduledAt: entry.scheduledAt,
   };
@@ -49,7 +55,7 @@ export class QueueRepository {
         hasScheduledAppointment: data.hasScheduledAppointment ?? false,
         scheduledAt: data.scheduledAt,
       },
-      include: { assignedVet: true },
+      include: { assignedVet: true, room: true },
     });
     return mapPrismaToDomain(entry);
   }
@@ -57,7 +63,7 @@ export class QueueRepository {
   async findById(id: string): Promise<QueueEntry | null> {
     const entry = await prisma.queueEntry.findUnique({
       where: { id },
-      include: { assignedVet: true },
+      include: { assignedVet: true, room: true },
     });
     return entry ? mapPrismaToDomain(entry) : null;
   }
@@ -70,7 +76,7 @@ export class QueueRepository {
 
     const entry = await prisma.queueEntry.findFirst({
       where: whereClause,
-      include: { assignedVet: true },
+      include: { assignedVet: true, room: true },
       orderBy: [
         { priority: "asc" },
         { createdAt: "asc" },
@@ -85,7 +91,7 @@ export class QueueRepository {
         status: Status.WAITING,
         assignedVetId: null,
       },
-      include: { assignedVet: true },
+      include: { assignedVet: true, room: true },
       orderBy: [
         { priority: "asc" },
         { createdAt: "asc" },
@@ -114,7 +120,7 @@ export class QueueRepository {
     const entry = await prisma.queueEntry.update({
       where: { id },
       data,
-      include: { assignedVet: true },
+      include: { assignedVet: true, room: true },
     });
     return mapPrismaToDomain(entry);
   }
@@ -126,7 +132,7 @@ export class QueueRepository {
     const entry = await prisma.queueEntry.update({
       where: { id },
       data: { assignedVetId },
-      include: { assignedVet: true },
+      include: { assignedVet: true, room: true },
     });
     return mapPrismaToDomain(entry);
   }
@@ -138,7 +144,7 @@ export class QueueRepository {
           in: [Status.WAITING, Status.CALLED, Status.IN_PROGRESS],
         },
       },
-      include: { assignedVet: true },
+      include: { assignedVet: true, room: true },
       orderBy: [
         { priority: "asc" },
         { createdAt: "asc" },
@@ -158,7 +164,7 @@ export class QueueRepository {
           { assignedVetId: null }
         ]
       },
-      include: { assignedVet: true },
+      include: { assignedVet: true, room: true },
       orderBy: [
         { priority: "asc" },
         { createdAt: "asc" },
@@ -175,7 +181,7 @@ export class QueueRepository {
         },
         assignedVetId: null,
       },
-      include: { assignedVet: true },
+      include: { assignedVet: true, room: true },
       orderBy: [
         { priority: "asc" },
         { createdAt: "asc" },
@@ -225,7 +231,7 @@ export class QueueRepository {
 
     const entries = await prisma.queueEntry.findMany({
       where,
-      include: { assignedVet: true },
+      include: { assignedVet: true, room: true },
       orderBy: { completedAt: "desc" },
     });
     return entries.map(mapPrismaToDomain);
@@ -279,7 +285,7 @@ export class QueueRepository {
     const [entries, total] = await Promise.all([
       prisma.queueEntry.findMany({
         where,
-        include: { assignedVet: true },
+        include: { assignedVet: true, room: true },
         orderBy: { completedAt: "desc" },
         skip,
         take: limit,
@@ -536,6 +542,32 @@ export class QueueRepository {
     });
 
     return occupations;
+  }
+
+  async getActiveVets(): Promise<Array<{ vetId: string; vetName: string; roomId: string; roomName: string }>> {
+    const activeVets = await prisma.user.findMany({
+      where: {
+        role: "VET",
+        currentRoomId: { not: null },
+      },
+      include: {
+        currentRoom: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+    });
+
+    return activeVets
+      .filter(vet => vet.currentRoom)
+      .map(vet => ({
+        vetId: vet.id,
+        vetName: vet.name,
+        roomId: vet.currentRoom!.id,
+        roomName: vet.currentRoom!.name,
+      }));
   }
 }
 

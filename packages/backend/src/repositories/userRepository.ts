@@ -10,6 +10,9 @@ function mapPrismaToDomain(user: PrismaUser): User {
     name: user.name,
     role: user.role as Role,
     createdAt: user.createdAt,
+    currentRoomId: user.currentRoomId,
+    roomCheckedInAt: user.roomCheckedInAt,
+    lastActivityAt: user.lastActivityAt,
   };
 }
 
@@ -67,6 +70,68 @@ export class UserRepository {
       data: updateData,
     });
     return mapPrismaToDomain(user);
+  }
+
+  async checkInRoom(vetId: string, roomId: string): Promise<User> {
+    const user = await prisma.$transaction(async (tx) => {
+      const existingUserInRoom = await tx.user.findFirst({
+        where: { currentRoomId: roomId },
+      });
+
+      if (existingUserInRoom) {
+        throw new Error("Sala já está ocupada por outro veterinário");
+      }
+
+      const user = await tx.user.update({
+        where: { id: vetId },
+        data: {
+          currentRoomId: roomId,
+          roomCheckedInAt: new Date(),
+          lastActivityAt: new Date(),
+        },
+      });
+
+      return user;
+    });
+
+    return mapPrismaToDomain(user);
+  }
+
+  async checkOutRoom(vetId: string): Promise<User> {
+    const user = await prisma.user.update({
+      where: { id: vetId },
+      data: {
+        currentRoomId: null,
+        roomCheckedInAt: null,
+        lastActivityAt: null,
+      },
+    });
+    return mapPrismaToDomain(user);
+  }
+
+  async updateLastActivity(vetId: string): Promise<void> {
+    await prisma.user.update({
+      where: { id: vetId },
+      data: {
+        lastActivityAt: new Date(),
+      },
+    });
+  }
+
+  async findInactiveVets(thresholdMinutes: number): Promise<User[]> {
+    const thresholdDate = new Date();
+    thresholdDate.setMinutes(thresholdDate.getMinutes() - thresholdMinutes);
+
+    const users = await prisma.user.findMany({
+      where: {
+        currentRoomId: { not: null },
+        lastActivityAt: {
+          lt: thresholdDate,
+        },
+      },
+    });
+
+    return users.map(mapPrismaToDomain);
   }
 }
 

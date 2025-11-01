@@ -8,24 +8,30 @@ datasource db {
 }
 
 model User {
-  id        String       @id @default(uuid())
-  username  String       @unique
-  password  String
-  name      String
-  role      String
-  createdAt DateTime     @default(now())
-  entries   QueueEntry[]
-  auditLogs AuditLog[]
+  id               String       @id @default(uuid())
+  username         String       @unique
+  password         String
+  name             String
+  role             String
+  createdAt        DateTime     @default(now())
+  currentRoomId    String?
+  currentRoom      Room?        @relation(fields: [currentRoomId], references: [id])
+  roomCheckedInAt  DateTime?
+  lastActivityAt   DateTime?
+  entries          QueueEntry[]
+  auditLogs        AuditLog[]
 
   @@map("users")
+  @@index([currentRoomId])
 }
 
 model Room {
-  id        String       @id @default(uuid())
-  name      String       @unique
-  isActive  Boolean      @default(true)
-  createdAt DateTime     @default(now())
-  entries   QueueEntry[]
+  id               String       @id @default(uuid())
+  name             String       @unique
+  isActive         Boolean      @default(true)
+  createdAt        DateTime     @default(now())
+  entries          QueueEntry[]
+  checkedInUsers   User[]
 
   @@map("rooms")
 }

@@ -1,8 +1,13 @@
 import { QueueRepository } from "../repositories/queueRepository";
+import { UserRepository } from "../repositories/userRepository";
 import { QueueEntry, Priority, Status } from "../core/types";
 
 export class QueueService {
-  constructor(private repository: QueueRepository) {}
+  private userRepository: UserRepository;
+  
+  constructor(private repository: QueueRepository) {
+    this.userRepository = new UserRepository();
+  }
 
   async addToQueue(data: {
     patientName: string;
@@ -53,13 +58,19 @@ export class QueueService {
       return null;
     }
 
-    return this.repository.updateStatus(
+    const result = await this.repository.updateStatus(
       next.id,
       Status.CALLED,
       new Date(),
       undefined,
       roomId
     );
+
+    if (vetId) {
+      this.userRepository.updateLastActivity(vetId).catch(console.error);
+    }
+
+    return result;
   }
 
   async callPatient(id: string, vetId?: string, roomId?: string): Promise<QueueEntry> {
@@ -87,13 +98,19 @@ export class QueueService {
       }
     }
 
-    return this.repository.updateStatus(
+    const result = await this.repository.updateStatus(
       id,
       Status.CALLED,
       new Date(),
       undefined,
       roomId
     );
+
+    if (vetId) {
+      this.userRepository.updateLastActivity(vetId).catch(console.error);
+    }
+
+    return result;
   }
 
   async startService(id: string, userRole?: string): Promise<QueueEntry> {
@@ -111,11 +128,15 @@ export class QueueService {
       throw new Error("Não é possível iniciar atendimento sem veterinário atribuído");
     }
 
-    if (entry.status === Status.WAITING && !entry.calledAt) {
-      return this.repository.updateStatus(id, Status.IN_PROGRESS, new Date());
+    const result = entry.status === Status.WAITING && !entry.calledAt
+      ? await this.repository.updateStatus(id, Status.IN_PROGRESS, new Date())
+      : await this.repository.updateStatus(id, Status.IN_PROGRESS);
+
+    if (entry.assignedVetId) {
+      this.userRepository.updateLastActivity(entry.assignedVetId).catch(console.error);
     }
 
-    return this.repository.updateStatus(id, Status.IN_PROGRESS);
+    return result;
   }
 
   async completeService(id: string, userRole?: string): Promise<QueueEntry> {
@@ -133,7 +154,13 @@ export class QueueService {
       throw new Error("Não é possível finalizar atendimento sem veterinário atribuído");
     }
 
-    return this.repository.updateStatus(id, Status.COMPLETED, undefined, new Date());
+    const result = await this.repository.updateStatus(id, Status.COMPLETED, undefined, new Date());
+
+    if (entry.assignedVetId) {
+      this.userRepository.updateLastActivity(entry.assignedVetId).catch(console.error);
+    }
+
+    return result;
   }
 
   async cancelEntry(id: string): Promise<QueueEntry> {

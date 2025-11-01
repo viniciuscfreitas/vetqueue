@@ -5,6 +5,7 @@ import authRoutes from "./api/routes/authRoutes";
 import roomRoutes from "./api/routes/roomRoutes";
 import userRoutes from "./api/routes/userRoutes";
 import serviceRoutes from "./api/routes/serviceRoutes";
+import { checkInactiveUsers } from "./jobs/inactivityCheck";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -49,4 +50,6 @@ app.use("/api/services", serviceRoutes);
 app.listen(Number(PORT), HOST, () => {
   console.log(`Server running on http://${HOST}:${PORT}`);
 });
+
+setInterval(checkInactiveUsers, 5 * 60 * 1000);
 

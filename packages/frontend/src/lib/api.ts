@@ -101,6 +101,7 @@ export interface QueueEntry {
   assignedVetId?: string | null;
   assignedVet?: User | null;
   roomId?: string | null;
+  room?: Room | null;
   hasScheduledAppointment?: boolean;
   scheduledAt?: string | null;
 }
@@ -111,6 +112,9 @@ export interface User {
   name: string;
   role: Role;
   createdAt: string;
+  currentRoomId?: string | null;
+  roomCheckedInAt?: string | null;
+  lastActivityAt?: string | null;
 }
 
 export interface Room {
@@ -142,6 +146,13 @@ export interface VetStats {
   total: number;
   avgServiceTimeMinutes: number;
   attendancePerDay: number;
+}
+
+export interface ActiveVet {
+  vetId: string;
+  vetName: string;
+  roomId: string;
+  roomName: string;
 }
 
 export const queueApi = {
@@ -222,6 +233,16 @@ export const roomApi = {
 
 export const userApi = {
   list: () => api.get<User[]>("/api/users"),
+  
+  getActiveVets: () => api.get<ActiveVet[]>("/api/users/active-vets"),
+  
+  checkInRoom: (roomId: string) => api.post<User>(`/api/users/rooms/${roomId}/check-in`),
+  
+  checkOutRoom: () => api.post<User>("/api/users/rooms/check-out"),
+  
+  keepAlive: () => api.post("/api/users/rooms/keep-alive"),
+  
+  checkOutRoomForVet: (vetId: string) => api.post<User>(`/api/users/${vetId}/rooms/check-out`),
   
   create: (data: { username: string; password: string; name: string; role: Role }) =>
     api.post<User>("/api/users", data),

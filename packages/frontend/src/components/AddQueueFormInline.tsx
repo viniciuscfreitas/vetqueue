@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
-import { Priority, queueApi, userApi, serviceApi, Role } from "@/lib/api";
+import { Priority, queueApi, userApi, serviceApi, Role, ActiveVet } from "@/lib/api";
 import { useToast } from "@/components/ui/use-toast";
 import { createErrorHandler } from "@/lib/errors";
 import { useAuth } from "@/contexts/AuthContext";
@@ -41,8 +41,8 @@ export function AddQueueFormInline({ onSuccess, onClose, inline = true }: AddQue
   const isRecepcao = user?.role === Role.RECEPCAO;
 
   const { data: vets = [] } = useQuery({
-    queryKey: ["users", "vets"],
-    queryFn: () => userApi.list().then((res) => res.data.filter((u) => u.role === Role.VET)),
+    queryKey: ["users", "active-vets"],
+    queryFn: () => userApi.getActiveVets().then((res) => res.data),
     enabled: isRecepcao,
   });
 
@@ -188,8 +188,8 @@ export function AddQueueFormInline({ onSuccess, onClose, inline = true }: AddQue
               <SelectContent>
                 <SelectItem value="NONE">Fila geral</SelectItem>
                 {vets.map((vet) => (
-                  <SelectItem key={vet.id} value={vet.id}>
-                    {vet.name}
+                  <SelectItem key={vet.vetId} value={vet.vetId}>
+                    {vet.vetName} - {vet.roomName}
                   </SelectItem>
                 ))}
               </SelectContent>

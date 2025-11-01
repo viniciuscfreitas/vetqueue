@@ -1,10 +1,12 @@
 import { Router, Request, Response } from "express";
 import { AuthService } from "../../services/authService";
+import { UserRepository } from "../../repositories/userRepository";
 import { authMiddleware, AuthenticatedRequest } from "../../middleware/authMiddleware";
 import { z } from "zod";
 
 const router = Router();
 const authService = new AuthService();
+const userRepository = new UserRepository();
 
 const loginSchema = z.object({
   username: z.string().min(1, "Usuário é obrigatório"),
@@ -26,7 +28,20 @@ router.post("/login", async (req: Request, res: Response) => {
 });
 
 router.get("/me", authMiddleware, async (req: AuthenticatedRequest, res: Response) => {
-  res.json({ user: req.user });
+  try {
+    if (!req.user?.id) {
+      res.status(401).json({ error: "Não autenticado" });
+      return;
+    }
+    const user = await userRepository.findById(req.user.id);
+    if (!user) {
+      res.status(401).json({ error: "Usuário não encontrado" });
+      return;
+    }
+    res.json({ user });
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
 });
 
 export default router;

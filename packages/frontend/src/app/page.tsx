@@ -256,11 +256,16 @@ export default function Home() {
   };
 
   const handleCall = (entryId: string) => {
+    const entry = entries.find(e => e.id === entryId);
+    
     if (currentRoom) {
       callPatientMutation.mutate({ entryId, roomId: currentRoom.id });
     } else {
-      setEntryToCall(entryId);
-      setShowRoomModal(true);
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Você precisa fazer check-in em uma sala primeiro",
+      });
     }
   };
 

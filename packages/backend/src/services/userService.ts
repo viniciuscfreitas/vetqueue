@@ -83,5 +83,24 @@ export class UserService {
 
     return this.repository.update(id, updateData);
   }
+
+  async checkInRoom(vetId: string, roomId: string): Promise<User> {
+    return this.repository.checkInRoom(vetId, roomId);
+  }
+
+  async checkOutRoom(vetId: string): Promise<User> {
+    return this.repository.checkOutRoom(vetId);
+  }
+
+  async keepAlive(vetId: string): Promise<void> {
+    return this.repository.updateLastActivity(vetId);
+  }
+
+  async checkInactiveVets(): Promise<void> {
+    const inactiveVets = await this.repository.findInactiveVets(45);
+    for (const vet of inactiveVets) {
+      await this.repository.checkOutRoom(vet.id);
+    }
+  }
 }
 

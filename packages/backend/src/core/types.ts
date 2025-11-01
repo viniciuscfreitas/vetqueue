@@ -45,6 +45,7 @@ export interface QueueEntry {
   assignedVetId?: string | null;
   assignedVet?: User | null;
   roomId?: string | null;
+  room?: Room | null;
   hasScheduledAppointment?: boolean;
   scheduledAt?: Date | null;
 }
@@ -55,6 +56,9 @@ export interface User {
   name: string;
   role: Role;
   createdAt: Date;
+  currentRoomId?: string | null;
+  roomCheckedInAt?: Date | null;
+  lastActivityAt?: Date | null;
 }
 
 export interface Room {
@@ -73,4 +77,11 @@ export interface AuditLog {
   entityId?: string | null;
   metadata?: any;
   timestamp: Date;
+}
+
+export interface ActiveVet {
+  vetId: string;
+  vetName: string;
+  roomId: string;
+  roomName: string;
 }

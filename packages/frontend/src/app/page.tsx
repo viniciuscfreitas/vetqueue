@@ -265,11 +265,17 @@ export default function Home() {
               {activeEntries.map((entry) => (
                 <li key={entry.id} className="flex items-center justify-between p-2 bg-muted rounded-md">
                   <span className="font-medium">{entry.patientName}</span>
-                  <span className={`text-xs px-2 py-1 rounded-full ${
-                    entry.status === Status.IN_PROGRESS 
-                      ? 'bg-purple-100 text-purple-800' 
-                      : 'bg-blue-100 text-blue-800'
-                  }`}>
+                  <span 
+                    className="text-xs px-2 py-1 rounded-full"
+                    style={{
+                      backgroundColor: entry.status === Status.IN_PROGRESS 
+                        ? 'rgba(91, 150, 183, 0.15)' 
+                        : 'rgba(37, 157, 227, 0.15)',
+                      color: entry.status === Status.IN_PROGRESS 
+                        ? '#5B96B7' 
+                        : '#259DE3',
+                    }}
+                  >
                     {entry.status === Status.IN_PROGRESS ? 'Em Atendimento' : 'Chamado'}
                   </span>
                 </li>

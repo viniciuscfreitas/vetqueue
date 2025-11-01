@@ -18,27 +18,37 @@ interface QueueCardProps {
 const statusConfig = {
   [Status.WAITING]: {
     label: "Aguardando",
-    className: "bg-amber-100 text-amber-800 border-amber-300",
+    bgColor: "rgba(183, 136, 68, 0.15)",
+    textColor: "#B78844",
+    borderColor: "#B78844",
     icon: Clock,
   },
   [Status.CALLED]: {
     label: "Chamado",
-    className: "bg-blue-100 text-blue-800 border-blue-300",
+    bgColor: "rgba(37, 157, 227, 0.15)",
+    textColor: "#259DE3",
+    borderColor: "#259DE3",
     icon: UserCircle,
   },
   [Status.IN_PROGRESS]: {
     label: "Em Atendimento",
-    className: "bg-purple-100 text-purple-800 border-purple-300",
+    bgColor: "rgba(91, 150, 183, 0.15)",
+    textColor: "#5B96B7",
+    borderColor: "#5B96B7",
     icon: Stethoscope,
   },
   [Status.COMPLETED]: {
     label: "Finalizado",
-    className: "bg-green-100 text-green-800 border-green-300",
+    bgColor: "rgba(34, 197, 94, 0.15)",
+    textColor: "#22c55e",
+    borderColor: "#22c55e",
     icon: CheckCircle2,
   },
   [Status.CANCELLED]: {
     label: "Cancelado",
-    className: "bg-gray-100 text-gray-800 border-gray-300",
+    bgColor: "rgba(107, 114, 128, 0.15)",
+    textColor: "#6b7280",
+    borderColor: "#6b7280",
     icon: XCircle,
   },
 };
@@ -78,7 +88,15 @@ export function QueueCard({
             </CardTitle>
             <div className="flex items-center gap-2 mt-1">
               <PriorityBadge priority={entry.priority} />
-              <Badge className={`${status.className} border flex items-center gap-1`} variant="outline">
+              <Badge 
+                className="border flex items-center gap-1" 
+                variant="outline"
+                style={{
+                  backgroundColor: status.bgColor,
+                  color: status.textColor,
+                  borderColor: status.borderColor,
+                }}
+              >
                 <StatusIcon className="h-3 w-3" />
                 {status.label}
               </Badge>
@@ -105,11 +123,17 @@ export function QueueCard({
           </div>
 
           {entry.status === Status.WAITING && waitTime && (
-            <div className="flex items-start gap-2 bg-amber-50 p-2 rounded-md border border-amber-200">
-              <Clock className="h-4 w-4 text-amber-700 mt-0.5 flex-shrink-0" />
+            <div 
+              className="flex items-start gap-2 p-2 rounded-md border"
+              style={{
+                backgroundColor: "rgba(183, 136, 68, 0.1)",
+                borderColor: "#B78844",
+              }}
+            >
+              <Clock className="h-4 w-4 mt-0.5 flex-shrink-0" style={{ color: '#B78844' }} />
               <div className="flex-1 min-w-0">
-                <p className="text-xs text-amber-700 font-medium">Tempo de espera</p>
-                <p className="font-bold text-amber-900">{waitTime}</p>
+                <p className="text-xs font-medium" style={{ color: '#B78844' }}>Tempo de espera</p>
+                <p className="font-bold" style={{ color: '#B78844' }}>{waitTime}</p>
               </div>
             </div>
           )}
@@ -151,7 +175,7 @@ export function QueueCard({
               <Button
                 onClick={() => onCall(entry.id)}
                 size="sm"
-                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                className="flex-1"
               >
                 Chamar
               </Button>

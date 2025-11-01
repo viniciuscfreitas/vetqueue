@@ -31,7 +31,10 @@ export function QueueHeader({
           <p className="text-sm text-muted-foreground mt-1">
             {entries.length} {entries.length === 1 ? "entrada" : "entradas"} na fila
             {waitingCount > 0 && (
-              <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+              <span 
+                className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
+                style={{ backgroundColor: 'rgba(183, 136, 68, 0.15)', color: '#B78844' }}
+              >
                 {waitingCount} aguardando
               </span>
             )}
@@ -54,7 +57,7 @@ export function QueueHeader({
           onClick={onCallNextClick}
           disabled={callNextPending || waitingCount === 0}
           size="lg"
-          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-6 text-base shadow-lg hover:shadow-xl transition-all"
+          className="font-semibold px-6 py-6 text-base shadow-lg hover:shadow-xl transition-all"
         >
           {callNextPending ? (
             "Chamando..."

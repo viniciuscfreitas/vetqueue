@@ -100,7 +100,15 @@ export function RoomSelectModal({ open, onSelect, onCancel }: RoomSelectModalPro
                         )}
                         <span>{room.name}</span>
                         {isDisabled && (
-                          <Badge variant="outline" className="ml-auto text-xs bg-red-50 text-red-700 border-red-300">
+                          <Badge 
+                            variant="outline" 
+                            className="ml-auto text-xs"
+                            style={{
+                              backgroundColor: 'rgba(214, 39, 39, 0.1)',
+                              color: '#D62727',
+                              borderColor: '#D62727',
+                            }}
+                          >
                             Ocupada
                           </Badge>
                         )}
@@ -111,11 +119,17 @@ export function RoomSelectModal({ open, onSelect, onCancel }: RoomSelectModalPro
               </SelectContent>
             </Select>
             {selectedRoom && selectedOccupation && isVet && (
-              <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-md flex items-start gap-2">
-                <AlertCircle className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
+              <div 
+                className="mt-3 p-3 border rounded-md flex items-start gap-2"
+                style={{
+                  backgroundColor: 'rgba(214, 39, 39, 0.1)',
+                  borderColor: '#D62727',
+                }}
+              >
+                <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" style={{ color: '#D62727' }} />
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-red-900">Sala ocupada</p>
-                  <p className="text-xs text-red-700 mt-0.5">
+                  <p className="text-sm font-medium" style={{ color: '#D62727' }}>Sala ocupada</p>
+                  <p className="text-xs mt-0.5" style={{ color: '#D62727' }}>
                     A sala {selectedRoom.name} está ocupada por {selectedOccupation.vetName}
                   </p>
                 </div>
@@ -138,11 +152,17 @@ export function RoomSelectModal({ open, onSelect, onCancel }: RoomSelectModalPro
               </div>
             )}
             {isRecepcao && availableRooms.length === 0 && (
-              <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-md flex items-start gap-2">
-                <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
+              <div 
+                className="mt-3 p-3 border rounded-md flex items-start gap-2"
+                style={{
+                  backgroundColor: 'rgba(183, 136, 68, 0.1)',
+                  borderColor: '#B78844',
+                }}
+              >
+                <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" style={{ color: '#B78844' }} />
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-amber-900">Nenhuma sala disponível</p>
-                  <p className="text-xs text-amber-700 mt-0.5">
+                  <p className="text-sm font-medium" style={{ color: '#B78844' }}>Nenhuma sala disponível</p>
+                  <p className="text-xs mt-0.5" style={{ color: '#B78844' }}>
                     Não há salas com veterinários ativos no momento
                   </p>
                 </div>

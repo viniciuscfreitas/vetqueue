@@ -1,6 +1,6 @@
-# VetQueue - Sistema de Fila para Hospital Veterinário
+# Fisiopet - Sistema de Fila de Atendimento
 
-Sistema de gestão de fila completo para hospital veterinário, desenvolvido com Node.js/TypeScript no backend e Next.js no frontend.
+Sistema de fila de atendimento desenvolvido com Node.js/TypeScript no backend e Next.js no frontend.
 
 ## Stack
 

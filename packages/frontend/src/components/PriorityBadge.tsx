@@ -9,17 +9,20 @@ interface PriorityBadgeProps {
 const priorityConfig = {
   [Priority.EMERGENCY]: {
     label: "Emergência",
-    className: "bg-red-600 text-white border-red-700 shadow-sm",
+    bgColor: "#D62727",
+    borderColor: "#b91c1c",
     icon: AlertTriangle,
   },
   [Priority.HIGH]: {
     label: "Alta",
-    className: "bg-orange-500 text-white border-orange-600 shadow-sm",
+    bgColor: "#B78844",
+    borderColor: "#a67c3d",
     icon: ArrowUp,
   },
   [Priority.NORMAL]: {
     label: "Normal",
-    className: "bg-blue-500 text-white border-blue-600 shadow-sm",
+    bgColor: "#259DE3",
+    borderColor: "#1e7bb8",
     icon: Minus,
   },
 };
@@ -29,7 +32,14 @@ export function PriorityBadge({ priority }: PriorityBadgeProps) {
   const Icon = config.icon;
 
   return (
-    <Badge className={`${config.className} border flex items-center gap-1 font-semibold`} variant="default">
+    <Badge 
+      className="border flex items-center gap-1 font-semibold text-white shadow-sm" 
+      variant="default"
+      style={{
+        backgroundColor: config.bgColor,
+        borderColor: config.borderColor,
+      }}
+    >
       <Icon className="h-3 w-3" />
       {config.label}
     </Badge>

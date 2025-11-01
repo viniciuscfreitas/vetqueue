@@ -5,6 +5,7 @@ const nextConfig = {
   images: {
     unoptimized: false,
     remotePatterns: [],
+    minimumCacheTTL: 60,
   },
 }
 

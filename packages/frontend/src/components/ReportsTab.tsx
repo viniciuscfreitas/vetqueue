@@ -42,7 +42,7 @@ export function ReportsTab({ authLoading }: ReportsTabProps) {
             <div className="flex flex-wrap gap-3 items-end">
               <div className="min-w-0">
                 <Label htmlFor="reportsStartDate" className="text-xs mb-1 block text-muted-foreground">
-                  Data Inicial
+                  Inicial
                 </Label>
                 <Input
                   id="reportsStartDate"
@@ -53,7 +53,7 @@ export function ReportsTab({ authLoading }: ReportsTabProps) {
               </div>
               <div className="min-w-0">
                 <Label htmlFor="reportsEndDate" className="text-xs mb-1 block text-muted-foreground">
-                  Data Final
+                  Final
                 </Label>
                 <Input
                   id="reportsEndDate"

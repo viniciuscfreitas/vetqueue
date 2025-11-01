@@ -130,9 +130,11 @@ export default function Home() {
         if (entry?.assignedVet) {
           toast({
             variant: "destructive",
-            title: "Erro",
-            description: `Veterinário ${entry.assignedVet.name} deve fazer check-in na sala primeiro`,
+            title: "Check-in necessário",
+            description: `O veterinário ${entry.assignedVet.name} precisa fazer check-in em uma sala antes de chamar este paciente. Você pode chamar o paciente diretamente selecionando uma sala.`,
           });
+          setShowRoomModal(true);
+          setEntryToCall(entryId);
         } else {
           setShowRoomModal(true);
           setEntryToCall(entryId);
@@ -140,8 +142,8 @@ export default function Home() {
       } else {
         toast({
           variant: "destructive",
-          title: "Erro",
-          description: "Você precisa fazer check-in em uma sala primeiro",
+          title: "Check-in necessário",
+          description: "Você precisa fazer check-in em uma sala antes de chamar pacientes.",
         });
       }
     }
@@ -253,16 +255,16 @@ export default function Home() {
           <AlertDialogHeader>
             <AlertDialogTitle>Cancelar entrada da fila?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta ação não pode ser desfeita. A entrada será removida permanentemente da fila.
+              O paciente será removido da fila e o status será marcado como cancelado. Esta ação pode ser visualizada no histórico de atendimentos.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Manter</AlertDialogCancel>
+            <AlertDialogCancel>Manter na fila</AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmCancel}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Cancelar entrada
+              Sim, cancelar entrada
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

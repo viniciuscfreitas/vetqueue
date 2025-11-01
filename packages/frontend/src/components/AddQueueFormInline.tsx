@@ -226,7 +226,7 @@ export function AddQueueFormInline({ onSuccess, onClose, inline = true }: AddQue
       {formData.hasScheduledAppointment && (
         <div className="space-y-2">
           <Label htmlFor="scheduledAt" className="text-sm font-medium">
-            Hora Agendada
+            Hora Agendada (hoje)
           </Label>
           <Input
             id="scheduledAt"
@@ -238,6 +238,9 @@ export function AddQueueFormInline({ onSuccess, onClose, inline = true }: AddQue
             required={formData.hasScheduledAppointment}
             className="w-full"
           />
+          <p className="text-xs text-muted-foreground">
+            A prioridade será aumentada automaticamente se o horário passou há mais de 15 minutos.
+          </p>
         </div>
       )}
 

@@ -44,7 +44,7 @@ export function RoomSelectModal({ open, onSelect, onCancel }: RoomSelectModalPro
   const roomsWithVets = Object.keys(occupations);
   const availableRooms = isRecepcao 
     ? rooms.filter(room => roomsWithVets.includes(room.id))
-    : rooms;
+    : rooms.filter(room => room.isActive);
 
   const handleConfirm = () => {
     if (selectedRoomId) {
@@ -73,7 +73,19 @@ export function RoomSelectModal({ open, onSelect, onCancel }: RoomSelectModalPro
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
       <div className="bg-background border rounded-lg shadow-xl p-6 w-full max-w-md">
-        <h2 className="text-xl font-semibold mb-4">Selecione a Sala</h2>
+        <h2 className="text-xl font-semibold mb-1">
+          {isVet ? "Fazer Check-in na Sala" : "Selecione a Sala para Chamar"}
+        </h2>
+        {isVet && (
+          <p className="text-sm text-muted-foreground mb-4">
+            Escolha uma sala disponível para atender pacientes
+          </p>
+        )}
+        {!isVet && (
+          <p className="text-sm text-muted-foreground mb-4">
+            Escolha uma sala onde o paciente será chamado
+          </p>
+        )}
         <div className="space-y-4">
           <div>
             <Label className="mb-2 block">Sala</Label>
@@ -163,7 +175,9 @@ export function RoomSelectModal({ open, onSelect, onCancel }: RoomSelectModalPro
                 <div className="flex-1">
                   <p className="text-sm font-medium" style={{ color: '#B78844' }}>Nenhuma sala disponível</p>
                   <p className="text-xs mt-0.5" style={{ color: '#B78844' }}>
-                    Não há salas com veterinários ativos no momento
+                    {rooms.length === 0 
+                      ? "Primeiro, crie salas em Administração > Salas e peça aos veterinários para fazerem check-in."
+                      : "Não há veterinários com check-in ativo no momento. Peça aos veterinários para fazerem check-in em uma sala."}
                   </p>
                 </div>
               </div>  

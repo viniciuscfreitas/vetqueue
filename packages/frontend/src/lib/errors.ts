@@ -15,6 +15,19 @@ export function getErrorMessage(error: unknown): string {
   if (error instanceof Error) {
     const axiosError = error as AxiosError<ErrorResponse>;
     
+    if (axiosError.response?.status === 401) {
+      if (axiosError.response?.data?.error === "Token não fornecido" || 
+          axiosError.response?.data?.error === "Token inválido") {
+        return "Sua sessão expirou. Por favor, faça login novamente.";
+      }
+      if (axiosError.response?.data?.error === "Não autenticado") {
+        return "Você precisa estar logado para realizar esta ação.";
+      }
+      if (typeof axiosError.response?.data?.error === "string") {
+        return axiosError.response.data.error;
+      }
+    }
+    
     if (axiosError.response?.data?.message) {
       return axiosError.response.data.message;
     }
@@ -29,8 +42,17 @@ export function getErrorMessage(error: unknown): string {
       }
       
       if (typeof errorData === "string") {
-        return errorData;
+        const friendlyMessages: Record<string, string> = {
+          "Token inválido": "Sua sessão expirou. Por favor, faça login novamente.",
+          "Token não fornecido": "Sua sessão expirou. Por favor, faça login novamente.",
+          "Não autenticado": "Você precisa estar logado para realizar esta ação.",
+        };
+        return friendlyMessages[errorData] || errorData;
       }
+    }
+    
+    if (axiosError.code === "ERR_NETWORK") {
+      return "Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente.";
     }
     
     if (axiosError.message) {

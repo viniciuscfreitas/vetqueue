@@ -1,8 +1,9 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { queueApi, ServiceType, Status } from "@/lib/api";
+import { queueApi, Status, serviceApi } from "@/lib/api";
 import { QueueList } from "@/components/QueueList";
+import { Pagination } from "@/components/Pagination";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { createErrorHandler } from "@/lib/errors";
@@ -40,7 +41,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { SERVICE_TYPE_OPTIONS } from "@/lib/constants";
 
 function getDefaultDates() {
   const today = new Date();
@@ -65,8 +65,9 @@ export default function Home() {
   const [historyEndDate, setHistoryEndDate] = useState(defaultDates.end);
   const [historyFilters, setHistoryFilters] = useState({
     tutorName: "",
-    serviceType: undefined as ServiceType | undefined,
+    serviceType: undefined as string | undefined,
   });
+  const [historyPage, setHistoryPage] = useState(1);
 
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [entryToCancel, setEntryToCancel] = useState<string | null>(null);
@@ -83,8 +84,8 @@ export default function Home() {
     enabled: !authLoading && !!user,
   });
 
-  const { data: historyEntries = [], isLoading: isLoadingHistory } = useQuery({
-    queryKey: ["queue", "history", historyStartDate, historyEndDate, historyFilters],
+  const { data: historyData, isLoading: isLoadingHistory } = useQuery({
+    queryKey: ["queue", "history", historyStartDate, historyEndDate, historyFilters, historyPage],
     queryFn: () =>
       queueApi
         .getHistory({
@@ -92,9 +93,19 @@ export default function Home() {
           endDate: historyEndDate,
           tutorName: historyFilters.tutorName || undefined,
           serviceType: historyFilters.serviceType || undefined,
+          page: historyPage,
+          limit: 20,
         })
         .then((res) => res.data),
     enabled: !authLoading && !!user,
+  });
+
+  const historyEntries = Array.isArray(historyData) ? historyData : (historyData?.entries || []);
+  const historyPaginated = Array.isArray(historyData) ? null : historyData;
+
+  const { data: services = [] } = useQuery({
+    queryKey: ["services"],
+    queryFn: () => serviceApi.list().then((res) => res.data),
   });
 
   const { data: stats, isLoading: isLoadingReports } = useQuery({
@@ -191,6 +202,10 @@ export default function Home() {
       setEntryToCancel(null);
     }
   };
+
+  useEffect(() => {
+    setHistoryPage(1);
+  }, [historyStartDate, historyEndDate, historyFilters]);
 
   const hasActiveFilters = historyFilters.tutorName || historyFilters.serviceType;
 
@@ -371,7 +386,7 @@ export default function Home() {
                         onValueChange={(value) =>
                           setHistoryFilters({
                             ...historyFilters,
-                            serviceType: value as ServiceType,
+                            serviceType: value,
                           })
                         }
                       >
@@ -379,9 +394,9 @@ export default function Home() {
                           <SelectValue placeholder="Todos" />
                         </SelectTrigger>
                         <SelectContent>
-                          {SERVICE_TYPE_OPTIONS.map((option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
+                          {services.map((service) => (
+                            <SelectItem key={service.id} value={service.name}>
+                              {service.name}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -420,24 +435,31 @@ export default function Home() {
                 ))}
               </div>
             ) : (
-              <div className="space-y-4">
-                {historyEntries.length > 0 && (
-                  <p className="text-sm text-muted-foreground">
-                    {historyEntries.length}{" "}
-                    {historyEntries.length === 1
-                      ? "atendimento encontrado"
-                      : "atendimentos encontrados"}
-                  </p>
+              <>
+                <div className="space-y-4">
+                  {historyEntries.length > 0 && (
+                    <p className="text-sm text-muted-foreground">
+                      {historyPaginated ? `${historyPaginated.total} atendimentos encontrados` : `${historyEntries.length} atendimentos encontrados`}
+                    </p>
+                  )}
+                  <QueueList
+                    entries={historyEntries}
+                    emptyMessage={
+                      hasActiveFilters
+                        ? "Nenhum atendimento encontrado com os filtros aplicados"
+                        : "Nenhum atendimento concluído no período selecionado"
+                    }
+                  />
+                </div>
+                {historyPaginated && (
+                  <Pagination
+                    currentPage={historyPaginated.page}
+                    totalPages={historyPaginated.totalPages}
+                    total={historyPaginated.total}
+                    onPageChange={setHistoryPage}
+                  />
                 )}
-                <QueueList
-                  entries={historyEntries}
-                  emptyMessage={
-                    hasActiveFilters
-                      ? "Nenhum atendimento encontrado com os filtros aplicados"
-                      : "Nenhum atendimento concluído no período selecionado"
-                  }
-                />
-              </div>
+              </>
             )}
           </TabsContent>
 

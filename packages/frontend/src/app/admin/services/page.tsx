@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { roomApi, Room } from "@/lib/api";
+import { serviceApi, Service } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,15 +14,15 @@ import { useRouter } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Header } from "@/components/Header";
 
-export default function RoomsPage() {
+export default function ServicesPage() {
   const router = useRouter();
   const { user, isLoading: authLoading } = useAuth();
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const handleError = createErrorHandler(toast);
   const [showForm, setShowForm] = useState(false);
-  const [editingRoom, setEditingRoom] = useState<Room | null>(null);
-  const [roomName, setRoomName] = useState("");
+  const [editingService, setEditingService] = useState<Service | null>(null);
+  const [serviceName, setServiceName] = useState("");
 
   useEffect(() => {
     if (!authLoading && (!user || user.role !== "RECEPCAO")) {
@@ -32,21 +32,21 @@ export default function RoomsPage() {
 
   const isAuthorized = !authLoading && !!user && user.role === "RECEPCAO";
 
-  const { data: rooms = [], isLoading } = useQuery({
-    queryKey: ["rooms", "all"],
-    queryFn: () => roomApi.listAll().then((res) => res.data),
+  const { data: services = [], isLoading } = useQuery({
+    queryKey: ["services", "all"],
+    queryFn: () => serviceApi.listAll().then((res) => res.data),
     enabled: isAuthorized,
   });
 
   const createMutation = useMutation({
-    mutationFn: (name: string) => roomApi.create(name),
+    mutationFn: (name: string) => serviceApi.create(name),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["rooms"] });
+      queryClient.invalidateQueries({ queryKey: ["services"] });
       setShowForm(false);
-      setRoomName("");
+      setServiceName("");
       toast({
         title: "Sucesso",
-        description: "Sala criada com sucesso",
+        description: "Serviço criado com sucesso",
       });
     },
     onError: handleError,
@@ -54,27 +54,27 @@ export default function RoomsPage() {
 
   const updateMutation = useMutation({
     mutationFn: (data: { id: string; name: string }) =>
-      roomApi.update(data.id, { name: data.name }),
+      serviceApi.update(data.id, { name: data.name }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["rooms"] });
-      setEditingRoom(null);
+      queryClient.invalidateQueries({ queryKey: ["services"] });
+      setEditingService(null);
       setShowForm(false);
-      setRoomName("");
+      setServiceName("");
       toast({
         title: "Sucesso",
-        description: "Sala atualizada com sucesso",
+        description: "Serviço atualizado com sucesso",
       });
     },
     onError: handleError,
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => roomApi.delete(id),
+    mutationFn: (id: string) => serviceApi.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["rooms"] });
+      queryClient.invalidateQueries({ queryKey: ["services"] });
       toast({
         title: "Sucesso",
-        description: "Sala desativada com sucesso",
+        description: "Serviço desativado com sucesso",
       });
     },
     onError: handleError,
@@ -86,23 +86,23 @@ export default function RoomsPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (editingRoom) {
-      updateMutation.mutate({ id: editingRoom.id, name: roomName });
+    if (editingService) {
+      updateMutation.mutate({ id: editingService.id, name: serviceName });
     } else {
-      createMutation.mutate(roomName);
+      createMutation.mutate(serviceName);
     }
   };
 
-  const handleEdit = (room: Room) => {
-    setEditingRoom(room);
-    setRoomName(room.name);
+  const handleEdit = (service: Service) => {
+    setEditingService(service);
+    setServiceName(service.name);
     setShowForm(true);
   };
 
   const handleCancel = () => {
     setShowForm(false);
-    setEditingRoom(null);
-    setRoomName("");
+    setEditingService(null);
+    setServiceName("");
   };
 
   return (
@@ -110,10 +110,10 @@ export default function RoomsPage() {
       <Header />
       <main className="container mx-auto px-4 py-6">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-semibold">Salas</h1>
+          <h1 className="text-2xl font-semibold">Serviços</h1>
           {!showForm && (
             <Button onClick={() => setShowForm(true)}>
-              Nova Sala
+              Novo Serviço
             </Button>
           )}
         </div>
@@ -121,16 +121,16 @@ export default function RoomsPage() {
         {showForm && (
           <Card className="mb-6">
             <CardHeader>
-              <CardTitle>{editingRoom ? "Editar Sala" : "Nova Sala"}</CardTitle>
+              <CardTitle>{editingService ? "Editar Serviço" : "Novo Serviço"}</CardTitle>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <Label>Nome da Sala</Label>
+                  <Label>Nome do Serviço</Label>
                   <Input
-                    value={roomName}
-                    onChange={(e) => setRoomName(e.target.value)}
-                    placeholder="Ex: Consultório 1"
+                    value={serviceName}
+                    onChange={(e) => setServiceName(e.target.value)}
+                    placeholder="Ex: Consulta"
                     required
                   />
                 </div>
@@ -138,9 +138,9 @@ export default function RoomsPage() {
                   <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
                     {createMutation.isPending || updateMutation.isPending 
                       ? "Salvando..." 
-                      : editingRoom 
+                      : editingService 
                       ? "Salvar Alterações" 
-                      : "Criar Sala"}
+                      : "Criar Serviço"}
                   </Button>
                   <Button type="button" variant="outline" onClick={handleCancel}>
                     Cancelar
@@ -163,23 +163,23 @@ export default function RoomsPage() {
           </div>
         ) : (
           <div className="space-y-4">
-            {rooms.map((room) => (
-              <Card key={room.id}>
+            {services.map((service) => (
+              <Card key={service.id}>
                 <CardContent className="pt-6">
                   <div className="flex justify-between items-center">
                     <div>
-                      <p className="font-semibold">{room.name}</p>
+                      <p className="font-semibold">{service.name}</p>
                       <p className="text-sm text-muted-foreground">
-                        {room.isActive ? "Ativa" : "Desativada"}
+                        {service.isActive ? "Ativo" : "Desativado"}
                       </p>
                     </div>
                     <div className="flex gap-2">
-                      {room.isActive && (
+                      {service.isActive && (
                         <>
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleEdit(room)}
+                            onClick={() => handleEdit(service)}
                           >
                             Editar
                           </Button>
@@ -187,8 +187,8 @@ export default function RoomsPage() {
                             variant="destructive"
                             size="sm"
                             onClick={() => {
-                              if (confirm(`Deseja desativar a sala ${room.name}?`)) {
-                                deleteMutation.mutate(room.id);
+                              if (confirm(`Deseja desativar o serviço ${service.name}?`)) {
+                                deleteMutation.mutate(service.id);
                               }
                             }}
                           >
@@ -207,3 +207,4 @@ export default function RoomsPage() {
     </div>
   );
 }
+

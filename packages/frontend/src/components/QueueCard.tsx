@@ -3,6 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { PriorityBadge } from "./PriorityBadge";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
+import { calculateWaitTime, calculateServiceTime } from "@/lib/utils";
+import { useState, useEffect } from "react";
 
 interface QueueCardProps {
   entry: QueueEntry;
@@ -43,6 +45,18 @@ export function QueueCard({
   const status = statusConfig[entry.status];
   const canStart = entry.status === Status.CALLED || entry.status === Status.WAITING;
   const canComplete = entry.status === Status.IN_PROGRESS || entry.status === Status.CALLED;
+  
+  const [, setCurrentTime] = useState(Date.now());
+  
+  useEffect(() => {
+    if (entry.status === Status.WAITING || entry.status === Status.IN_PROGRESS) {
+      const interval = setInterval(() => setCurrentTime(Date.now()), 1000);
+      return () => clearInterval(interval);
+    }
+  }, [entry.status]);
+  
+  const waitTime = calculateWaitTime(entry.createdAt, entry.calledAt);
+  const serviceTime = calculateServiceTime(entry.calledAt, entry.completedAt);
 
   return (
     <Card>
@@ -63,6 +77,18 @@ export function QueueCard({
           <div>
             <p className="text-sm text-muted-foreground">Serviço</p>
             <p className="font-medium">{entry.serviceType}</p>
+          </div>
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            <div>
+              <p className="text-muted-foreground">Tempo espera</p>
+              <p className="font-medium">{waitTime}</p>
+            </div>
+            {(entry.status === Status.IN_PROGRESS || entry.status === Status.COMPLETED) && (
+              <div>
+                <p className="text-muted-foreground">Tempo atendimento</p>
+                <p className="font-medium">{serviceTime}</p>
+              </div>
+            )}
           </div>
           <div>
             <Badge className={status.className} variant="outline">

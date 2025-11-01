@@ -12,10 +12,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
-import { ServiceType, Priority, queueApi, userApi, Role } from "@/lib/api";
+import { Priority, queueApi, userApi, serviceApi, Role } from "@/lib/api";
 import { useToast } from "@/components/ui/use-toast";
 import { createErrorHandler } from "@/lib/errors";
-import { SERVICE_TYPE_OPTIONS } from "@/lib/constants";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface AddQueueFormInlineProps {
@@ -30,7 +29,7 @@ export function AddQueueFormInline({ onSuccess }: AddQueueFormInlineProps) {
   const [formData, setFormData] = useState({
     patientName: "",
     tutorName: "",
-    serviceType: "" as ServiceType | "",
+    serviceType: "",
     priority: Priority.NORMAL as Priority,
     assignedVetId: "NONE",
   });
@@ -43,6 +42,11 @@ export function AddQueueFormInline({ onSuccess }: AddQueueFormInlineProps) {
     enabled: isRecepcao,
   });
 
+  const { data: services = [] } = useQuery({
+    queryKey: ["services"],
+    queryFn: () => serviceApi.list().then((res) => res.data),
+  });
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -51,14 +55,14 @@ export function AddQueueFormInline({ onSuccess }: AddQueueFormInlineProps) {
       await queueApi.add({
         patientName: formData.patientName,
         tutorName: formData.tutorName,
-        serviceType: formData.serviceType as ServiceType,
+        serviceType: formData.serviceType,
         priority: formData.priority,
         assignedVetId: formData.assignedVetId === "NONE" ? undefined : formData.assignedVetId,
       });
       setFormData({
         patientName: "",
         tutorName: "",
-        serviceType: "" as ServiceType | "",
+        serviceType: "",
         priority: Priority.NORMAL as Priority,
         assignedVetId: "NONE",
       });
@@ -114,7 +118,7 @@ export function AddQueueFormInline({ onSuccess }: AddQueueFormInlineProps) {
           <Select
             value={formData.serviceType}
             onValueChange={(value) =>
-              setFormData({ ...formData, serviceType: value as ServiceType })
+              setFormData({ ...formData, serviceType: value })
             }
             required
           >
@@ -122,9 +126,9 @@ export function AddQueueFormInline({ onSuccess }: AddQueueFormInlineProps) {
               <SelectValue placeholder="Selecione o serviço" />
             </SelectTrigger>
             <SelectContent>
-              {SERVICE_TYPE_OPTIONS.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
+              {services.map((service) => (
+                <SelectItem key={service.id} value={service.name}>
+                  {service.name}
                 </SelectItem>
               ))}
             </SelectContent>

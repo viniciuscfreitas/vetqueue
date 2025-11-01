@@ -15,6 +15,7 @@ model User {
   role      String
   createdAt DateTime     @default(now())
   entries   QueueEntry[]
+  auditLogs AuditLog[]
 
   @@map("users")
 }
@@ -27,6 +28,15 @@ model Room {
   entries   QueueEntry[]
 
   @@map("rooms")
+}
+
+model Service {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  @@map("services")
 }
 
 model QueueEntry {
@@ -51,4 +61,21 @@ model QueueEntry {
   @@index([assignedVetId])
   @@index([roomId])
 }
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  action     String
+  entityType String
+  entityId   String?
+  metadata   Json?
+  timestamp  DateTime @default(now())
+
+  @@map("audit_logs")
+  @@index([userId])
+  @@index([entityType, entityId])
+  @@index([timestamp])
+}
+
 

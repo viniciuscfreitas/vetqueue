@@ -1,5 +1,5 @@
 import { QueueRepository } from "../repositories/queueRepository";
-import { QueueEntry, Priority, Status, ServiceType } from "../core/types";
+import { QueueEntry, Priority, Status } from "../core/types";
 
 export class QueueService {
   constructor(private repository: QueueRepository) {}
@@ -7,7 +7,7 @@ export class QueueService {
   async addToQueue(data: {
     patientName: string;
     tutorName: string;
-    serviceType: ServiceType;
+    serviceType: string;
     priority?: Priority;
     assignedVetId?: string;
   }): Promise<QueueEntry> {
@@ -127,17 +127,31 @@ export class QueueService {
     startDate?: Date;
     endDate?: Date;
     tutorName?: string;
-    serviceType?: ServiceType;
+    serviceType?: string;
   }): Promise<QueueEntry[]> {
     return this.repository.listCompleted(filters);
+  }
+
+  async getHistoryPaginated(filters?: {
+    startDate?: Date;
+    endDate?: Date;
+    tutorName?: string;
+    serviceType?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<{ entries: QueueEntry[]; total: number; page: number; totalPages: number }> {
+    return this.repository.listCompletedPaginated(filters);
   }
 
   async getReports(startDate: Date, endDate: Date) {
     return this.repository.getStats(startDate, endDate);
   }
 
+  async getVetStats(vetId: string, startDate: Date, endDate: Date) {
+    return this.repository.getVetStats(vetId, startDate, endDate);
+  }
+
   async getRoomOccupations(currentVetId?: string) {
     return this.repository.getRoomOccupations(currentVetId);
   }
 }
-

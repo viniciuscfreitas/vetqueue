@@ -59,6 +59,12 @@ export function Header() {
                       Salas
                 </Link>
                   </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/admin/services" className="flex items-center cursor-pointer">
+                      <Settings className="mr-2 h-4 w-4" />
+                      Serviços
+                </Link>
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             )}

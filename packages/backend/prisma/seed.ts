@@ -51,6 +51,24 @@ async function main() {
   }
 
   console.log("✅ Created rooms:", rooms.map((r) => r.name));
+
+  const services = [
+    { name: "Consulta" },
+    { name: "Vacinação" },
+    { name: "Cirurgia" },
+    { name: "Exame" },
+    { name: "Banho e Tosa" },
+  ];
+
+  for (const service of services) {
+    await prisma.service.upsert({
+      where: { name: service.name },
+      update: {},
+      create: service,
+    });
+  }
+
+  console.log("✅ Created services:", services.map((s) => s.name));
   console.log("Seeding completed!");
 }
 

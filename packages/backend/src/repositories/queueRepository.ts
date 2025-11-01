@@ -1,5 +1,5 @@
 import { PrismaClient, Prisma, QueueEntry as PrismaQueueEntry } from "@prisma/client";
-import { QueueEntry, Priority, Status, ServiceType, User, Role } from "../core/types";
+import { QueueEntry, Priority, Status, User, Role } from "../core/types";
 
 const prisma = new PrismaClient();
 
@@ -8,7 +8,7 @@ function mapPrismaToDomain(entry: PrismaQueueEntry & { assignedVet?: { id: strin
     id: entry.id,
     patientName: entry.patientName,
     tutorName: entry.tutorName,
-    serviceType: entry.serviceType as ServiceType,
+    serviceType: entry.serviceType,
     priority: entry.priority as Priority,
     status: entry.status as Status,
     createdAt: entry.createdAt,
@@ -30,7 +30,7 @@ export class QueueRepository {
   async create(data: {
     patientName: string;
     tutorName: string;
-    serviceType: ServiceType;
+    serviceType: string;
     priority: Priority;
     assignedVetId?: string;
   }): Promise<QueueEntry> {
@@ -182,7 +182,7 @@ export class QueueRepository {
     startDate?: Date;
     endDate?: Date;
     tutorName?: string;
-    serviceType?: ServiceType;
+    serviceType?: string;
   }): Promise<QueueEntry[]> {
     const where: Prisma.QueueEntryWhereInput = {
       status: Status.COMPLETED,
@@ -215,6 +215,64 @@ export class QueueRepository {
       orderBy: { completedAt: "desc" },
     });
     return entries.map(mapPrismaToDomain);
+  }
+
+  async listCompletedPaginated(filters?: {
+    startDate?: Date;
+    endDate?: Date;
+    tutorName?: string;
+    serviceType?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<{ entries: QueueEntry[]; total: number; page: number; totalPages: number }> {
+    const page = filters?.page || 1;
+    const limit = filters?.limit || 20;
+    const skip = (page - 1) * limit;
+
+    const where: Prisma.QueueEntryWhereInput = {
+      status: Status.COMPLETED,
+    };
+
+    if (filters?.startDate || filters?.endDate) {
+      where.completedAt = {};
+      if (filters.startDate) {
+        where.completedAt.gte = filters.startDate;
+      }
+      if (filters.endDate) {
+        where.completedAt.lte = filters.endDate;
+      }
+    }
+
+    if (filters?.tutorName) {
+      where.tutorName = {
+        contains: filters.tutorName,
+        mode: "insensitive",
+      };
+    }
+
+    if (filters?.serviceType) {
+      where.serviceType = filters.serviceType;
+    }
+
+    const [entries, total] = await Promise.all([
+      prisma.queueEntry.findMany({
+        where,
+        include: { assignedVet: true },
+        orderBy: { completedAt: "desc" },
+        skip,
+        take: limit,
+      }),
+      prisma.queueEntry.count({ where }),
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      entries: entries.map(mapPrismaToDomain),
+      total,
+      page,
+      totalPages,
+    };
   }
 
   async getStats(startDate: Date, endDate: Date) {
@@ -256,6 +314,43 @@ export class QueueRepository {
       total,
       byService,
       avgWaitTimeMinutes: Math.round(avgWaitTime / 1000 / 60),
+    };
+  }
+
+  async getVetStats(vetId: string, startDate: Date, endDate: Date) {
+    const completed = await prisma.queueEntry.findMany({
+      where: {
+        status: Status.COMPLETED,
+        assignedVetId: vetId,
+        completedAt: {
+          gte: startDate,
+          lte: endDate,
+        },
+      },
+    });
+
+    let serviceTimeSum = 0;
+    let entriesWithServiceTime = 0;
+    
+    completed.forEach((entry: PrismaQueueEntry) => {
+      if (entry.calledAt && entry.completedAt) {
+        const serviceTime = entry.completedAt.getTime() - entry.calledAt.getTime();
+        serviceTimeSum += serviceTime;
+        entriesWithServiceTime++;
+      }
+    });
+
+    const avgServiceTime = entriesWithServiceTime > 0 
+      ? serviceTimeSum / entriesWithServiceTime 
+      : 0;
+
+    const days = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+    const attendancePerDay = days > 0 ? completed.length / days : 0;
+
+    return {
+      total: completed.length,
+      avgServiceTimeMinutes: Math.round(avgServiceTime / 1000 / 60),
+      attendancePerDay: Math.round(attendancePerDay * 10) / 10,
     };
   }
 

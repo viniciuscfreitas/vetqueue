@@ -25,11 +25,18 @@ export enum Role {
   RECEPCAO = "RECEPCAO",
 }
 
+export interface Service {
+  id: string;
+  name: string;
+  isActive: boolean;
+  createdAt: Date;
+}
+
 export interface QueueEntry {
   id: string;
   patientName: string;
   tutorName: string;
-  serviceType: ServiceType;
+  serviceType: string;
   priority: Priority;
   status: Status;
   createdAt: Date;
@@ -53,4 +60,15 @@ export interface Room {
   name: string;
   isActive: boolean;
   createdAt: Date;
+}
+
+export interface AuditLog {
+  id: string;
+  userId: string;
+  user?: User;
+  action: string;
+  entityType: string;
+  entityId?: string | null;
+  metadata?: any;
+  timestamp: Date;
 }

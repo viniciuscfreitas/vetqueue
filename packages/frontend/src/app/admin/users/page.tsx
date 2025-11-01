@@ -15,10 +15,9 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
 import { createErrorHandler } from "@/lib/errors";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Header } from "@/components/Header";
 
@@ -30,13 +29,6 @@ export default function UsersPage() {
   const handleError = createErrorHandler(toast);
   const [showForm, setShowForm] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      console.log("[UsersPage] Render - authLoading:", authLoading, "user:", user?.username, "role:", user?.role);
-    }
-  }, [authLoading, user]);
-
   const [formData, setFormData] = useState({
     username: "",
     password: "",

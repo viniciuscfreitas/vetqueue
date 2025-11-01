@@ -81,11 +81,18 @@ export enum Role {
   RECEPCAO = "RECEPCAO",
 }
 
+export interface Service {
+  id: string;
+  name: string;
+  isActive: boolean;
+  createdAt: string;
+}
+
 export interface QueueEntry {
   id: string;
   patientName: string;
   tutorName: string;
-  serviceType: ServiceType;
+  serviceType: string;
   priority: Priority;
   status: Status;
   createdAt: string;
@@ -117,11 +124,24 @@ export interface ReportStats {
   byService: Record<string, number>;
 }
 
+export interface PaginatedResult<T> {
+  entries: T[];
+  total: number;
+  page: number;
+  totalPages: number;
+}
+
+export interface VetStats {
+  total: number;
+  avgServiceTimeMinutes: number;
+  attendancePerDay: number;
+}
+
 export const queueApi = {
   add: (data: {
     patientName: string;
     tutorName: string;
-    serviceType: ServiceType;
+    serviceType: string;
     priority?: Priority;
     assignedVetId?: string;
   }) => api.post<QueueEntry>("/api/queue", data),
@@ -148,13 +168,20 @@ export const queueApi = {
     startDate?: string;
     endDate?: string;
     tutorName?: string;
-    serviceType?: ServiceType;
-  }) => api.get<QueueEntry[]>("/api/queue/history", { params: filters }),
+    serviceType?: string;
+    page?: number;
+    limit?: number;
+  }) => api.get<QueueEntry[] | PaginatedResult<QueueEntry>>("/api/queue/history", { params: filters }),
 
   getReports: (filters?: {
     startDate?: string;
     endDate?: string;
   }) => api.get<ReportStats>("/api/queue/reports", { params: filters }),
+
+  getVetStats: (vetId: string, filters?: {
+    startDate?: string;
+    endDate?: string;
+  }) => api.get<VetStats>(`/api/queue/vet-stats/${vetId}`, { params: filters }),
 
   getRoomOccupations: () => 
     api.get<Record<string, { vetId: string; vetName: string } | null>>("/api/queue/room-occupations"),
@@ -188,5 +215,18 @@ export const userApi = {
   
   update: (id: string, data: { name?: string; role?: Role; password?: string }) =>
     api.patch<User>(`/api/users/${id}`, data),
+};
+
+export const serviceApi = {
+  list: () => api.get<Service[]>("/api/services"),
+  
+  listAll: () => api.get<Service[]>("/api/services/all"),
+  
+  create: (name: string) => api.post<Service>("/api/services", { name }),
+  
+  update: (id: string, data: { name?: string; isActive?: boolean }) =>
+    api.patch<Service>(`/api/services/${id}`, data),
+  
+  delete: (id: string) => api.delete(`/api/services/${id}`),
 };
 

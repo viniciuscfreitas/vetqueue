@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useQuery } from "@tanstack/react-query";
 import { queueApi, Status, Priority, roomApi } from "@/lib/api";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AlertTriangle } from "lucide-react";
 
 function formatTime(date: Date): string {
   return date.toLocaleTimeString("pt-BR", {
@@ -12,6 +13,10 @@ function formatTime(date: Date): string {
     minute: "2-digit",
     second: "2-digit",
   });
+}
+
+function getWaitMinutes(createdAt: string): number {
+  return Math.floor((Date.now() - new Date(createdAt).getTime()) / 60000);
 }
 
 function playBeep() {
@@ -29,6 +34,16 @@ function playBeep() {
 
   oscillator.start(audioContext.currentTime);
   oscillator.stop(audioContext.currentTime + 0.5);
+}
+
+function playBeepSequence() {
+  try {
+    for (let i = 0; i < 3; i++) {
+      setTimeout(() => playBeep(), i * 600);
+    }
+  } catch (e) {
+    console.error("Audio failed:", e);
+  }
 }
 
 export default function DisplayPage() {
@@ -70,7 +85,7 @@ export default function DisplayPage() {
     );
 
     if (hasNewCalled && previousCalledIdsRef.current.size > 0) {
-      playBeep();
+      playBeepSequence();
     }
 
     previousCalledIdsRef.current = currentCalledIds;
@@ -90,6 +105,9 @@ export default function DisplayPage() {
                   height={130} 
                   className="h-20 w-auto md:h-28"
                   priority
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                  }}
                 />
               </div>
               <div 
@@ -150,23 +168,31 @@ export default function DisplayPage() {
                   ) : (
                     called.map((entry) => {
                       const roomName = getRoomName(entry.roomId);
+                      const isEmergency = entry.priority === Priority.EMERGENCY;
                       return (
                         <article
                           key={entry.id}
-                          className="bg-white rounded-lg p-6 shadow-md border-l-4 border-green-500 transition-all duration-300 hover:shadow-lg animate-[pulse-subtle_3s_ease-in-out_infinite]"
+                          className={`bg-white rounded-lg p-6 shadow-md border-l-4 ${
+                            isEmergency ? 'border-red-600 animate-pulse' : 'border-green-500'
+                          } transition-all duration-300 hover:shadow-lg`}
                           aria-label={`Paciente ${entry.patientName} chamado para ${roomName || 'atendimento'}`}
                         >
-                          <h3 className="text-4xl md:text-5xl font-bold mb-3 tracking-tight text-gray-900">
+                          <h3 className="text-4xl md:text-5xl font-bold mb-3 tracking-tight text-gray-900 flex items-center gap-3">
+                            {isEmergency && <AlertTriangle className="h-10 w-10 text-red-600" />}
                             {entry.patientName}
                           </h3>
                           <div className="text-2xl md:text-3xl mb-2 font-medium text-gray-700">
                             Tutor: {entry.tutorName}
                           </div>
-                          <div className="text-2xl md:text-3xl mb-2 font-semibold text-green-600">
+                          <div className={`text-2xl md:text-3xl mb-2 font-semibold ${
+                            isEmergency ? 'text-red-600' : 'text-green-600'
+                          }`}>
                             {entry.serviceType}
                           </div>
                           {roomName && (
-                            <div className="text-3xl md:text-4xl font-bold mt-3 text-green-600">
+                            <div className={`text-3xl md:text-4xl font-bold mt-3 ${
+                              isEmergency ? 'text-red-600' : 'text-green-600'
+                            }`}>
                               → {roomName}
                             </div>
                           )}
@@ -195,29 +221,50 @@ export default function DisplayPage() {
                         return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
                       });
                       
-                      return sortedWaiting.map((entry, index) => {
-                        const position = index + 1;
-                        return (
-                          <article
-                            key={entry.id}
-                            className="bg-white rounded-lg p-6 shadow-md border-l-4 border-gray-400 transition-all duration-300 hover:shadow-lg"
-                            aria-label={`${entry.patientName} na posição ${position} da fila`}
-                          >
-                            <div className="text-3xl md:text-4xl font-bold mb-3 tracking-tight text-gray-600">
-                              {position}º na fila
+                      const visibleWaiting = sortedWaiting.slice(0, 10);
+                      
+                      return (
+                        <>
+                          {waiting.length > 10 && (
+                            <div className="text-center text-xl md:text-2xl text-gray-600 py-4 bg-gray-50 rounded-lg border border-gray-200 mb-4">
+                              Mostrando 10 de {waiting.length} pacientes
                             </div>
-                            <h3 className="text-4xl md:text-5xl font-bold mb-3 tracking-tight text-gray-900">
-                              {entry.patientName}
-                            </h3>
-                            <div className="text-2xl md:text-3xl mb-2 font-medium text-gray-700">
-                              Tutor: {entry.tutorName}
-                            </div>
-                            <div className="text-2xl md:text-3xl font-semibold text-gray-600">
-                              {entry.serviceType}
-                            </div>
-                          </article>
-                        );
-                      });
+                          )}
+                          {visibleWaiting.map((entry, index) => {
+                            const position = index + 1;
+                            const isEmergency = entry.priority === Priority.EMERGENCY;
+                            const waitMinutes = getWaitMinutes(entry.createdAt);
+                            return (
+                              <article
+                                key={entry.id}
+                                className={`bg-white rounded-lg p-6 shadow-md border-l-4 ${
+                                  isEmergency ? 'border-red-600 animate-pulse' : 'border-gray-400'
+                                } transition-all duration-300 hover:shadow-lg`}
+                                aria-label={`${entry.patientName} na posição ${position} da fila`}
+                              >
+                                <div className="text-3xl md:text-4xl font-bold mb-3 tracking-tight text-gray-600">
+                                  {position}º na fila
+                                </div>
+                                <h3 className="text-4xl md:text-5xl font-bold mb-3 tracking-tight text-gray-900 flex items-center gap-3">
+                                  {isEmergency && <AlertTriangle className="h-10 w-10 text-red-600" />}
+                                  {entry.patientName}
+                                </h3>
+                                <div className="text-2xl md:text-3xl mb-2 font-medium text-gray-700">
+                                  Tutor: {entry.tutorName}
+                                </div>
+                                <div className={`text-2xl md:text-3xl font-semibold ${
+                                  isEmergency ? 'text-red-600' : 'text-gray-600'
+                                }`}>
+                                  {entry.serviceType}
+                                </div>
+                                <div className="text-xl md:text-2xl mt-3 text-gray-500">
+                                  Aguardando: {waitMinutes} min
+                                </div>
+                              </article>
+                            );
+                          })}
+                        </>
+                      );
                     })()
                   )}
                 </div>

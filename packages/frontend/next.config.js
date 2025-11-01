@@ -3,9 +3,8 @@ const nextConfig = {
   reactStrictMode: true,
   output: 'standalone',
   images: {
-    unoptimized: false,
+    unoptimized: true,
     remotePatterns: [],
-    minimumCacheTTL: 60,
   },
 }
 

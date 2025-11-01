@@ -77,13 +77,17 @@ export class QueueService {
       return null;
     }
 
-    const result = await this.repository.updateStatus(
+    let result = await this.repository.updateStatus(
       next.id,
       Status.CALLED,
       new Date(),
       undefined,
       roomId
     );
+
+    if (vetId && !next.assignedVetId) {
+      result = await this.repository.updateAssignedVet(next.id, vetId);
+    }
 
     const actualVetId = vetId || (next.assignedVetId || undefined);
     if (actualVetId) {
@@ -121,13 +125,17 @@ export class QueueService {
       }
     }
 
-    const result = await this.repository.updateStatus(
+    let result = await this.repository.updateStatus(
       id,
       Status.CALLED,
       new Date(),
       undefined,
       roomId
     );
+
+    if (vetId && !entry.assignedVetId) {
+      result = await this.repository.updateAssignedVet(id, vetId);
+    }
 
     if (vetId) {
       this.userRepository.updateLastActivity(vetId).catch(console.error);

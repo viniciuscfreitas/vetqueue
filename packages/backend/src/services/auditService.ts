@@ -20,5 +20,17 @@ export class AuditService {
   async getAuditLogsByUser(userId: string) {
     return this.repository.findByUser(userId);
   }
+
+  async getAllLogs(filters?: {
+    startDate?: Date;
+    endDate?: Date;
+    userId?: string;
+    action?: string;
+    entityType?: string;
+    page?: number;
+    limit?: number;
+  }) {
+    return this.repository.findAll(filters);
+  }
 }
 

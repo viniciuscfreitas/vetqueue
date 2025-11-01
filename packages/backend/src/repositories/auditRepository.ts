@@ -57,5 +57,63 @@ export class AuditRepository {
     });
     return logs.map(mapPrismaToDomain);
   }
+
+  async findAll(filters?: {
+    startDate?: Date;
+    endDate?: Date;
+    userId?: string;
+    action?: string;
+    entityType?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<{ logs: AuditLog[]; total: number; page: number; totalPages: number }> {
+    const page = filters?.page || 1;
+    const limit = filters?.limit || 20;
+    const skip = (page - 1) * limit;
+
+    const where: any = {};
+
+    if (filters?.startDate || filters?.endDate) {
+      where.timestamp = {};
+      if (filters.startDate) {
+        where.timestamp.gte = filters.startDate;
+      }
+      if (filters.endDate) {
+        where.timestamp.lte = filters.endDate;
+      }
+    }
+
+    if (filters?.userId) {
+      where.userId = filters.userId;
+    }
+
+    if (filters?.action) {
+      where.action = filters.action;
+    }
+
+    if (filters?.entityType) {
+      where.entityType = filters.entityType;
+    }
+
+    const [logs, total] = await Promise.all([
+      prisma.auditLog.findMany({
+        where,
+        include: { user: true },
+        orderBy: { timestamp: "desc" },
+        skip,
+        take: limit,
+      }),
+      prisma.auditLog.count({ where }),
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      logs: logs.map(mapPrismaToDomain),
+      total,
+      page,
+      totalPages,
+    };
+  }
 }
 

@@ -155,6 +155,17 @@ export interface ActiveVet {
   roomName: string;
 }
 
+export interface AuditLog {
+  id: string;
+  userId: string;
+  user?: User;
+  action: string;
+  entityType: string;
+  entityId?: string | null;
+  metadata?: any;
+  timestamp: string;
+}
+
 export const queueApi = {
   add: (data: {
     patientName: string;
@@ -260,5 +271,20 @@ export const serviceApi = {
     api.patch<Service>(`/api/services/${id}`, data),
   
   delete: (id: string) => api.delete(`/api/services/${id}`),
+};
+
+export const auditApi = {
+  getLogs: (filters?: {
+    startDate?: string;
+    endDate?: string;
+    userId?: string;
+    action?: string;
+    entityType?: string;
+    page?: number;
+    limit?: number;
+  }) => api.get<PaginatedResult<AuditLog>>("/api/queue/audit/logs", { params: filters }),
+  
+  getLogsByEntry: (entryId: string) =>
+    api.get<AuditLog[]>(`/api/queue/entry/${entryId}/audit`),
 };
 

@@ -267,10 +267,54 @@ router.get("/vet-stats/:vetId", authMiddleware, async (req: Request, res: Respon
   }
 });
 
-router.get("/entry/:id/audit", authMiddleware, async (req: Request, res: Response) => {
+router.get("/entry/:id/audit", authMiddleware, requireRole(["RECEPCAO"]), async (req: Request, res: Response) => {
   try {
     const logs = await auditService.getAuditLogsByEntity("QueueEntry", req.params.id);
     res.json(logs);
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+router.get("/audit/logs", authMiddleware, requireRole(["RECEPCAO"]), async (req: Request, res: Response) => {
+  try {
+    const filters: any = {};
+
+    if (req.query.startDate) {
+      const dateStr = req.query.startDate as string;
+      const date = new Date(dateStr + "T00:00:00-03:00");
+      filters.startDate = date;
+    }
+    if (req.query.endDate) {
+      const dateStr = req.query.endDate as string;
+      const date = new Date(dateStr + "T23:59:59.999-03:00");
+      filters.endDate = date;
+    }
+    if (req.query.userId) {
+      filters.userId = req.query.userId as string;
+    }
+    if (req.query.action) {
+      filters.action = req.query.action as string;
+    }
+    if (req.query.entityType) {
+      filters.entityType = req.query.entityType as string;
+    }
+
+    const page = req.query.page ? parseInt(req.query.page as string) : undefined;
+    const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
+
+    const result = await auditService.getAllLogs({
+      ...filters,
+      page,
+      limit,
+    });
+    
+    res.json({
+      entries: result.logs,
+      total: result.total,
+      page: result.page,
+      totalPages: result.totalPages,
+    });
   } catch (error) {
     res.status(500).json({ error: (error as Error).message });
   }

@@ -33,6 +33,7 @@ export function useQueueMutations({ user, onCallNextSuccess, onCallPatientSucces
         });
       }
       queryClient.invalidateQueries({ queryKey: ["queue"] });
+      queryClient.invalidateQueries({ queryKey: ["room-occupations"] });
       onCallNextSuccess?.();
     },
     onError: handleError,
@@ -48,6 +49,7 @@ export function useQueueMutations({ user, onCallNextSuccess, onCallPatientSucces
         description: `${data.patientName} foi chamado com sucesso`,
       });
       queryClient.invalidateQueries({ queryKey: ["queue"] });
+      queryClient.invalidateQueries({ queryKey: ["room-occupations"] });
       onCallPatientSuccess?.();
     },
     onError: handleError,

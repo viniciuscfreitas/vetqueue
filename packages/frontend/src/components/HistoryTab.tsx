@@ -86,7 +86,6 @@ export function HistoryTab({ authLoading }: HistoryTabProps) {
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
-                  className="w-[130px]"
                 />
               </div>
               <div className="min-w-0">
@@ -98,7 +97,6 @@ export function HistoryTab({ authLoading }: HistoryTabProps) {
                   type="date"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
-                  className="w-[130px]"
                 />
               </div>
               <div className="min-w-0">

@@ -166,7 +166,7 @@ export function RoomSelectModal({ open, onSelect, onCancel }: RoomSelectModalPro
                     Não há salas com veterinários ativos no momento
                   </p>
                 </div>
-              </div>
+              </div>  
             )}
           </div>
           <div className="flex gap-2 justify-end pt-2 border-t">

@@ -39,6 +39,8 @@
   input[type="date"] {
     max-width: 100%;
     box-sizing: border-box;
+    padding-right: 2.5rem;
+    width: 120px;
   }
 }
 

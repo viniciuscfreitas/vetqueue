@@ -49,7 +49,6 @@ export function ReportsTab({ authLoading }: ReportsTabProps) {
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
-                  className="w-[140px]"
                 />
               </div>
               <div className="min-w-0">
@@ -61,7 +60,6 @@ export function ReportsTab({ authLoading }: ReportsTabProps) {
                   type="date"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
-                  className="w-[140px]"
                 />
               </div>
             </div>

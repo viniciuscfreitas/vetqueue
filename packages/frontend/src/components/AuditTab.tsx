@@ -176,7 +176,6 @@ export function AuditTab({ authLoading }: AuditTabProps) {
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
-                  className="w-[130px]"
                 />
               </div>
               <div className="min-w-0">
@@ -188,7 +187,6 @@ export function AuditTab({ authLoading }: AuditTabProps) {
                   type="date"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
-                  className="w-[130px]"
                 />
               </div>
               <div className="min-w-0">

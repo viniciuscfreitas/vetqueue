@@ -215,9 +215,9 @@ export default function Home() {
   }, [isError, error]);
 
   const handleCallNext = () => {
-    const inProgressEntryLocal = entries.find((e) => e.status === Status.IN_PROGRESS);
+    const activeEntries = entries.filter((e) => e.status === Status.IN_PROGRESS || e.status === Status.CALLED);
     
-    if (inProgressEntryLocal) {
+    if (activeEntries.length > 0) {
       setCallNextConfirmDialogOpen(true);
       return;
     }
@@ -266,7 +266,7 @@ export default function Home() {
   const hasActiveFilters = historyFilters.tutorName || historyFilters.patientName || (historyFilters.serviceType && historyFilters.serviceType !== "__ALL__");
 
   const waitingCount = entries.filter((entry) => entry.status === Status.WAITING).length;
-  const inProgressEntry = entries.find((e) => e.status === Status.IN_PROGRESS);
+  const activeEntries = entries.filter((e) => e.status === Status.IN_PROGRESS || e.status === Status.CALLED);
 
   if (authLoading || !user) {
     return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;
@@ -713,11 +713,27 @@ export default function Home() {
       <AlertDialog open={callNextConfirmDialogOpen} onOpenChange={setCallNextConfirmDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Paciente em atendimento</AlertDialogTitle>
+            <AlertDialogTitle>Pacientes ativos</AlertDialogTitle>
             <AlertDialogDescription>
-              Você está atendendo <strong>{inProgressEntry?.patientName}</strong>. Deseja chamar o próximo paciente?
+              Você tem pacientes ainda não finalizados:
             </AlertDialogDescription>
           </AlertDialogHeader>
+          <div className="py-4">
+            <ul className="space-y-2">
+              {activeEntries.map((entry) => (
+                <li key={entry.id} className="flex items-center justify-between p-2 bg-muted rounded-md">
+                  <span className="font-medium">{entry.patientName}</span>
+                  <span className={`text-xs px-2 py-1 rounded-full ${
+                    entry.status === Status.IN_PROGRESS 
+                      ? 'bg-purple-100 text-purple-800' 
+                      : 'bg-blue-100 text-blue-800'
+                  }`}>
+                    {entry.status === Status.IN_PROGRESS ? 'Em Atendimento' : 'Chamado'}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={handleConfirmCallNext}>

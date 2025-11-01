@@ -47,7 +47,7 @@ function playBeepSequence() {
 }
 
 export default function DisplayPage() {
-  const [currentTime, setCurrentTime] = useState(new Date());
+  const [currentTime, setCurrentTime] = useState<Date | null>(null);
   const previousCalledIdsRef = useRef<Set<string>>(new Set());
 
   const { data: entries = [], isLoading } = useQuery({
@@ -62,6 +62,7 @@ export default function DisplayPage() {
   });
 
   useEffect(() => {
+    setCurrentTime(new Date());
     const interval = setInterval(() => {
       setCurrentTime(new Date());
     }, 1000);
@@ -110,14 +111,14 @@ export default function DisplayPage() {
                   }}
                 />
               </div>
-              <div 
+                <div 
                 className="text-4xl md:text-5xl font-mono text-gray-800 bg-gray-50 border-2 border-gray-300 px-6 py-3 rounded-lg shadow-sm tracking-tight"
                 role="timer"
                 aria-live="polite"
                 aria-atomic="true"
-                aria-label={`Horário atual: ${formatTime(currentTime)}`}
+                aria-label={`Horário atual: ${currentTime ? formatTime(currentTime) : 'carregando...'}`}
               >
-                {formatTime(currentTime)}
+                {currentTime ? formatTime(currentTime) : '--:--:--'}
               </div>
             </div>
             <h1 className="text-5xl md:text-6xl font-bold tracking-tight text-center mt-6 text-gray-800">

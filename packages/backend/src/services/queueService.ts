@@ -34,6 +34,13 @@ export class QueueService {
       }
     }
 
+    if (!vetId && roomId) {
+      const hasVet = await this.repository.hasVetInRoom(roomId);
+      if (!hasVet) {
+        throw new Error("A sala selecionada não possui veterinário ativo");
+      }
+    }
+
     const next = vetId
       ? await this.repository.findNextWaiting(vetId)
       : await this.repository.findNextWaitingGeneral();
@@ -69,6 +76,13 @@ export class QueueService {
       }
     }
 
+    if (!vetId && roomId) {
+      const hasVet = await this.repository.hasVetInRoom(roomId);
+      if (!hasVet) {
+        throw new Error("A sala selecionada não possui veterinário ativo");
+      }
+    }
+
     return this.repository.updateStatus(
       id,
       Status.CALLED,
@@ -78,7 +92,7 @@ export class QueueService {
     );
   }
 
-  async startService(id: string): Promise<QueueEntry> {
+  async startService(id: string, userRole?: string): Promise<QueueEntry> {
     const entry = await this.repository.findById(id);
 
     if (!entry) {
@@ -89,6 +103,10 @@ export class QueueService {
       throw new Error("Apenas entradas chamadas ou aguardando podem iniciar atendimento");
     }
 
+    if (userRole === "RECEPCAO" && !entry.assignedVetId) {
+      throw new Error("Não é possível iniciar atendimento sem veterinário atribuído");
+    }
+
     if (entry.status === Status.WAITING && !entry.calledAt) {
       return this.repository.updateStatus(id, Status.IN_PROGRESS, new Date());
     }
@@ -96,7 +114,7 @@ export class QueueService {
     return this.repository.updateStatus(id, Status.IN_PROGRESS);
   }
 
-  async completeService(id: string): Promise<QueueEntry> {
+  async completeService(id: string, userRole?: string): Promise<QueueEntry> {
     const entry = await this.repository.findById(id);
 
     if (!entry) {
@@ -105,6 +123,10 @@ export class QueueService {
 
     if (entry.status === Status.COMPLETED) {
       throw new Error("Atendimento já foi finalizado");
+    }
+
+    if (userRole === "RECEPCAO" && !entry.assignedVetId) {
+      throw new Error("Não é possível finalizar atendimento sem veterinário atribuído");
     }
 
     return this.repository.updateStatus(id, Status.COMPLETED, undefined, new Date());

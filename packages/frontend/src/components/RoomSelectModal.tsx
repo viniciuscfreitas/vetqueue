@@ -26,6 +26,7 @@ export function RoomSelectModal({ open, onSelect, onCancel }: RoomSelectModalPro
   const [selectedRoomId, setSelectedRoomId] = useState<string>("");
   const { user } = useAuth();
   const isVet = user?.role === "VET";
+  const isRecepcao = user?.role === "RECEPCAO";
   
   const { data: rooms = [] } = useQuery({
     queryKey: ["rooms"],
@@ -35,10 +36,15 @@ export function RoomSelectModal({ open, onSelect, onCancel }: RoomSelectModalPro
   const { data: occupations = {} } = useQuery({
     queryKey: ["room-occupations"],
     queryFn: () => queueApi.getRoomOccupations().then((res) => res.data),
-    enabled: isVet && open,
+    enabled: (isVet || isRecepcao) && open,
   });
 
   if (!open) return null;
+
+  const roomsWithVets = Object.keys(occupations);
+  const availableRooms = isRecepcao 
+    ? rooms.filter(room => roomsWithVets.includes(room.id))
+    : rooms;
 
   const handleConfirm = () => {
     if (selectedRoomId) {
@@ -46,20 +52,23 @@ export function RoomSelectModal({ open, onSelect, onCancel }: RoomSelectModalPro
       if (isVet && occupation) {
         return;
       }
+      if (isRecepcao && !occupations[selectedRoomId]) {
+        return;
+      }
       onSelect(selectedRoomId);
     }
   };
 
-  const sortedRooms = [...rooms].sort((a, b) => {
+  const sortedRooms = [...availableRooms].sort((a, b) => {
     const aOccupied = isVet && !!occupations[a.id];
     const bOccupied = isVet && !!occupations[b.id];
     if (aOccupied === bOccupied) return a.name.localeCompare(b.name);
     return aOccupied ? 1 : -1;
   });
 
-  const selectedRoom = rooms.find(r => r.id === selectedRoomId);
+  const selectedRoom = availableRooms.find(r => r.id === selectedRoomId);
   const selectedOccupation = selectedRoom ? occupations[selectedRoomId] : null;
-  const isSelectedDisabled = isVet && !!selectedOccupation;
+  const isSelectedDisabled = (isVet && !!selectedOccupation) || (isRecepcao && !selectedOccupation);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
@@ -112,12 +121,31 @@ export function RoomSelectModal({ open, onSelect, onCancel }: RoomSelectModalPro
                 </div>
               </div>
             )}
-            {selectedRoom && !selectedOccupation && (
+            {selectedRoom && !selectedOccupation && isVet && (
               <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-md flex items-center gap-2">
                 <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0" />
                 <p className="text-sm font-medium text-green-900">
                   Sala {selectedRoom.name} disponível
                 </p>
+              </div>
+            )}
+            {selectedRoom && selectedOccupation && isRecepcao && (
+              <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-md flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0" />
+                <p className="text-sm font-medium text-green-900">
+                  Sala {selectedRoom.name} com veterinário {selectedOccupation.vetName}
+                </p>
+              </div>
+            )}
+            {isRecepcao && availableRooms.length === 0 && (
+              <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-md flex items-start gap-2">
+                <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-amber-900">Nenhuma sala disponível</p>
+                  <p className="text-xs text-amber-700 mt-0.5">
+                    Não há salas com veterinários ativos no momento
+                  </p>
+                </div>
               </div>
             )}
           </div>

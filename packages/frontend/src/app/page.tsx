@@ -231,11 +231,13 @@ export default function Home() {
   }, [isError, error]);
 
   const handleCallNext = () => {
-    const activeEntries = entries.filter((e) => e.status === Status.IN_PROGRESS || e.status === Status.CALLED);
-    
-    if (activeEntries.length > 0) {
-      setCallNextConfirmDialogOpen(true);
-      return;
+    if (user?.role !== Role.RECEPCAO) {
+      const activeEntries = entries.filter((e) => e.status === Status.IN_PROGRESS || e.status === Status.CALLED);
+      
+      if (activeEntries.length > 0) {
+        setCallNextConfirmDialogOpen(true);
+        return;
+      }
     }
 
     if (currentRoom) {

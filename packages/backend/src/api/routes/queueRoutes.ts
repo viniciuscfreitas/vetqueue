@@ -128,7 +128,8 @@ router.post("/:id/claim", authMiddleware, requireRole(["VET"]), async (req: Auth
 
 router.patch("/:id/start", authMiddleware, async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const entry = await queueService.startService(req.params.id);
+    const userRole = req.user?.role;
+    const entry = await queueService.startService(req.params.id, userRole);
     if (req.user) {
       auditService.log({
         userId: req.user.id,
@@ -145,7 +146,8 @@ router.patch("/:id/start", authMiddleware, async (req: AuthenticatedRequest, res
 
 router.patch("/:id/complete", authMiddleware, async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const entry = await queueService.completeService(req.params.id);
+    const userRole = req.user?.role;
+    const entry = await queueService.completeService(req.params.id, userRole);
     if (req.user) {
       auditService.log({
         userId: req.user.id,

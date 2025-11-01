@@ -486,6 +486,19 @@ export class QueueRepository {
     };
   }
 
+  async hasVetInRoom(roomId: string): Promise<boolean> {
+    const entry = await prisma.queueEntry.findFirst({
+      where: {
+        roomId,
+        assignedVetId: { not: null },
+        status: {
+          in: [Status.CALLED, Status.IN_PROGRESS],
+        },
+      },
+    });
+    return !!entry;
+  }
+
   async getRoomOccupations(currentVetId?: string): Promise<Record<string, { vetId: string; vetName: string } | null>> {
     const occupiedEntries = await prisma.queueEntry.findMany({
       where: {

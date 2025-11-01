@@ -19,6 +19,8 @@ const addQueueSchema = z.object({
   serviceType: z.string().min(1, "Tipo de serviço é obrigatório"),
   priority: z.nativeEnum(Priority).optional(),
   assignedVetId: z.string().optional(),
+  hasScheduledAppointment: z.boolean().optional(),
+  scheduledAt: z.string().datetime().optional(),
 });
 
 const callNextSchema = z.object({
@@ -34,7 +36,10 @@ const callPatientSchema = z.object({
 router.post("/", authMiddleware, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const data = addQueueSchema.parse(req.body);
-    const entry = await queueService.addToQueue(data);
+    const entry = await queueService.addToQueue({
+      ...data,
+      scheduledAt: data.scheduledAt ? new Date(data.scheduledAt) : undefined,
+    });
     if (req.user) {
       auditService.log({
         userId: req.user.id,

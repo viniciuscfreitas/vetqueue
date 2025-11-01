@@ -10,6 +10,8 @@ export class QueueService {
     serviceType: string;
     priority?: Priority;
     assignedVetId?: string;
+    hasScheduledAppointment?: boolean;
+    scheduledAt?: Date;
   }): Promise<QueueEntry> {
     const priority = data.priority || Priority.NORMAL;
 
@@ -23,6 +25,8 @@ export class QueueService {
       serviceType: data.serviceType,
       priority,
       assignedVetId: data.assignedVetId,
+      hasScheduledAppointment: data.hasScheduledAppointment,
+      scheduledAt: data.scheduledAt,
     });
   }
 

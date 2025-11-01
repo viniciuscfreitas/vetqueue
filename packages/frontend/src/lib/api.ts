@@ -101,6 +101,8 @@ export interface QueueEntry {
   assignedVetId?: string | null;
   assignedVet?: User | null;
   roomId?: string | null;
+  hasScheduledAppointment?: boolean;
+  scheduledAt?: string | null;
 }
 
 export interface User {
@@ -149,6 +151,8 @@ export const queueApi = {
     serviceType: string;
     priority?: Priority;
     assignedVetId?: string;
+    hasScheduledAppointment?: boolean;
+    scheduledAt?: string;
   }) => api.post<QueueEntry>("/api/queue", data),
 
   listActive: (vetId?: string | null) => 

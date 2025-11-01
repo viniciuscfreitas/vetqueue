@@ -23,6 +23,8 @@ function mapPrismaToDomain(entry: PrismaQueueEntry & { assignedVet?: { id: strin
       createdAt: entry.assignedVet.createdAt,
     } : null,
     roomId: entry.roomId,
+    hasScheduledAppointment: entry.hasScheduledAppointment,
+    scheduledAt: entry.scheduledAt,
   };
 }
 
@@ -33,6 +35,8 @@ export class QueueRepository {
     serviceType: string;
     priority: Priority;
     assignedVetId?: string;
+    hasScheduledAppointment?: boolean;
+    scheduledAt?: Date;
   }): Promise<QueueEntry> {
     const entry = await prisma.queueEntry.create({
       data: {
@@ -42,6 +46,8 @@ export class QueueRepository {
         priority: data.priority,
         status: Status.WAITING,
         assignedVetId: data.assignedVetId,
+        hasScheduledAppointment: data.hasScheduledAppointment ?? false,
+        scheduledAt: data.scheduledAt,
       },
       include: { assignedVet: true },
     });

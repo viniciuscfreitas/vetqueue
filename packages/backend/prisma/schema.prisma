@@ -40,19 +40,21 @@ model Service {
 }
 
 model QueueEntry {
-  id            String   @id @default(uuid())
-  patientName   String
-  tutorName     String
-  serviceType   String
-  priority      Int
-  status        String
-  createdAt     DateTime @default(now())
-  calledAt      DateTime?
-  completedAt   DateTime?
-  assignedVetId String?
-  assignedVet   User?    @relation(fields: [assignedVetId], references: [id])
-  roomId        String?
-  room          Room?    @relation(fields: [roomId], references: [id])
+  id                    String    @id @default(uuid())
+  patientName           String
+  tutorName             String
+  serviceType           String
+  priority              Int
+  status                String
+  createdAt             DateTime  @default(now())
+  calledAt              DateTime?
+  completedAt           DateTime?
+  assignedVetId         String?
+  assignedVet           User?     @relation(fields: [assignedVetId], references: [id])
+  roomId                String?
+  room                  Room?     @relation(fields: [roomId], references: [id])
+  hasScheduledAppointment Boolean @default(false)
+  scheduledAt           DateTime?
 
   @@map("queue_entries")
   @@index([status])

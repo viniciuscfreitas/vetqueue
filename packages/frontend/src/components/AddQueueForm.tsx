@@ -27,6 +27,8 @@ export function AddQueueForm() {
     tutorName: "",
     serviceType: "" as ServiceType | "",
     priority: Priority.NORMAL as Priority,
+    hasScheduledAppointment: false,
+    scheduledAt: "",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -39,6 +41,8 @@ export function AddQueueForm() {
         tutorName: formData.tutorName,
         serviceType: formData.serviceType as ServiceType,
         priority: formData.priority,
+        hasScheduledAppointment: formData.hasScheduledAppointment,
+        scheduledAt: formData.hasScheduledAppointment && formData.scheduledAt ? new Date(formData.scheduledAt).toISOString() : undefined,
       });
       router.push("/");
       router.refresh();
@@ -117,6 +121,40 @@ export function AddQueueForm() {
           </SelectContent>
         </Select>
       </div>
+
+      <div className="flex items-center space-x-2">
+        <input
+          type="checkbox"
+          id="hasScheduledAppointment"
+          checked={formData.hasScheduledAppointment}
+          onChange={(e) =>
+            setFormData({
+              ...formData,
+              hasScheduledAppointment: e.target.checked,
+              scheduledAt: e.target.checked ? formData.scheduledAt : "",
+            })
+          }
+          className="h-4 w-4 rounded border-gray-300"
+        />
+        <Label htmlFor="hasScheduledAppointment" className="font-normal cursor-pointer">
+          Tem hora marcada
+        </Label>
+      </div>
+
+      {formData.hasScheduledAppointment && (
+        <div>
+          <Label htmlFor="scheduledAt">Hora Agendada</Label>
+          <Input
+            id="scheduledAt"
+            type="datetime-local"
+            value={formData.scheduledAt}
+            onChange={(e) =>
+              setFormData({ ...formData, scheduledAt: e.target.value })
+            }
+            required={formData.hasScheduledAppointment}
+          />
+        </div>
+      )}
 
       <Button type="submit" disabled={loading} className="w-full">
         {loading ? "Adicionando..." : "Adicionar à Fila"}

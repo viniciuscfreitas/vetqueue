@@ -34,6 +34,8 @@ export function AddQueueFormInline({ onSuccess, onClose, inline = true }: AddQue
     serviceType: "",
     priority: Priority.NORMAL as Priority,
     assignedVetId: "NONE",
+    hasScheduledAppointment: false,
+    scheduledAt: "",
   });
 
   const isRecepcao = user?.role === Role.RECEPCAO;
@@ -60,6 +62,8 @@ export function AddQueueFormInline({ onSuccess, onClose, inline = true }: AddQue
         serviceType: formData.serviceType,
         priority: formData.priority,
         assignedVetId: formData.assignedVetId === "NONE" ? undefined : formData.assignedVetId,
+        hasScheduledAppointment: formData.hasScheduledAppointment,
+        scheduledAt: formData.hasScheduledAppointment && formData.scheduledAt ? new Date(formData.scheduledAt).toISOString() : undefined,
       });
       setFormData({
         patientName: "",
@@ -67,6 +71,8 @@ export function AddQueueFormInline({ onSuccess, onClose, inline = true }: AddQue
         serviceType: "",
         priority: Priority.NORMAL as Priority,
         assignedVetId: "NONE",
+        hasScheduledAppointment: false,
+        scheduledAt: "",
       });
       toast({
         title: "Sucesso",
@@ -191,6 +197,43 @@ export function AddQueueFormInline({ onSuccess, onClose, inline = true }: AddQue
           </div>
         )}
       </div>
+
+      <div className="flex items-center space-x-2">
+        <input
+          type="checkbox"
+          id="hasScheduledAppointment"
+          checked={formData.hasScheduledAppointment}
+          onChange={(e) =>
+            setFormData({
+              ...formData,
+              hasScheduledAppointment: e.target.checked,
+              scheduledAt: e.target.checked ? formData.scheduledAt : "",
+            })
+          }
+          className="h-4 w-4 rounded border-gray-300"
+        />
+        <Label htmlFor="hasScheduledAppointment" className="text-sm font-normal cursor-pointer">
+          Tem hora marcada
+        </Label>
+      </div>
+
+      {formData.hasScheduledAppointment && (
+        <div className="space-y-2">
+          <Label htmlFor="scheduledAt" className="text-sm font-medium">
+            Hora Agendada
+          </Label>
+          <Input
+            id="scheduledAt"
+            type="datetime-local"
+            value={formData.scheduledAt}
+            onChange={(e) =>
+              setFormData({ ...formData, scheduledAt: e.target.value })
+            }
+            required={formData.hasScheduledAppointment}
+            className="w-full"
+          />
+        </div>
+      )}
 
       <div className="flex justify-end">
         <Button 

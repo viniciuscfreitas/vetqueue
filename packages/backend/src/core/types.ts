@@ -45,6 +45,8 @@ export interface QueueEntry {
   assignedVetId?: string | null;
   assignedVet?: User | null;
   roomId?: string | null;
+  hasScheduledAppointment?: boolean;
+  scheduledAt?: Date | null;
 }
 
 export interface User {

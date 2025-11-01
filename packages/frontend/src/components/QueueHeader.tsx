@@ -24,30 +24,32 @@ export function QueueHeader({
   callNextPending,
 }: QueueHeaderProps) {
   return (
-    <div className="flex items-center justify-between gap-4">
-      <div>
+    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="w-full sm:w-auto">
         <h2 className="text-xl font-semibold">Fila Atual</h2>
         {!isLoading && !isError && (
-          <p className="text-sm text-muted-foreground mt-1">
-            {entries.length} {entries.length === 1 ? "entrada" : "entradas"} na fila
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 mt-1">
+            <p className="text-sm text-muted-foreground">
+              {entries.length} {entries.length === 1 ? "entrada" : "entradas"} na fila
+            </p>
             {waitingCount > 0 && (
               <span 
-                className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
+                className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium w-fit"
                 style={{ backgroundColor: 'rgba(183, 136, 68, 0.15)', color: '#B78844' }}
               >
                 {waitingCount} aguardando
               </span>
             )}
-          </p>
+          </div>
         )}
       </div>
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2 w-full sm:w-auto">
         {userRole === Role.RECEPCAO && (
           <Button
             onClick={onAddClick}
             variant="outline"
             size="lg"
-            className="px-6 py-6 text-base"
+            className="flex-1 sm:flex-initial px-6 py-6 text-base"
           >
             <Plus className="mr-2 h-5 w-5" />
             Adicionar
@@ -57,12 +59,12 @@ export function QueueHeader({
           onClick={onCallNextClick}
           disabled={callNextPending || waitingCount === 0}
           size="lg"
-          className="font-semibold px-6 py-6 text-base shadow-lg hover:shadow-xl transition-all"
+          className="font-semibold flex-1 sm:flex-initial px-6 py-6 text-base shadow-lg hover:shadow-xl transition-all"
         >
           {callNextPending ? (
             "Chamando..."
           ) : waitingCount > 0 ? (
-            <span className="flex items-center gap-2">
+            <span className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2">
               <span>Chamar Próximo</span>
               <span className="bg-white/20 px-2 py-0.5 rounded-full text-sm font-bold">
                 {waitingCount}

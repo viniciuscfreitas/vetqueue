@@ -36,6 +36,12 @@ const actionConfig = {
     borderColor: "#FFC107",
     textColor: "#FFC107",
   },
+  CALL_DIRECT: {
+    label: "Chamado Direto",
+    bgColor: "rgba(255, 193, 7, 0.15)",
+    borderColor: "#FFC107",
+    textColor: "#FFC107",
+  },
   START: {
     label: "Iniciado",
     bgColor: "rgba(156, 39, 176, 0.15)",
@@ -60,6 +66,10 @@ const actionConfig = {
     borderColor: "#16C35E",
     textColor: "#16C35E",
   },
+};
+
+const entityTypeConfig = {
+  QueueEntry: "Fila",
 };
 
 function formatDateTime(timestamp: string): string {
@@ -138,6 +148,10 @@ export function AuditTab({ authLoading }: AuditTabProps) {
         {config.label}
       </Badge>
     );
+  };
+
+  const getEntityTypeLabel = (entityType: string) => {
+    return entityTypeConfig[entityType as keyof typeof entityTypeConfig] || entityType;
   };
 
   return (
@@ -282,7 +296,7 @@ export function AuditTab({ authLoading }: AuditTabProps) {
                           <div className="flex items-center gap-2 flex-wrap">
                             {getActionBadge(entry.action)}
                             <span className="text-sm text-muted-foreground">
-                              {entry.entityType}
+                              {getEntityTypeLabel(entry.entityType)}
                             </span>
                           </div>
                           <span className="text-sm text-muted-foreground">

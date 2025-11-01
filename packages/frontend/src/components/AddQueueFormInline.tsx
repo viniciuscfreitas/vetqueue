@@ -79,9 +79,9 @@ export function AddQueueFormInline({ onSuccess }: AddQueueFormInlineProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="bg-card p-4 rounded-lg border space-y-4">
-      <div className="grid grid-cols-1 sm:grid-cols-8 gap-4">
-        <div className="sm:col-span-2 space-y-2">
+    <form onSubmit={handleSubmit} className="bg-card p-5 rounded-lg border space-y-5">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-2">
           <Label htmlFor="patientName" className="text-sm font-medium">
             Paciente
           </Label>
@@ -93,10 +93,11 @@ export function AddQueueFormInline({ onSuccess }: AddQueueFormInlineProps) {
             }
             required
             placeholder="Nome do paciente"
+            className="w-full"
           />
         </div>
 
-        <div className="sm:col-span-2 space-y-2">
+        <div className="space-y-2">
           <Label htmlFor="tutorName" className="text-sm font-medium">
             Tutor
           </Label>
@@ -108,10 +109,13 @@ export function AddQueueFormInline({ onSuccess }: AddQueueFormInlineProps) {
             }
             required
             placeholder="Nome do tutor"
+            className="w-full"
           />
         </div>
+      </div>
 
-        <div className="sm:col-span-2 space-y-2">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="space-y-2">
           <Label htmlFor="serviceType" className="text-sm font-medium">
             Serviço
           </Label>
@@ -135,7 +139,7 @@ export function AddQueueFormInline({ onSuccess }: AddQueueFormInlineProps) {
           </Select>
         </div>
 
-        <div className="sm:col-span-1 space-y-2">
+        <div className="space-y-2">
           <Label htmlFor="priority" className="text-sm font-medium">
             Prioridade
           </Label>
@@ -158,34 +162,43 @@ export function AddQueueFormInline({ onSuccess }: AddQueueFormInlineProps) {
           </Select>
         </div>
 
-        <div className="sm:col-span-1 space-y-2">
-          <Label htmlFor="assignedVetId" className="text-sm font-medium">
-            Veterinário
-          </Label>
-          <Select
-            value={formData.assignedVetId}
-            onValueChange={(value) =>
-              setFormData({ ...formData, assignedVetId: value })
-            }
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Fila geral" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="NONE">Fila geral</SelectItem>
-              {vets.map((vet) => (
-                <SelectItem key={vet.id} value={vet.id}>
-                  {vet.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        {isRecepcao && (
+          <div className="space-y-2">
+            <Label htmlFor="assignedVetId" className="text-sm font-medium">
+              Veterinário
+            </Label>
+            <Select
+              value={formData.assignedVetId}
+              onValueChange={(value) =>
+                setFormData({ ...formData, assignedVetId: value })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Fila geral" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="NONE">Fila geral</SelectItem>
+                {vets.map((vet) => (
+                  <SelectItem key={vet.id} value={vet.id}>
+                    {vet.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
       </div>
 
-      <Button type="submit" disabled={loading} className="w-full">
-        {loading ? "Adicionando..." : "Adicionar à Fila"}
-      </Button>
+      <div className="flex justify-end">
+        <Button 
+          type="submit" 
+          disabled={loading} 
+          className="w-full md:w-auto"
+          size="lg"
+        >
+          {loading ? "Adicionando..." : "Adicionar à Fila"}
+        </Button>
+      </div>
     </form>
   );
 }

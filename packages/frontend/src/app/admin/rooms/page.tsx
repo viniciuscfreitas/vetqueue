@@ -119,11 +119,21 @@ export default function RoomsPage() {
         </div>
 
         {showForm && (
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle>{editingRoom ? "Editar Sala" : "Nova Sala"}</CardTitle>
+          <Card className="mb-6 border-2 transition-all">
+            <CardHeader className="bg-muted/50">
+              <div className="flex items-center justify-between">
+                <CardTitle>{editingRoom ? "Editar Sala" : "Nova Sala"}</CardTitle>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={handleCancel}
+                  className="h-8 w-8 p-0"
+                >
+                  ×
+                </Button>
+              </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-6">
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <Label>Nome da Sala</Label>

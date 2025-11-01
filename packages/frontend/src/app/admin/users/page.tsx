@@ -152,11 +152,21 @@ export default function UsersPage() {
         </div>
 
         {showForm && (
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle>{editingUser ? "Editar Usuário" : "Novo Usuário"}</CardTitle>
+          <Card className="mb-6 border-2 transition-all">
+            <CardHeader className="bg-muted/50">
+              <div className="flex items-center justify-between">
+                <CardTitle>{editingUser ? "Editar Usuário" : "Novo Usuário"}</CardTitle>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={handleCancel}
+                  className="h-8 w-8 p-0"
+                >
+                  ×
+                </Button>
+              </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-6">
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>

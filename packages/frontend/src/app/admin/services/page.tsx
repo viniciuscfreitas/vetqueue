@@ -119,11 +119,21 @@ export default function ServicesPage() {
         </div>
 
         {showForm && (
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle>{editingService ? "Editar Serviço" : "Novo Serviço"}</CardTitle>
+          <Card className="mb-6 border-2 transition-all">
+            <CardHeader className="bg-muted/50">
+              <div className="flex items-center justify-between">
+                <CardTitle>{editingService ? "Editar Serviço" : "Novo Serviço"}</CardTitle>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={handleCancel}
+                  className="h-8 w-8 p-0"
+                >
+                  ×
+                </Button>
+              </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-6">
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <Label>Nome do Serviço</Label>

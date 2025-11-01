@@ -52,6 +52,34 @@ function getDefaultDates() {
   };
 }
 
+function getDateRangePreset(preset: string) {
+  const today = new Date();
+  const end = today.toISOString().split("T")[0];
+  let start = new Date();
+  
+  switch (preset) {
+    case "today":
+      start = today;
+      break;
+    case "7days":
+      start.setDate(today.getDate() - 7);
+      break;
+    case "30days":
+      start.setDate(today.getDate() - 30);
+      break;
+    case "90days":
+      start.setDate(today.getDate() - 90);
+      break;
+    default:
+      return getDefaultDates();
+  }
+  
+  return {
+    start: start.toISOString().split("T")[0],
+    end,
+  };
+}
+
 export default function Home() {
   const router = useRouter();
   const { user, currentRoom, isLoading: authLoading } = useAuth();
@@ -65,7 +93,7 @@ export default function Home() {
   const [historyEndDate, setHistoryEndDate] = useState(defaultDates.end);
   const [historyFilters, setHistoryFilters] = useState({
     tutorName: "",
-    serviceType: "",
+    serviceType: "__ALL__",
   });
   const [historyPage, setHistoryPage] = useState(1);
 
@@ -92,7 +120,7 @@ export default function Home() {
           startDate: historyStartDate,
           endDate: historyEndDate,
           tutorName: historyFilters.tutorName || undefined,
-          serviceType: historyFilters.serviceType || undefined,
+          serviceType: historyFilters.serviceType === "__ALL__" ? undefined : historyFilters.serviceType,
           page: historyPage,
           limit: 20,
         })
@@ -129,6 +157,12 @@ export default function Home() {
           title: "Fila vazia",
           description: data.message,
         });
+      } else {
+        toast({
+          variant: "default",
+          title: "Paciente chamado",
+          description: `${data.patientName} foi chamado com sucesso`,
+        });
       }
       queryClient.invalidateQueries({ queryKey: ["queue"] });
       setShowRoomModal(false);
@@ -139,6 +173,11 @@ export default function Home() {
   const startServiceMutation = useMutation({
     mutationFn: (id: string) => queueApi.startService(id).then((res) => res.data),
     onSuccess: () => {
+      toast({
+        variant: "default",
+        title: "Atendimento iniciado",
+        description: "O atendimento foi iniciado com sucesso",
+      });
       queryClient.invalidateQueries({ queryKey: ["queue"] });
     },
     onError: handleError,
@@ -148,6 +187,11 @@ export default function Home() {
     mutationFn: (id: string) =>
       queueApi.completeService(id).then((res) => res.data),
     onSuccess: () => {
+      toast({
+        variant: "default",
+        title: "Atendimento finalizado",
+        description: "O atendimento foi concluído com sucesso",
+      });
       queryClient.invalidateQueries({ queryKey: ["queue"] });
     },
     onError: handleError,
@@ -156,6 +200,11 @@ export default function Home() {
   const cancelEntryMutation = useMutation({
     mutationFn: (id: string) => queueApi.cancelEntry(id).then((res) => res.data),
     onSuccess: () => {
+      toast({
+        variant: "default",
+        title: "Entrada cancelada",
+        description: "A entrada foi removida da fila",
+      });
       queryClient.invalidateQueries({ queryKey: ["queue"] });
     },
     onError: handleError,
@@ -207,7 +256,7 @@ export default function Home() {
     setHistoryPage(1);
   }, [historyStartDate, historyEndDate, historyFilters]);
 
-  const hasActiveFilters = historyFilters.tutorName || historyFilters.serviceType;
+  const hasActiveFilters = historyFilters.tutorName || (historyFilters.serviceType && historyFilters.serviceType !== "__ALL__");
 
   const waitingCount = entries.filter((entry) => entry.status === Status.WAITING).length;
 
@@ -219,8 +268,8 @@ export default function Home() {
     <div className="min-h-screen bg-background">
       <Header />
 
-      <main className="container mx-auto px-4 py-6">
-        <Tabs defaultValue="queue" className="space-y-6">
+      <main className="container mx-auto px-4 py-8">
+        <Tabs defaultValue="queue" className="space-y-8">
           <TabsList className={`grid w-full h-auto ${user?.role === Role.RECEPCAO ? 'grid-cols-3' : 'grid-cols-1'}`}>
             <TabsTrigger
               value="queue"
@@ -246,14 +295,19 @@ export default function Home() {
             )}
           </TabsList>
 
-          <TabsContent value="queue" className="space-y-6">
+          <TabsContent value="queue" className="space-y-6 mt-6">
             {user?.role === Role.RECEPCAO && (
-              <div className="space-y-4">
+              <div className="space-y-5">
                 <div>
                   <h2 className="text-xl font-semibold mb-4">Adicionar à Fila</h2>
                   <AddQueueFormInline
                     onSuccess={() => {
                       queryClient.invalidateQueries({ queryKey: ["queue"] });
+                      toast({
+                        variant: "default",
+                        title: "Sucesso",
+                        description: "Entrada adicionada à fila com sucesso",
+                      });
                     }}
                   />
                 </div>
@@ -261,12 +315,17 @@ export default function Home() {
             )}
 
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-4">
                 <div>
                   <h2 className="text-xl font-semibold">Fila Atual</h2>
                   {!isLoading && !isError && (
                     <p className="text-sm text-muted-foreground mt-1">
                       {entries.length} {entries.length === 1 ? "entrada" : "entradas"} na fila
+                      {waitingCount > 0 && (
+                        <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                          {waitingCount} aguardando
+                        </span>
+                      )}
                     </p>
                   )}
                 </div>
@@ -274,8 +333,20 @@ export default function Home() {
                   onClick={handleCallNext}
                   disabled={callNextMutation.isPending || waitingCount === 0}
                   size="lg"
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-6 text-base shadow-lg hover:shadow-xl transition-all"
                 >
-                  {callNextMutation.isPending ? "Chamando..." : "Chamar Próximo"}
+                  {callNextMutation.isPending ? (
+                    "Chamando..."
+                  ) : waitingCount > 0 ? (
+                    <span className="flex items-center gap-2">
+                      <span>Chamar Próximo</span>
+                      <span className="bg-white/20 px-2 py-0.5 rounded-full text-sm font-bold">
+                        {waitingCount}
+                      </span>
+                    </span>
+                  ) : (
+                    "Nenhum aguardando"
+                  )}
                 </Button>
               </div>
 
@@ -328,7 +399,7 @@ export default function Home() {
 
           {user?.role === Role.RECEPCAO && (
             <>
-              <TabsContent value="history" className="space-y-6">
+              <TabsContent value="history" className="space-y-6 mt-6">
             <div className="space-y-4">
               <div>
                 <h2 className="text-xl font-semibold">Histórico de Atendimentos</h2>
@@ -339,84 +410,141 @@ export default function Home() {
 
               <Card>
                 <CardContent className="pt-6 overflow-hidden">
-                  <div className="grid grid-cols-1 sm:grid-cols-7 gap-4 min-w-0">
-                    <div className="sm:col-span-2 min-w-0 w-full">
-                      <Label htmlFor="historyStartDate" className="text-sm mb-2 block font-medium">
-                        Data Inicial
-                      </Label>
-                      <Input
-                        id="historyStartDate"
-                        type="date"
-                        value={historyStartDate}
-                        onChange={(e) => setHistoryStartDate(e.target.value)}
-                        className="w-full max-w-full"
-                      />
+                  <div className="space-y-4">
+                    <div>
+                      <Label className="text-sm mb-2 block font-medium">Período</Label>
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const dates = getDateRangePreset("today");
+                            setHistoryStartDate(dates.start);
+                            setHistoryEndDate(dates.end);
+                          }}
+                        >
+                          Hoje
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const dates = getDateRangePreset("7days");
+                            setHistoryStartDate(dates.start);
+                            setHistoryEndDate(dates.end);
+                          }}
+                        >
+                          Últimos 7 dias
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const dates = getDateRangePreset("30days");
+                            setHistoryStartDate(dates.start);
+                            setHistoryEndDate(dates.end);
+                          }}
+                        >
+                          Último mês
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const dates = getDateRangePreset("90days");
+                            setHistoryStartDate(dates.start);
+                            setHistoryEndDate(dates.end);
+                          }}
+                        >
+                          Últimos 3 meses
+                        </Button>
+                      </div>
                     </div>
-                    <div className="sm:col-span-2 min-w-0 w-full">
-                      <Label htmlFor="historyEndDate" className="text-sm mb-2 block font-medium">
-                        Data Final
-                      </Label>
-                      <Input
-                        id="historyEndDate"
-                        type="date"
-                        value={historyEndDate}
-                        onChange={(e) => setHistoryEndDate(e.target.value)}
-                        className="w-full max-w-full"
-                      />
+                    <div className="grid grid-cols-1 sm:grid-cols-5 gap-4">
+                      <div className="sm:col-span-2 min-w-0 w-full">
+                        <Label htmlFor="historyStartDate" className="text-sm mb-2 block font-medium">
+                          Data Inicial
+                        </Label>
+                        <Input
+                          id="historyStartDate"
+                          type="date"
+                          value={historyStartDate}
+                          onChange={(e) => setHistoryStartDate(e.target.value)}
+                          className="w-full max-w-full"
+                        />
+                      </div>
+                      <div className="sm:col-span-2 min-w-0 w-full">
+                        <Label htmlFor="historyEndDate" className="text-sm mb-2 block font-medium">
+                          Data Final
+                        </Label>
+                        <Input
+                          id="historyEndDate"
+                          type="date"
+                          value={historyEndDate}
+                          onChange={(e) => setHistoryEndDate(e.target.value)}
+                          className="w-full max-w-full"
+                        />
+                      </div>
+                      <div className="sm:col-span-1">
+                        <Label htmlFor="historyServiceType" className="text-sm mb-2 block font-medium">
+                          Serviço
+                        </Label>
+                        <Select
+                          value={historyFilters.serviceType}
+                          onValueChange={(value) =>
+                            setHistoryFilters({
+                              ...historyFilters,
+                              serviceType: value,
+                            })
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Todos" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="__ALL__">Todos</SelectItem>
+                            {services.map((service) => (
+                              <SelectItem key={service.id} value={service.name}>
+                                {service.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
-                    <div className="sm:col-span-2">
-                      <Label htmlFor="historyTutorName" className="text-sm mb-2 block font-medium">
-                        Tutor
-                      </Label>
-                      <Input
-                        id="historyTutorName"
-                        placeholder="Nome do tutor..."
-                        value={historyFilters.tutorName}
-                        onChange={(e) =>
-                          setHistoryFilters({ ...historyFilters, tutorName: e.target.value })
+                    <div className="grid grid-cols-1 sm:grid-cols-6 gap-4">
+                      <div className="sm:col-span-3">
+                        <Label htmlFor="historyTutorName" className="text-sm mb-2 block font-medium">
+                          Tutor
+                        </Label>
+                        <Input
+                          id="historyTutorName"
+                          placeholder="Nome do tutor..."
+                          value={historyFilters.tutorName}
+                          onChange={(e) =>
+                            setHistoryFilters({ ...historyFilters, tutorName: e.target.value })
+                          }
+                        />
+                      </div>
+                      {hasActiveFilters && (
+                        <div className="sm:col-span-3 flex items-end">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                        onClick={() =>
+                          setHistoryFilters({ tutorName: "", serviceType: "__ALL__" })
                         }
-                      />
-                    </div>
-                    <div className="sm:col-span-1">
-                      <Label htmlFor="historyServiceType" className="text-sm mb-2 block font-medium">
-                        Tipo de Serviço
-                      </Label>
-                      <Select
-                        value={historyFilters.serviceType}
-                        onValueChange={(value) =>
-                          setHistoryFilters({
-                            ...historyFilters,
-                            serviceType: value,
-                          })
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Todos" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="">Todos</SelectItem>
-                          {services.map((service) => (
-                            <SelectItem key={service.id} value={service.name}>
-                              {service.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                          >
+                            Limpar filtros
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   </div>
-                  {hasActiveFilters && (
-                    <div className="mt-4 pt-4 border-t">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() =>
-                          setHistoryFilters({ tutorName: "", serviceType: "" })
-                        }
-                      >
-                        Limpar filtros
-                      </Button>
-                    </div>
-                  )}
                 </CardContent>
               </Card>
             </div>
@@ -464,7 +592,7 @@ export default function Home() {
             )}
           </TabsContent>
 
-          <TabsContent value="reports" className="space-y-6">
+          <TabsContent value="reports" className="space-y-6 mt-6">
             <div className="space-y-4">
               <div>
                 <h2 className="text-xl font-semibold">Relatórios</h2>
@@ -475,30 +603,85 @@ export default function Home() {
 
               <Card>
                 <CardContent className="pt-6 overflow-hidden">
-                  <div className="grid grid-cols-1 sm:grid-cols-5 gap-4 min-w-0">
-                    <div className="sm:col-span-2 min-w-0 w-full">
-                      <Label htmlFor="reportsStartDate" className="text-sm mb-2 block font-medium">
-                        Data Inicial
-                      </Label>
-                      <Input
-                        id="reportsStartDate"
-                        type="date"
-                        value={reportsStartDate}
-                        onChange={(e) => setReportsStartDate(e.target.value)}
-                        className="w-full max-w-full"
-                      />
+                  <div className="space-y-4">
+                    <div>
+                      <Label className="text-sm mb-2 block font-medium">Período</Label>
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const dates = getDateRangePreset("today");
+                            setReportsStartDate(dates.start);
+                            setReportsEndDate(dates.end);
+                          }}
+                        >
+                          Hoje
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const dates = getDateRangePreset("7days");
+                            setReportsStartDate(dates.start);
+                            setReportsEndDate(dates.end);
+                          }}
+                        >
+                          Últimos 7 dias
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const dates = getDateRangePreset("30days");
+                            setReportsStartDate(dates.start);
+                            setReportsEndDate(dates.end);
+                          }}
+                        >
+                          Último mês
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const dates = getDateRangePreset("90days");
+                            setReportsStartDate(dates.start);
+                            setReportsEndDate(dates.end);
+                          }}
+                        >
+                          Últimos 3 meses
+                        </Button>
+                      </div>
                     </div>
-                    <div className="sm:col-span-3 min-w-0 w-full">
-                      <Label htmlFor="reportsEndDate" className="text-sm mb-2 block font-medium">
-                        Data Final
-                      </Label>
-                      <Input
-                        id="reportsEndDate"
-                        type="date"
-                        value={reportsEndDate}
-                        onChange={(e) => setReportsEndDate(e.target.value)}
-                        className="w-full max-w-full"
-                      />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="min-w-0 w-full">
+                        <Label htmlFor="reportsStartDate" className="text-sm mb-2 block font-medium">
+                          Data Inicial
+                        </Label>
+                        <Input
+                          id="reportsStartDate"
+                          type="date"
+                          value={reportsStartDate}
+                          onChange={(e) => setReportsStartDate(e.target.value)}
+                          className="w-full max-w-full"
+                        />
+                      </div>
+                      <div className="min-w-0 w-full">
+                        <Label htmlFor="reportsEndDate" className="text-sm mb-2 block font-medium">
+                          Data Final
+                        </Label>
+                        <Input
+                          id="reportsEndDate"
+                          type="date"
+                          value={reportsEndDate}
+                          onChange={(e) => setReportsEndDate(e.target.value)}
+                          className="w-full max-w-full"
+                        />
+                      </div>
                     </div>
                   </div>
                 </CardContent>

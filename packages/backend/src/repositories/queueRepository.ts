@@ -549,6 +549,19 @@ export class QueueRepository {
       },
     });
 
+    const vetsCheckedIn = await prisma.user.findMany({
+      where: {
+        currentRoomId: { not: null },
+        role: "VET",
+        ...(currentVetId ? { id: { not: currentVetId } } : {}),
+      },
+      select: {
+        id: true,
+        name: true,
+        currentRoomId: true,
+      },
+    });
+
     const occupations: Record<string, { vetId: string; vetName: string } | null> = {};
     
     occupiedEntries.forEach((entry) => {
@@ -556,6 +569,15 @@ export class QueueRepository {
         occupations[entry.roomId] = {
           vetId: entry.assignedVet.id,
           vetName: entry.assignedVet.name,
+        };
+      }
+    });
+
+    vetsCheckedIn.forEach((vet) => {
+      if (vet.currentRoomId && !occupations[vet.currentRoomId]) {
+        occupations[vet.currentRoomId] = {
+          vetId: vet.id,
+          vetName: vet.name,
         };
       }
     });

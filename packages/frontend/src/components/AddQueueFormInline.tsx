@@ -56,6 +56,12 @@ export function AddQueueFormInline({ onSuccess, onClose, inline = true }: AddQue
     setLoading(true);
 
     try {
+      const today = new Date();
+      const [hours, minutes] = formData.hasScheduledAppointment && formData.scheduledAt ? formData.scheduledAt.split(':') : ['00', '00'];
+      const scheduledDateTime = formData.hasScheduledAppointment && formData.scheduledAt
+        ? new Date(today.getFullYear(), today.getMonth(), today.getDate(), parseInt(hours), parseInt(minutes))
+        : undefined;
+
       await queueApi.add({
         patientName: formData.patientName,
         tutorName: formData.tutorName,
@@ -63,7 +69,7 @@ export function AddQueueFormInline({ onSuccess, onClose, inline = true }: AddQue
         priority: formData.priority,
         assignedVetId: formData.assignedVetId === "NONE" ? undefined : formData.assignedVetId,
         hasScheduledAppointment: formData.hasScheduledAppointment,
-        scheduledAt: formData.hasScheduledAppointment && formData.scheduledAt ? new Date(formData.scheduledAt).toISOString() : undefined,
+        scheduledAt: scheduledDateTime?.toISOString(),
       });
       setFormData({
         patientName: "",
@@ -224,7 +230,7 @@ export function AddQueueFormInline({ onSuccess, onClose, inline = true }: AddQue
           </Label>
           <Input
             id="scheduledAt"
-            type="datetime-local"
+            type="time"
             value={formData.scheduledAt}
             onChange={(e) =>
               setFormData({ ...formData, scheduledAt: e.target.value })

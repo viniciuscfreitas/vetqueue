@@ -47,6 +47,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Plus } from "lucide-react";
 
 function formatDateLocal(date: Date): string {
   const year = date.getFullYear();
@@ -79,6 +80,7 @@ export default function Home() {
   const [historyEndDate, setHistoryEndDate] = useState(defaultDates.end);
   const [historyFilters, setHistoryFilters] = useState({
     tutorName: "",
+    patientName: "",
     serviceType: "__ALL__",
   });
   const [historyPage, setHistoryPage] = useState(1);
@@ -106,6 +108,7 @@ export default function Home() {
           startDate: historyStartDate,
           endDate: historyEndDate,
           tutorName: historyFilters.tutorName || undefined,
+          patientName: historyFilters.patientName || undefined,
           serviceType: historyFilters.serviceType === "__ALL__" ? undefined : historyFilters.serviceType,
           page: historyPage,
           limit: 20,
@@ -242,7 +245,7 @@ export default function Home() {
     setHistoryPage(1);
   }, [historyStartDate, historyEndDate, historyFilters]);
 
-  const hasActiveFilters = historyFilters.tutorName || (historyFilters.serviceType && historyFilters.serviceType !== "__ALL__");
+  const hasActiveFilters = historyFilters.tutorName || historyFilters.patientName || (historyFilters.serviceType && historyFilters.serviceType !== "__ALL__");
 
   const waitingCount = entries.filter((entry) => entry.status === Status.WAITING).length;
 
@@ -303,8 +306,10 @@ export default function Home() {
                       onClick={() => setShowAddQueueModal(true)}
                       variant="outline"
                       size="lg"
+                      className="px-6 py-6 text-base"
                     >
-                      ➕ Adicionar
+                      <Plus className="mr-2 h-5 w-5" />
+                      Adicionar
                     </Button>
                   )}
                   <Button
@@ -441,6 +446,20 @@ export default function Home() {
                       </Select>
                     </div>
                     <div className="min-w-0 flex-1 min-w-[180px]">
+                      <Label htmlFor="historyPatientName" className="text-xs mb-1 block text-muted-foreground">
+                        Pet
+                      </Label>
+                      <Input
+                        id="historyPatientName"
+                        placeholder="Nome do pet..."
+                        value={historyFilters.patientName}
+                        onChange={(e) =>
+                          setHistoryFilters({ ...historyFilters, patientName: e.target.value })
+                        }
+                        className="w-full"
+                      />
+                    </div>
+                    <div className="min-w-0 flex-1 min-w-[180px]">
                       <Label htmlFor="historyTutorName" className="text-xs mb-1 block text-muted-foreground">
                         Tutor
                       </Label>
@@ -459,7 +478,7 @@ export default function Home() {
                         variant="ghost"
                         size="sm"
                         onClick={() =>
-                          setHistoryFilters({ tutorName: "", serviceType: "__ALL__" })
+                          setHistoryFilters({ tutorName: "", patientName: "", serviceType: "__ALL__" })
                         }
                         className="h-10"
                       >

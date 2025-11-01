@@ -127,6 +127,7 @@ export class QueueService {
     startDate?: Date;
     endDate?: Date;
     tutorName?: string;
+    patientName?: string;
     serviceType?: string;
   }): Promise<QueueEntry[]> {
     return this.repository.listCompleted(filters);
@@ -136,6 +137,7 @@ export class QueueService {
     startDate?: Date;
     endDate?: Date;
     tutorName?: string;
+    patientName?: string;
     serviceType?: string;
     page?: number;
     limit?: number;

@@ -168,6 +168,7 @@ export const queueApi = {
     startDate?: string;
     endDate?: string;
     tutorName?: string;
+    patientName?: string;
     serviceType?: string;
     page?: number;
     limit?: number;

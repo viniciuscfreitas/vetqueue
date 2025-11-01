@@ -182,6 +182,7 @@ export class QueueRepository {
     startDate?: Date;
     endDate?: Date;
     tutorName?: string;
+    patientName?: string;
     serviceType?: string;
   }): Promise<QueueEntry[]> {
     const where: Prisma.QueueEntryWhereInput = {
@@ -205,6 +206,13 @@ export class QueueRepository {
       };
     }
 
+    if (filters?.patientName) {
+      where.patientName = {
+        contains: filters.patientName,
+        mode: "insensitive",
+      };
+    }
+
     if (filters?.serviceType) {
       where.serviceType = filters.serviceType;
     }
@@ -221,6 +229,7 @@ export class QueueRepository {
     startDate?: Date;
     endDate?: Date;
     tutorName?: string;
+    patientName?: string;
     serviceType?: string;
     page?: number;
     limit?: number;
@@ -246,6 +255,13 @@ export class QueueRepository {
     if (filters?.tutorName) {
       where.tutorName = {
         contains: filters.tutorName,
+        mode: "insensitive",
+      };
+    }
+
+    if (filters?.patientName) {
+      where.patientName = {
+        contains: filters.patientName,
         mode: "insensitive",
       };
     }

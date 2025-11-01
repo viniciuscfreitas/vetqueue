@@ -152,6 +152,7 @@ interface HistoryFilters {
   startDate?: Date;
   endDate?: Date;
   tutorName?: string;
+  patientName?: string;
   serviceType?: string;
 }
 
@@ -171,6 +172,9 @@ router.get("/history", authMiddleware, async (req: Request, res: Response) => {
     }
     if (req.query.tutorName) {
       filters.tutorName = req.query.tutorName as string;
+    }
+    if (req.query.patientName) {
+      filters.patientName = req.query.patientName as string;
     }
     if (req.query.serviceType) {
       filters.serviceType = req.query.serviceType as string;

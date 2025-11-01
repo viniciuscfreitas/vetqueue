@@ -122,6 +122,11 @@ export interface ReportStats {
   total: number;
   avgWaitTimeMinutes: number;
   byService: Record<string, number>;
+  avgServiceTimeMinutes: number;
+  cancellationRate: number;
+  topVets: Array<{ name: string; count: number }>;
+  avgPerDay: number;
+  byPriority: { emergency: number; high: number; normal: number };
 }
 
 export interface PaginatedResult<T> {

@@ -292,15 +292,42 @@ export class QueueRepository {
   }
 
   async getStats(startDate: Date, endDate: Date) {
-    const completed = await prisma.queueEntry.findMany({
-      where: {
-        status: Status.COMPLETED,
-        completedAt: {
-          gte: startDate,
-          lte: endDate,
+    const [completed, cancelled, allCreated] = await Promise.all([
+      prisma.queueEntry.findMany({
+        where: {
+          status: Status.COMPLETED,
+          completedAt: {
+            gte: startDate,
+            lte: endDate,
+          },
         },
-      },
-    });
+        include: {
+          assignedVet: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+      }),
+      prisma.queueEntry.count({
+        where: {
+          status: Status.CANCELLED,
+          createdAt: {
+            gte: startDate,
+            lte: endDate,
+          },
+        },
+      }),
+      prisma.queueEntry.count({
+        where: {
+          createdAt: {
+            gte: startDate,
+            lte: endDate,
+          },
+        },
+      }),
+    ]);
 
     const total = completed.length;
     const byService = completed.reduce(
@@ -326,10 +353,67 @@ export class QueueRepository {
       ? waitTimeSum / entriesWithCalledAt 
       : 0;
 
+    let serviceTimeSum = 0;
+    let entriesWithServiceTime = 0;
+    
+    completed.forEach((entry: PrismaQueueEntry) => {
+      if (entry.calledAt && entry.completedAt) {
+        const serviceTime = entry.completedAt.getTime() - entry.calledAt.getTime();
+        serviceTimeSum += serviceTime;
+        entriesWithServiceTime++;
+      }
+    });
+
+    const avgServiceTime = entriesWithServiceTime > 0 
+      ? serviceTimeSum / entriesWithServiceTime 
+      : 0;
+
+    const cancellationRate = allCreated > 0 
+      ? (cancelled / allCreated) * 100 
+      : 0;
+
+    const vetCounts = completed.reduce(
+      (acc: Record<string, { name: string; count: number }>, entry) => {
+        if (entry.assignedVetId && entry.assignedVet) {
+          if (!acc[entry.assignedVetId]) {
+            acc[entry.assignedVetId] = {
+              name: entry.assignedVet.name,
+              count: 0,
+            };
+          }
+          acc[entry.assignedVetId].count++;
+        }
+        return acc;
+      },
+      {} as Record<string, { name: string; count: number }>
+    );
+
+    const topVets = Object.values(vetCounts)
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 3);
+
+    const daysInPeriod = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) || 1;
+    const avgPerDay = total / daysInPeriod;
+
+    const byPriority = completed.reduce(
+      (acc: { emergency: number; high: number; normal: number }, entry: PrismaQueueEntry) => {
+        if (entry.priority === 1) acc.emergency++;
+        else if (entry.priority === 2) acc.high++;
+        else if (entry.priority === 3) acc.normal++;
+        return acc;
+      },
+      { emergency: 0, high: 0, normal: 0 }
+    );
+
     return {
       total,
       byService,
       avgWaitTimeMinutes: Math.round(avgWaitTime / 1000 / 60),
+      avgServiceTimeMinutes: Math.round(avgServiceTime / 1000 / 60),
+      cancellationRate: Math.round(cancellationRate * 10) / 10,
+      topVets,
+      avgPerDay: Math.round(avgPerDay * 10) / 10,
+      byPriority,
     };
   }
 

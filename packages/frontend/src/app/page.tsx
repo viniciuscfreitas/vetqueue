@@ -36,6 +36,7 @@ import { QueueTab } from "@/components/QueueTab";
 import { HistoryTab } from "@/components/HistoryTab";
 import { ReportsTab } from "@/components/ReportsTab";
 import { useQueueMutations } from "@/hooks/useQueueMutations";
+import { Spinner } from "@/components/ui/spinner";
 
 export default function Home() {
   const router = useRouter();
@@ -168,7 +169,11 @@ export default function Home() {
   };
 
   if (authLoading || !user) {
-    return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Spinner size="lg" />
+      </div>
+    );
   }
 
   return (

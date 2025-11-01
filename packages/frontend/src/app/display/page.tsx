@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { useQuery } from "@tanstack/react-query";
 import { queueApi, Status, Priority, roomApi } from "@/lib/api";
+import { Skeleton } from "@/components/ui/skeleton";
 
 function formatTime(date: Date): string {
   return date.toLocaleTimeString("pt-BR", {
@@ -107,8 +108,33 @@ export default function DisplayPage() {
           </div>
 
           {isLoading ? (
-            <div className="text-center text-5xl md:text-6xl py-32 text-gray-600 tracking-tight bg-white rounded-lg">
-              Carregando...
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <section className="bg-white rounded-lg shadow-sm p-6">
+                <Skeleton className="h-16 w-48 mb-6" />
+                <div className="space-y-4">
+                  {[1, 2].map((i) => (
+                    <div key={i} className="bg-white rounded-lg p-6 shadow-md border-l-4 border-green-500">
+                      <Skeleton className="h-12 w-3/4 mb-3" />
+                      <Skeleton className="h-8 w-1/2 mb-2" />
+                      <Skeleton className="h-8 w-2/3 mb-2" />
+                      <Skeleton className="h-10 w-1/3 mt-3" />
+                    </div>
+                  ))}
+                </div>
+              </section>
+              <section className="bg-white rounded-lg shadow-sm p-6">
+                <Skeleton className="h-16 w-48 mb-6" />
+                <div className="space-y-4">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="bg-white rounded-lg p-6 shadow-md border-l-4 border-gray-400">
+                      <Skeleton className="h-10 w-32 mb-3" />
+                      <Skeleton className="h-12 w-3/4 mb-3" />
+                      <Skeleton className="h-8 w-1/2 mb-2" />
+                      <Skeleton className="h-8 w-2/3" />
+                    </div>
+                  ))}
+                </div>
+              </section>
             </div>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

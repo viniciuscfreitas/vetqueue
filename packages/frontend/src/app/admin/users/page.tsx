@@ -20,6 +20,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Header } from "@/components/Header";
+import { Spinner } from "@/components/ui/spinner";
 
 export default function UsersPage() {
   const router = useRouter();
@@ -80,7 +81,11 @@ export default function UsersPage() {
   });
 
   if (authLoading || !user || user.role !== "RECEPCAO") {
-    return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Spinner size="lg" />
+      </div>
+    );
   }
 
   const handleSubmit = (e: React.FormEvent) => {

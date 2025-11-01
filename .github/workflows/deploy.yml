@@ -39,7 +39,8 @@ jobs:
               git reset --hard origin/main
             fi
             
-            # 3. Suba TUDO com Docker Compose
+            # 3. Reseta e sobe TUDO com Docker Compose
+            docker compose down -v
             docker compose up -d --build
             
             # 4. Conecte ao Nginx Proxy Manager

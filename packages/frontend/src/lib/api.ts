@@ -157,6 +157,9 @@ export const queueApi = {
   callNext: (roomId: string, vetId?: string) => 
     api.post<QueueEntry | { message: string }>("/api/queue/call-next", { vetId, roomId }),
 
+  callPatient: (id: string, roomId: string, vetId?: string) =>
+    api.post<QueueEntry>(`/api/queue/${id}/call`, { vetId, roomId }),
+
   startService: (id: string) =>
     api.patch<QueueEntry>(`/api/queue/${id}/start`),
 

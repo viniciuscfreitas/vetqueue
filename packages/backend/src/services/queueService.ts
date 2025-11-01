@@ -51,6 +51,33 @@ export class QueueService {
     );
   }
 
+  async callPatient(id: string, vetId?: string, roomId?: string): Promise<QueueEntry> {
+    const entry = await this.repository.findById(id);
+
+    if (!entry) {
+      throw new Error("Entrada não encontrada");
+    }
+
+    if (entry.status !== Status.WAITING) {
+      throw new Error("Apenas pacientes aguardando podem ser chamados");
+    }
+
+    if (vetId && roomId) {
+      const roomOccupied = await this.repository.isRoomOccupiedByOtherVet(roomId, vetId);
+      if (roomOccupied) {
+        throw new Error(`Sala já está ocupada por veterinário ${roomOccupied.vetName}`);
+      }
+    }
+
+    return this.repository.updateStatus(
+      id,
+      Status.CALLED,
+      new Date(),
+      undefined,
+      roomId
+    );
+  }
+
   async startService(id: string): Promise<QueueEntry> {
     const entry = await this.repository.findById(id);
 

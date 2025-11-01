@@ -74,6 +74,7 @@ export default function Home() {
   const handleError = createErrorHandler(toast);
   const [showRoomModal, setShowRoomModal] = useState(false);
   const [showAddQueueModal, setShowAddQueueModal] = useState(false);
+  const [entryToCall, setEntryToCall] = useState<string | null>(null);
 
   const defaultDates = getDefaultDates();
   const [historyStartDate, setHistoryStartDate] = useState(defaultDates.start);
@@ -161,6 +162,21 @@ export default function Home() {
     onError: handleError,
   });
 
+  const callPatientMutation = useMutation({
+    mutationFn: ({ entryId, roomId }: { entryId: string; roomId: string }) => 
+      queueApi.callPatient(entryId, roomId, user?.role === Role.VET ? user.id : undefined).then((res) => res.data),
+    onSuccess: (data) => {
+      toast({
+        variant: "default",
+        title: "Paciente chamado",
+        description: `${data.patientName} foi chamado com sucesso`,
+      });
+      queryClient.invalidateQueries({ queryKey: ["queue"] });
+      setShowRoomModal(false);
+    },
+    onError: handleError,
+  });
+
   const startServiceMutation = useMutation({
     mutationFn: (id: string) => queueApi.startService(id).then((res) => res.data),
     onSuccess: () => {
@@ -235,6 +251,15 @@ export default function Home() {
 
   const handleComplete = (id: string) => {
     completeServiceMutation.mutate(id);
+  };
+
+  const handleCall = (entryId: string) => {
+    if (currentRoom) {
+      callPatientMutation.mutate({ entryId, roomId: currentRoom.id });
+    } else {
+      setEntryToCall(entryId);
+      setShowRoomModal(true);
+    }
   };
 
   const handleCancel = (id: string) => {
@@ -395,6 +420,7 @@ export default function Home() {
                   onStart={handleStart}
                   onComplete={handleComplete}
                   onCancel={user?.role === Role.RECEPCAO ? handleCancel : undefined}
+                  onCall={(user?.role === Role.RECEPCAO || user?.role === Role.VET) ? handleCall : undefined}
                 />
               )}
             </div>
@@ -655,11 +681,11 @@ export default function Home() {
                       </div>
 
                       <div className="md:col-span-1">
-                        <Card>
-                          <CardHeader>
+                        <Card className="max-h-[200px] flex flex-col">
+                          <CardHeader className="flex-shrink-0">
                             <CardTitle className="text-base">Distribuição por Serviço</CardTitle>
                           </CardHeader>
-                          <CardContent>
+                          <CardContent className="flex-1 overflow-y-auto min-h-0">
                             <div className="space-y-3">
                               {stats?.byService &&
                                 Object.entries(stats.byService)
@@ -858,8 +884,18 @@ export default function Home() {
 
       <RoomSelectModal
         open={showRoomModal}
-        onSelect={(roomId) => callNextMutation.mutate(roomId)}
-        onCancel={() => setShowRoomModal(false)}
+        onSelect={(roomId) => {
+          if (entryToCall) {
+            callPatientMutation.mutate({ entryId: entryToCall, roomId });
+            setEntryToCall(null);
+          } else {
+            callNextMutation.mutate(roomId);
+          }
+        }}
+        onCancel={() => {
+          setShowRoomModal(false);
+          setEntryToCall(null);
+        }}
       />
 
       <Dialog open={showAddQueueModal} onOpenChange={setShowAddQueueModal}>

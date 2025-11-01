@@ -12,6 +12,7 @@ interface QueueCardProps {
   onStart?: (id: string) => void;
   onComplete?: (id: string) => void;
   onCancel?: (id: string) => void;
+  onCall?: (id: string) => void;
 }
 
 const statusConfig = {
@@ -47,6 +48,7 @@ export function QueueCard({
   onStart,
   onComplete,
   onCancel,
+  onCall,
 }: QueueCardProps) {
   const status = statusConfig[entry.status];
   const canStart = entry.status === Status.CALLED || entry.status === Status.WAITING;
@@ -135,8 +137,17 @@ export function QueueCard({
           )}
         </div>
 
-        {onStart || onComplete || onCancel ? (
+        {onStart || onComplete || onCancel || onCall ? (
           <div className="flex gap-2 pt-3 border-t">
+            {entry.status === Status.WAITING && onCall && (
+              <Button
+                onClick={() => onCall(entry.id)}
+                size="sm"
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                Chamar
+              </Button>
+            )}
             {entry.status === Status.CALLED && onStart && (
               <Button
                 onClick={() => onStart(entry.id)}

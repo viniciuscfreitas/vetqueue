@@ -26,6 +26,11 @@ const callNextSchema = z.object({
   roomId: z.string().min(1, "Sala é obrigatória"),
 });
 
+const callPatientSchema = z.object({
+  vetId: z.string().optional(),
+  roomId: z.string().min(1, "Sala é obrigatória"),
+});
+
 router.post("/", authMiddleware, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const data = addQueueSchema.parse(req.body);
@@ -79,6 +84,30 @@ router.post("/call-next", authMiddleware, async (req: AuthenticatedRequest, res:
       }).catch(console.error);
     }
     res.json(next);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      res.status(400).json({ error: error.errors });
+      return;
+    }
+    res.status(400).json({ error: (error as Error).message });
+  }
+});
+
+router.post("/:id/call", authMiddleware, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const data = callPatientSchema.parse(req.body);
+    const vetId = data.vetId || (req.user?.role === "VET" ? req.user.id : undefined);
+    const entry = await queueService.callPatient(req.params.id, vetId, data.roomId);
+    if (req.user) {
+      auditService.log({
+        userId: req.user.id,
+        action: "CALL_DIRECT",
+        entityType: "QueueEntry",
+        entityId: entry.id,
+        metadata: { roomId: data.roomId },
+      }).catch(console.error);
+    }
+    res.json(entry);
   } catch (error) {
     if (error instanceof z.ZodError) {
       res.status(400).json({ error: error.errors });

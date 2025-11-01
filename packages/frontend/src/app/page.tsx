@@ -133,18 +133,12 @@ export default function Home() {
             title: "Check-in necessário",
             description: `O veterinário ${entry.assignedVet.name} precisa fazer check-in em uma sala antes de chamar este paciente. Você pode chamar o paciente diretamente selecionando uma sala.`,
           });
-          setShowRoomModal(true);
-          setEntryToCall(entryId);
-        } else {
-          setShowRoomModal(true);
-          setEntryToCall(entryId);
         }
+        setShowRoomModal(true);
+        setEntryToCall(entryId);
       } else {
-        toast({
-          variant: "destructive",
-          title: "Check-in necessário",
-          description: "Você precisa fazer check-in em uma sala antes de chamar pacientes.",
-        });
+        setShowRoomModal(true);
+        setEntryToCall(entryId);
       }
     }
   };

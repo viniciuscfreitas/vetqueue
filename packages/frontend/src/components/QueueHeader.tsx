@@ -64,12 +64,7 @@ export function QueueHeader({
           {callNextPending ? (
             "Chamando..."
           ) : waitingCount > 0 ? (
-            <span className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2">
-              <span>Chamar Próximo</span>
-              <span className="bg-white/20 px-2 py-0.5 rounded-full text-sm font-bold">
-                {waitingCount}
-              </span>
-            </span>
+            "Chamar Próximo"
           ) : (
             "Nenhum aguardando"
           )}

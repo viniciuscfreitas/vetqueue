@@ -42,28 +42,32 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 
+function formatDateLocal(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 function getDefaultDates() {
   const today = new Date();
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(today.getDate() - 30);
   return {
-    start: thirtyDaysAgo.toISOString().split("T")[0],
-    end: today.toISOString().split("T")[0],
+    start: formatDateLocal(thirtyDaysAgo),
+    end: formatDateLocal(today),
   };
 }
 
 function getDateRangePreset(preset: string) {
   const today = new Date();
-  const todayStr = today.toISOString().split("T")[0];
+  const end = formatDateLocal(today);
   let start = new Date();
   
   switch (preset) {
     case "today":
-      start = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-      return {
-        start: todayStr,
-        end: todayStr,
-      };
+      start = new Date(today);
+      break;
     case "7days":
       start.setDate(today.getDate() - 7);
       break;
@@ -78,8 +82,8 @@ function getDateRangePreset(preset: string) {
   }
   
   return {
-    start: start.toISOString().split("T")[0],
-    end: todayStr,
+    start: formatDateLocal(start),
+    end,
   };
 }
 

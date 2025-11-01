@@ -8,29 +8,29 @@ async function main() {
 
   const hashedPassword = await bcrypt.hash("senha123", 10);
 
-  const recepcao = await prisma.user.upsert({
-    where: { username: "recepcao" },
+  const admin = await prisma.user.upsert({
+    where: { username: "admin" },
     update: {},
     create: {
-      username: "recepcao",
+      username: "admin",
       password: hashedPassword,
-      name: "Recepção",
+      name: "Admin",
       role: "RECEPCAO",
     },
   });
 
-  const drjoao = await prisma.user.upsert({
-    where: { username: "drjoao" },
+  const alex = await prisma.user.upsert({
+    where: { username: "alex" },
     update: {},
     create: {
-      username: "drjoao",
+      username: "alex",
       password: hashedPassword,
-      name: "Dr. João",
+      name: "Alex",
       role: "VET",
     },
   });
 
-  console.log("✅ Created users:", { recepcao, drjoao });
+  console.log("✅ Created users:", { admin, alex });
 
   const rooms = [
     { name: "Consultório 1" },
@@ -38,8 +38,8 @@ async function main() {
     { name: "Consultório 3" },
     { name: "Consultório 4" },
     { name: "Consultório 5" },
-    { name: "Cirurgia" },
-    { name: "Exames" },
+    { name: "Consultório 6" },
+    { name: "Consultório 7" },
   ];
 
   for (const room of rooms) {
@@ -54,10 +54,7 @@ async function main() {
 
   const services = [
     { name: "Consulta" },
-    { name: "Vacinação" },
-    { name: "Cirurgia" },
-    { name: "Exame" },
-    { name: "Banho e Tosa" },
+    { name: "Retorno" },
   ];
 
   for (const service of services) {

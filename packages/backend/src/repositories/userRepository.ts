@@ -116,5 +116,40 @@ export class UserRepository {
       },
     });
   }
+
+  async findInactiveRoomCheckins(maxAgeMinutes: number): Promise<User[]> {
+    const cutoffTime = new Date(Date.now() - maxAgeMinutes * 60 * 1000);
+    
+    const users = await prisma.user.findMany({
+      where: {
+        currentRoomId: { not: null },
+        roomCheckedInAt: { not: null },
+        role: "VET",
+        OR: [
+          {
+            lastActivityAt: null,
+            roomCheckedInAt: { lte: cutoffTime },
+          },
+          {
+            lastActivityAt: { not: null, lte: cutoffTime },
+          },
+        ],
+      },
+    });
+
+    return users.map(mapPrismaToDomain);
+  }
+
+  async clearRoomCheckin(userId: string): Promise<User> {
+    const user = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        currentRoomId: null,
+        roomCheckedInAt: null,
+        lastActivityAt: null,
+      },
+    });
+    return mapPrismaToDomain(user);
+  }
 }
 

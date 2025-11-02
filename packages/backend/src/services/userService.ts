@@ -125,5 +125,21 @@ export class UserService {
       throw error;
     }
   }
+
+  async cleanupInactiveRoomCheckins(maxAgeMinutes: number = 60): Promise<User[]> {
+    const inactiveUsers = await this.repository.findInactiveRoomCheckins(maxAgeMinutes);
+    const cleanedUsers: User[] = [];
+
+    for (const user of inactiveUsers) {
+      try {
+        const cleaned = await this.repository.clearRoomCheckin(user.id);
+        cleanedUsers.push(cleaned);
+      } catch (error) {
+        console.error(`[CLEANUP] ✗ Erro ao limpar check-in de ${user.name}:`, error);
+      }
+    }
+
+    return cleanedUsers;
+  }
 }
 

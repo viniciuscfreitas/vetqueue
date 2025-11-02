@@ -255,11 +255,6 @@ export default function DisplayPage() {
                       
                       return (
                         <>
-                          {waiting.length > 10 && (
-                            <div className="text-center text-xl md:text-2xl text-gray-600 py-4 bg-gray-50 rounded-lg border border-gray-200 mb-4">
-                              Mostrando 10 de {waiting.length} pacientes
-                            </div>
-                          )}
                           {visibleWaiting.map((entry, index) => {
                             const position = index + 1;
                             const isEmergency = entry.priority === Priority.EMERGENCY;

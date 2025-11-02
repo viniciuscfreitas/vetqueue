@@ -44,6 +44,8 @@ export function RoomSelectModal({ open, onSelect, onCancel }: RoomSelectModalPro
   const roomsWithVets = Object.keys(occupations);
   const availableRooms = isRecepcao 
     ? rooms.filter(room => roomsWithVets.includes(room.id))
+    : isVet
+    ? rooms.filter(room => room.isActive && !occupations[room.id])
     : rooms.filter(room => room.isActive);
 
   const handleConfirm = () => {

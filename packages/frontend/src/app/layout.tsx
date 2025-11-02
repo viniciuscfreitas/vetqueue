@@ -11,13 +11,14 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Fisiopet - Sistema de Fila de Atendimento",
   description: "Sistema de fila de atendimento da Fisiopet",
+  manifest: "/site.webmanifest",
   icons: {
     icon: [
-      { url: "/icon.svg", type: "image/svg+xml" },
-      { url: "/icon.svg", type: "image/x-icon", sizes: "any" },
+      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
     ],
-    shortcut: "/icon.svg",
-    apple: "/icon.svg",
+    shortcut: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
   },
 };
 

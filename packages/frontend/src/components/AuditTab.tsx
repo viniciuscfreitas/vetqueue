@@ -68,9 +68,15 @@ const actionConfig = {
   },
 };
 
-const entityTypeConfig = {
+const entityTypeConfig: Record<string, string> = {
   QueueEntry: "Fila",
+  QUEUE_ENTRY: "Fila",
 };
+
+function normalizeEntityType(entityType: string): string {
+  if (entityType === "QUEUE_ENTRY") return "QueueEntry";
+  return entityType;
+}
 
 function formatDateTime(timestamp: string): string {
   const date = new Date(timestamp);
@@ -151,7 +157,8 @@ export function AuditTab({ authLoading }: AuditTabProps) {
   };
 
   const getEntityTypeLabel = (entityType: string) => {
-    return entityTypeConfig[entityType as keyof typeof entityTypeConfig] || entityType;
+    const normalized = normalizeEntityType(entityType);
+    return entityTypeConfig[normalized] || entityType;
   };
 
   return (

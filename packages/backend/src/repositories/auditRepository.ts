@@ -1,7 +1,6 @@
-import { PrismaClient, AuditLog as PrismaAuditLog } from "@prisma/client";
+import { AuditLog as PrismaAuditLog } from "@prisma/client";
 import { AuditLog, Role } from "../core/types";
-
-const prisma = new PrismaClient();
+import { prisma } from "../lib/prisma";
 
 function mapPrismaToDomain(entry: PrismaAuditLog & { user?: { id: string; username: string; name: string; role: string; createdAt: Date } | null }): AuditLog {
   return {

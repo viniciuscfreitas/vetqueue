@@ -3,6 +3,21 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { authApi, User, Room, roomApi, userApi } from "@/lib/api";
 
+async function loadUserRoom(userId: string | null | undefined, currentRoomId: string | null | undefined): Promise<Room | null> {
+  if (!userId || !currentRoomId) {
+    return null;
+  }
+  
+  try {
+    const roomsResponse = await roomApi.list();
+    const room = roomsResponse.data.find(r => r.id === currentRoomId);
+    return room || null;
+  } catch (error) {
+    console.error("Erro ao buscar sala:", error);
+    return null;
+  }
+}
+
 interface AuthContextType {
   user: User | null;
   currentRoom: Room | null;
@@ -33,16 +48,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const response = await authApi.me();
           setUser(response.data.user);
           
-          if (response.data.user.currentRoomId) {
-            try {
-              const roomsResponse = await roomApi.list();
-              const room = roomsResponse.data.find(r => r.id === response.data.user.currentRoomId);
-              if (room) {
-                setCurrentRoom(room);
-              }
-            } catch (error) {
-              console.error("Erro ao buscar sala:", error);
-            }
+          const room = await loadUserRoom(response.data.user.id, response.data.user.currentRoomId);
+          if (room) {
+            setCurrentRoom(room);
           }
         } catch (error) {
           localStorage.removeItem("auth_token");
@@ -61,16 +69,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem("auth_token", response.data.token);
     }
     
-    if (response.data.user.currentRoomId) {
-      try {
-        const roomsResponse = await roomApi.list();
-        const room = roomsResponse.data.find(r => r.id === response.data.user.currentRoomId);
-        if (room) {
-          setCurrentRoom(room);
-        }
-      } catch (error) {
-        console.error("Erro ao buscar sala:", error);
-      }
+    const room = await loadUserRoom(response.data.user.id, response.data.user.currentRoomId);
+    if (room) {
+      setCurrentRoom(room);
     }
   }, []);
 

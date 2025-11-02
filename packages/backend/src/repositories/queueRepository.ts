@@ -1,7 +1,6 @@
-import { PrismaClient, Prisma, QueueEntry as PrismaQueueEntry } from "@prisma/client";
+import { Prisma, QueueEntry as PrismaQueueEntry } from "@prisma/client";
 import { QueueEntry, Priority, Status, User, Role } from "../core/types";
-
-const prisma = new PrismaClient();
+import { prisma } from "../lib/prisma";
 
 function mapPrismaToDomain(entry: PrismaQueueEntry & { assignedVet?: { id: string; username: string; name: string; role: string; createdAt: Date } | null; room?: { id: string; name: string; isActive: boolean; createdAt: Date } | null }): QueueEntry {
   return {

@@ -1,14 +1,12 @@
 import express, { Request, Response, NextFunction } from "express";
 import cors from "cors";
-import { PrismaClient } from "@prisma/client";
 import queueRoutes from "./api/routes/queueRoutes";
 import authRoutes from "./api/routes/authRoutes";
 import roomRoutes from "./api/routes/roomRoutes";
 import userRoutes from "./api/routes/userRoutes";
 import serviceRoutes from "./api/routes/serviceRoutes";
 import { checkAndUpgradePriorities } from "./jobs/priorityUpgradeCheck";
-
-const prisma = new PrismaClient();
+import { prisma } from "./lib/prisma";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -64,13 +62,18 @@ app.use("/api/users", userRoutes);
 app.use("/api/queue", queueRoutes);
 app.use("/api/services", serviceRoutes);
 
-app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   console.error(`[ERROR] ${req.method} ${req.path}`, {
     error: err.message,
     stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
     body: req.body,
     user: (req as any).user?.id,
   });
+  
+  if (err.name === 'ZodError') {
+    res.status(400).json({ error: err.errors });
+    return;
+  }
   
   res.status(500).json({ 
     error: process.env.NODE_ENV === 'production' 

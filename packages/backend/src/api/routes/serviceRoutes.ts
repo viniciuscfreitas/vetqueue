@@ -3,6 +3,7 @@ import { ServiceService } from "../../services/serviceService";
 import { ServiceRepository } from "../../repositories/serviceRepository";
 import { authMiddleware, requireRole } from "../../middleware/authMiddleware";
 import { z } from "zod";
+import { asyncHandler } from "../../middleware/asyncHandler";
 
 const router = Router();
 const repository = new ServiceRepository();
@@ -17,23 +18,15 @@ const updateServiceSchema = z.object({
   isActive: z.boolean().optional(),
 });
 
-router.get("/", authMiddleware, async (req: Request, res: Response) => {
-  try {
-    const services = await serviceService.listServices();
-    res.json(services);
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
-});
+router.get("/", authMiddleware, asyncHandler(async (req: Request, res: Response) => {
+  const services = await serviceService.listServices();
+  res.json(services);
+}));
 
-router.get("/all", authMiddleware, requireRole(["RECEPCAO"]), async (req: Request, res: Response) => {
-  try {
-    const services = await serviceService.getAllServices();
-    res.json(services);
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
-});
+router.get("/all", authMiddleware, requireRole(["RECEPCAO"]), asyncHandler(async (req: Request, res: Response) => {
+  const services = await serviceService.getAllServices();
+  res.json(services);
+}));
 
 router.post("/", authMiddleware, requireRole(["RECEPCAO"]), async (req: Request, res: Response) => {
   try {
@@ -63,14 +56,10 @@ router.patch("/:id", authMiddleware, requireRole(["RECEPCAO"]), async (req: Requ
   }
 });
 
-router.delete("/:id", authMiddleware, requireRole(["RECEPCAO"]), async (req: Request, res: Response) => {
-  try {
-    await serviceService.deleteService(req.params.id);
-    res.json({ message: "Serviço desativado com sucesso" });
-  } catch (error) {
-    res.status(400).json({ error: (error as Error).message });
-  }
-});
+router.delete("/:id", authMiddleware, requireRole(["RECEPCAO"]), asyncHandler(async (req: Request, res: Response) => {
+  await serviceService.deleteService(req.params.id);
+  res.json({ message: "Serviço desativado com sucesso" });
+}));
 
 export default router;
 

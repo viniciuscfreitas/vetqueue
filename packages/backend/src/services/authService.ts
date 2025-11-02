@@ -1,9 +1,7 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { PrismaClient } from "@prisma/client";
 import { User, Role } from "../core/types";
-
-const prisma = new PrismaClient();
+import { prisma } from "../lib/prisma";
 
 const JWT_SECRET = process.env.JWT_SECRET || "vetqueue-secret-key-change-in-production";
 const JWT_EXPIRES_IN = "24h";

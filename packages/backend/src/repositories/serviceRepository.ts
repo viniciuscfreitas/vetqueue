@@ -1,7 +1,6 @@
-import { PrismaClient, Service as PrismaService } from "@prisma/client";
+import { Service as PrismaService } from "@prisma/client";
 import { Service } from "../core/types";
-
-const prisma = new PrismaClient();
+import { prisma } from "../lib/prisma";
 
 function mapPrismaToDomain(service: PrismaService): Service {
   return {

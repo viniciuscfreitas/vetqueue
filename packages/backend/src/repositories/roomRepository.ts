@@ -1,7 +1,6 @@
-import { PrismaClient, Room as PrismaRoom } from "@prisma/client";
+import { Room as PrismaRoom } from "@prisma/client";
 import { Room } from "../core/types";
-
-const prisma = new PrismaClient();
+import { prisma } from "../lib/prisma";
 
 function mapPrismaToDomain(room: PrismaRoom): Room {
   return {

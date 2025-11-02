@@ -6,6 +6,8 @@ import { AuditRepository } from "../../repositories/auditRepository";
 import { Priority } from "../../core/types";
 import { authMiddleware, AuthenticatedRequest, requireRole } from "../../middleware/authMiddleware";
 import { z } from "zod";
+import { parseDateRange } from "../../utils/dateParsing";
+import { asyncHandler } from "../../middleware/asyncHandler";
 
 const router = Router();
 const repository = new QueueRepository();
@@ -59,16 +61,12 @@ router.post("/", authMiddleware, async (req: AuthenticatedRequest, res: Response
   }
 });
 
-router.get("/active", authMiddleware, async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const vetId = req.query.vetId as string | undefined;
-    const finalVetId = vetId === "null" ? null : vetId;
-    const entries = await queueService.listActive(finalVetId);
-    res.json(entries);
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
-});
+router.get("/active", authMiddleware, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const vetId = req.query.vetId as string | undefined;
+  const finalVetId = vetId === "null" ? null : vetId;
+  const entries = await queueService.listActive(finalVetId);
+  res.json(entries);
+}));
 
 router.post("/call-next", authMiddleware, async (req: AuthenticatedRequest, res: Response) => {
   try {
@@ -122,14 +120,10 @@ router.post("/:id/call", authMiddleware, async (req: AuthenticatedRequest, res: 
   }
 });
 
-router.post("/:id/claim", authMiddleware, requireRole(["VET"]), async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const entry = await queueService.claimPatient(req.params.id, req.user!.id);
-    res.json(entry);
-  } catch (error) {
-    res.status(400).json({ error: (error as Error).message });
-  }
-});
+router.post("/:id/claim", authMiddleware, requireRole(["VET"]), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const entry = await queueService.claimPatient(req.params.id, req.user!.id);
+  res.json(entry);
+}));
 
 router.patch("/:id/start", authMiddleware, async (req: AuthenticatedRequest, res: Response) => {
   try {
@@ -192,152 +186,104 @@ interface HistoryFilters {
   serviceType?: string;
 }
 
-router.get("/history", authMiddleware, async (req: Request, res: Response) => {
-  try {
-    const filters: HistoryFilters = {};
-
-    if (req.query.startDate) {
-      const dateStr = req.query.startDate as string;
-      const date = new Date(dateStr + "T00:00:00-03:00");
-      filters.startDate = date;
-    }
-    if (req.query.endDate) {
-      const dateStr = req.query.endDate as string;
-      const date = new Date(dateStr + "T23:59:59.999-03:00");
-      filters.endDate = date;
-    }
-    if (req.query.tutorName) {
-      filters.tutorName = req.query.tutorName as string;
-    }
-    if (req.query.patientName) {
-      filters.patientName = req.query.patientName as string;
-    }
-    if (req.query.serviceType) {
-      filters.serviceType = req.query.serviceType as string;
-    }
-
-    const page = req.query.page ? parseInt(req.query.page as string) : undefined;
-    const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
-
-    if (page !== undefined || limit !== undefined) {
-      const result = await queueService.getHistoryPaginated({
-        ...filters,
-        page,
-        limit,
-      });
-      res.json(result);
-    } else {
-      const entries = await queueService.getHistory(filters);
-      res.json(entries);
-    }
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
+router.get("/history", authMiddleware, asyncHandler(async (req: Request, res: Response) => {
+  const dateRange = parseDateRange(req.query);
+  const filters: HistoryFilters = {
+    startDate: dateRange.start,
+    endDate: dateRange.end,
+  };
+  if (req.query.tutorName) {
+    filters.tutorName = req.query.tutorName as string;
   }
-});
-
-router.get("/reports", authMiddleware, async (req: Request, res: Response) => {
-  try {
-    const startDate = req.query.startDate
-      ? new Date((req.query.startDate as string) + "T00:00:00-03:00")
-      : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-    const endDate = req.query.endDate
-      ? new Date((req.query.endDate as string) + "T23:59:59.999-03:00")
-      : new Date();
-
-    const stats = await queueService.getReports(startDate, endDate);
-    res.json(stats);
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
+  if (req.query.patientName) {
+    filters.patientName = req.query.patientName as string;
   }
-});
-
-router.get("/vet-stats/:vetId", authMiddleware, async (req: Request, res: Response) => {
-  try {
-    const startDate = req.query.startDate
-      ? new Date((req.query.startDate as string) + "T00:00:00-03:00")
-      : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-    const endDate = req.query.endDate
-      ? new Date((req.query.endDate as string) + "T23:59:59.999-03:00")
-      : new Date();
-
-    const stats = await queueService.getVetStats(req.params.vetId, startDate, endDate);
-    res.json(stats);
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
+  if (req.query.serviceType) {
+    filters.serviceType = req.query.serviceType as string;
   }
-});
 
-router.get("/entry/:id/audit", authMiddleware, requireRole(["RECEPCAO"]), async (req: Request, res: Response) => {
-  try {
-    const logs = await auditService.getAuditLogsByEntity("QueueEntry", req.params.id);
-    res.json(logs);
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
-});
+  const page = req.query.page ? parseInt(req.query.page as string) : undefined;
+  const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
 
-router.get("/audit/logs", authMiddleware, requireRole(["RECEPCAO"]), async (req: Request, res: Response) => {
-  try {
-    const filters: any = {};
-
-    if (req.query.startDate) {
-      const dateStr = req.query.startDate as string;
-      const date = new Date(dateStr + "T00:00:00-03:00");
-      filters.startDate = date;
-    }
-    if (req.query.endDate) {
-      const dateStr = req.query.endDate as string;
-      const date = new Date(dateStr + "T23:59:59.999-03:00");
-      filters.endDate = date;
-    }
-    if (req.query.userId) {
-      filters.userId = req.query.userId as string;
-    }
-    if (req.query.action) {
-      filters.action = req.query.action as string;
-    }
-    if (req.query.entityType) {
-      filters.entityType = req.query.entityType as string;
-    }
-
-    const page = req.query.page ? parseInt(req.query.page as string) : undefined;
-    const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
-
-    const result = await auditService.getAllLogs({
+  if (page !== undefined || limit !== undefined) {
+    const result = await queueService.getHistoryPaginated({
       ...filters,
       page,
       limit,
     });
-    
-    res.json({
-      entries: result.logs,
-      total: result.total,
-      page: result.page,
-      totalPages: result.totalPages,
-    });
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
+    res.json(result);
+  } else {
+    const entries = await queueService.getHistory(filters);
+    res.json(entries);
   }
-});
+}));
 
-router.get("/room-occupations", authMiddleware, async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const vetId = req.user?.id;
-    const occupations = await queueService.getRoomOccupations(vetId);
-    res.json(occupations);
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
-});
+router.get("/reports", authMiddleware, asyncHandler(async (req: Request, res: Response) => {
+  const dateRange = parseDateRange(req.query);
+  const startDate = dateRange.start || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  const endDate = dateRange.end || new Date();
 
-router.post("/upgrade-priorities", authMiddleware, async (req: Request, res: Response) => {
-  try {
-    const upgradedEntries = await queueService.upgradeScheduledPriorities();
-    res.json({ upgraded: upgradedEntries.map(e => e.id), entries: upgradedEntries });
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
+  const stats = await queueService.getReports(startDate, endDate);
+  res.json(stats);
+}));
+
+router.get("/vet-stats/:vetId", authMiddleware, asyncHandler(async (req: Request, res: Response) => {
+  const dateRange = parseDateRange(req.query);
+  const startDate = dateRange.start || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  const endDate = dateRange.end || new Date();
+
+  const stats = await queueService.getVetStats(req.params.vetId, startDate, endDate);
+  res.json(stats);
+}));
+
+router.get("/entry/:id/audit", authMiddleware, requireRole(["RECEPCAO"]), asyncHandler(async (req: Request, res: Response) => {
+  const logs = await auditService.getAuditLogsByEntity("QueueEntry", req.params.id);
+  res.json(logs);
+}));
+
+router.get("/audit/logs", authMiddleware, requireRole(["RECEPCAO"]), asyncHandler(async (req: Request, res: Response) => {
+  const dateRange = parseDateRange(req.query);
+  const filters: any = {
+    startDate: dateRange.start,
+    endDate: dateRange.end,
+  };
+  if (req.query.userId) {
+    filters.userId = req.query.userId as string;
   }
-});
+  if (req.query.action) {
+    filters.action = req.query.action as string;
+  }
+  if (req.query.entityType) {
+    filters.entityType = req.query.entityType as string;
+  }
+
+  const page = req.query.page ? parseInt(req.query.page as string) : undefined;
+  const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
+
+  const result = await auditService.getAllLogs({
+    ...filters,
+    page,
+    limit,
+  });
+  
+  res.json({
+    entries: result.logs,
+    total: result.total,
+    page: result.page,
+    totalPages: result.totalPages,
+  });
+}));
+
+router.get("/room-occupations", authMiddleware, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const vetId = req.user?.id;
+  const occupations = await queueService.getRoomOccupations(vetId);
+  res.json(occupations);
+}));
+
+router.post("/upgrade-priorities", authMiddleware, asyncHandler(async (req: Request, res: Response) => {
+  const upgradedEntries = await queueService.upgradeScheduledPriorities();
+  res.json({ upgraded: upgradedEntries.map(e => e.id), entries: upgradedEntries });
+}));
 
 export default router;
 

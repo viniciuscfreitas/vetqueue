@@ -5,6 +5,7 @@ import { QueueRepository } from "../../repositories/queueRepository";
 import { Role } from "../../core/types";
 import { authMiddleware, requireRole, AuthenticatedRequest } from "../../middleware/authMiddleware";
 import { z } from "zod";
+import { asyncHandler } from "../../middleware/asyncHandler";
 
 const router = Router();
 const repository = new UserRepository();
@@ -24,14 +25,10 @@ const updateUserSchema = z.object({
   password: z.string().min(6, "Senha deve ter no mínimo 6 caracteres").optional(),
 });
 
-router.get("/", authMiddleware, requireRole(["RECEPCAO"]), async (req: Request, res: Response) => {
-  try {
-    const users = await userService.listUsers();
-    res.json(users);
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
-});
+router.get("/", authMiddleware, requireRole(["RECEPCAO"]), asyncHandler(async (req: Request, res: Response) => {
+  const users = await userService.listUsers();
+  res.json(users);
+}));
 
 router.post("/", authMiddleware, requireRole(["RECEPCAO"]), async (req: Request, res: Response) => {
   try {
@@ -61,14 +58,10 @@ router.patch("/:id", authMiddleware, requireRole(["RECEPCAO"]), async (req: Requ
   }
 });
 
-router.get("/active-vets", authMiddleware, requireRole(["RECEPCAO"]), async (req: Request, res: Response) => {
-  try {
-    const activeVets = await queueRepository.getActiveVets();
-    res.json(activeVets);
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
-});
+router.get("/active-vets", authMiddleware, requireRole(["RECEPCAO"]), asyncHandler(async (req: Request, res: Response) => {
+  const activeVets = await queueRepository.getActiveVets();
+  res.json(activeVets);
+}));
 
 router.post("/rooms/:roomId/check-in", authMiddleware, requireRole(["VET"]), async (req: AuthenticatedRequest, res: Response) => {
   try {

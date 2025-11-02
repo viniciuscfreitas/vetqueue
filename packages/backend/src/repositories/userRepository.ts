@@ -1,7 +1,6 @@
-import { PrismaClient, User as PrismaUser } from "@prisma/client";
+import { User as PrismaUser } from "@prisma/client";
 import { User, Role } from "../core/types";
-
-const prisma = new PrismaClient();
+import { prisma } from "../lib/prisma";
 
 function mapPrismaToDomain(user: PrismaUser): User {
   return {

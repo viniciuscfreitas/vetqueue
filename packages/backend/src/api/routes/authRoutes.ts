@@ -3,6 +3,7 @@ import { AuthService } from "../../services/authService";
 import { UserRepository } from "../../repositories/userRepository";
 import { authMiddleware, AuthenticatedRequest } from "../../middleware/authMiddleware";
 import { z } from "zod";
+import { asyncHandler } from "../../middleware/asyncHandler";
 
 const router = Router();
 const authService = new AuthService();
@@ -27,22 +28,18 @@ router.post("/login", async (req: Request, res: Response) => {
   }
 });
 
-router.get("/me", authMiddleware, async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    if (!req.user?.id) {
-      res.status(401).json({ error: "Não autenticado" });
-      return;
-    }
-    const user = await userRepository.findById(req.user.id);
-    if (!user) {
-      res.status(401).json({ error: "Usuário não encontrado" });
-      return;
-    }
-    res.json({ user });
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
+router.get("/me", authMiddleware, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  if (!req.user?.id) {
+    res.status(401).json({ error: "Não autenticado" });
+    return;
   }
-});
+  const user = await userRepository.findById(req.user.id);
+  if (!user) {
+    res.status(401).json({ error: "Usuário não encontrado" });
+    return;
+  }
+  res.json({ user });
+}));
 
 export default router;
 

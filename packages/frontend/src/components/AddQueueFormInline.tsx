@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -28,6 +28,7 @@ export function AddQueueFormInline({ onSuccess, onClose, inline = true }: AddQue
   const { toast } = useToast();
   const handleError = createErrorHandler(toast);
   const [loading, setLoading] = useState(false);
+  const patientNameInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState({
     patientName: "",
     tutorName: "",
@@ -39,6 +40,14 @@ export function AddQueueFormInline({ onSuccess, onClose, inline = true }: AddQue
   });
 
   const isRecepcao = user?.role === Role.RECEPCAO;
+
+  useEffect(() => {
+    if (!inline) {
+      setTimeout(() => {
+        patientNameInputRef.current?.focus();
+      }, 100);
+    }
+  }, [inline]);
 
   const { data: vets = [] } = useQuery({
     queryKey: ["users", "active-vets"],
@@ -101,6 +110,7 @@ export function AddQueueFormInline({ onSuccess, onClose, inline = true }: AddQue
             Paciente
           </Label>
           <Input
+            ref={patientNameInputRef}
             id="patientName"
             value={formData.patientName}
             onChange={(e) =>
@@ -109,6 +119,7 @@ export function AddQueueFormInline({ onSuccess, onClose, inline = true }: AddQue
             required
             placeholder="Nome do paciente"
             className="w-full"
+            autoFocus={!inline}
           />
         </div>
 

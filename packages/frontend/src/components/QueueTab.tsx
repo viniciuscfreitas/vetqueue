@@ -105,6 +105,8 @@ export function QueueTab({
           onComplete={onComplete}
           onCancel={onCancel}
           onCall={onCall}
+          userRole={user?.role}
+          onAddClick={onShowAddQueueModal}
         />
       )}
     </div>

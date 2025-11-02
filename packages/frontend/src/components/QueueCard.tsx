@@ -9,6 +9,7 @@ import { Clock, User, Stethoscope, CheckCircle2, XCircle, UserCircle, DoorOpen }
 
 interface QueueCardProps {
   entry: QueueEntry;
+  position?: number;
   onStart?: (id: string) => void;
   onComplete?: (id: string) => void;
   onCancel?: (id: string) => void;
@@ -55,6 +56,7 @@ const statusConfig = {
 
 export function QueueCard({
   entry,
+  position,
   onStart,
   onComplete,
   onCancel,
@@ -83,9 +85,22 @@ export function QueueCard({
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
-            <CardTitle className="text-xl font-bold mb-1 truncate">
-              {entry.patientName}
-            </CardTitle>
+            <div className="flex items-center gap-2 mb-1">
+              <CardTitle className="text-xl font-bold truncate">
+                {entry.patientName}
+              </CardTitle>
+              {position !== undefined && entry.status === Status.WAITING && (
+                <Badge 
+                  className="flex-shrink-0 font-semibold"
+                  style={{
+                    backgroundColor: '#3B3839',
+                    color: 'white',
+                  }}
+                >
+                  #{position}
+                </Badge>
+              )}
+            </div>
             <div className="flex items-center gap-2 mt-1">
               <PriorityBadge priority={entry.priority} />
               <Badge 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
@@ -20,6 +20,11 @@ export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const usernameInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    usernameInputRef.current?.focus();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,11 +66,13 @@ export default function LoginPage() {
             <div className="space-y-2">
               <Label htmlFor="username">Usuário</Label>
               <Input
+                ref={usernameInputRef}
                 id="username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
                 placeholder="Digite seu usuário"
+                autoFocus
               />
             </div>
 

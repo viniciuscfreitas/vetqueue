@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { queueApi, Status, Role, Priority } from "@/lib/api";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { Header } from "@/components/Header";
 import { AddQueueFormInline } from "@/components/AddQueueFormInline";
 import { useAuth } from "@/contexts/AuthContext";
@@ -50,7 +50,6 @@ export default function Home() {
   const [entryToCall, setEntryToCall] = useState<string | null>(null);
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [entryToCancel, setEntryToCancel] = useState<string | null>(null);
-  const [callNextConfirmDialogOpen, setCallNextConfirmDialogOpen] = useState(false);
 
   const previousEntriesRef = useRef<any[]>([]);
 
@@ -62,8 +61,6 @@ export default function Home() {
     refetchInterval: (query) => (query.state.error ? false : 3000),
     enabled: !authLoading && !!user,
   });
-
-  const activeEntries = entries.filter((e) => e.status === Status.IN_PROGRESS || e.status === Status.CALLED);
 
   const queueMutations = useQueueMutations({
     user,
@@ -98,20 +95,38 @@ export default function Home() {
     previousEntriesRef.current = entries;
   }, [entries, toast]);
 
-  const handleCallNext = () => {
-    if (user?.role !== Role.RECEPCAO) {
-      if (activeEntries.length > 0) {
-        setCallNextConfirmDialogOpen(true);
-        return;
-      }
-    }
-
+  const handleCallNext = useCallback(() => {
     if (currentRoom) {
       queueMutations.callNext(currentRoom.id);
     } else {
       setShowRoomModal(true);
     }
-  };
+  }, [currentRoom, queueMutations]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      const isInputFocused = target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable;
+
+      if (e.ctrlKey && e.key === "n") {
+        e.preventDefault();
+        if (user?.role === Role.RECEPCAO) {
+          setShowAddQueueModal(true);
+        }
+        return;
+      }
+
+      if (e.key === "Enter" && !isInputFocused && !showRoomModal && !showAddQueueModal) {
+        const waitingCount = entries.filter((e) => e.status === Status.WAITING).length;
+        if (waitingCount > 0 && (user?.role === Role.RECEPCAO || user?.role === Role.VET)) {
+          handleCallNext();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [user?.role, entries, showRoomModal, showAddQueueModal, handleCallNext]);
 
   const handleStart = (id: string) => {
     queueMutations.startService(id);
@@ -148,15 +163,6 @@ export default function Home() {
       queueMutations.cancelEntry(entryToCancel);
       setCancelDialogOpen(false);
       setEntryToCancel(null);
-    }
-  };
-
-  const handleConfirmCallNext = () => {
-    setCallNextConfirmDialogOpen(false);
-    if (currentRoom) {
-      queueMutations.callNext(currentRoom.id);
-    } else {
-      setShowRoomModal(true);
     }
   };
 
@@ -254,45 +260,6 @@ export default function Home() {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Sim, cancelar entrada
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <AlertDialog open={callNextConfirmDialogOpen} onOpenChange={setCallNextConfirmDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Pacientes ativos</AlertDialogTitle>
-            <AlertDialogDescription>
-              Você tem pacientes ainda não finalizados:
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <div className="py-4">
-            <ul className="space-y-2">
-              {activeEntries.map((entry) => (
-                <li key={entry.id} className="flex items-center justify-between p-2 bg-muted rounded-md">
-                  <span className="font-medium">{entry.patientName}</span>
-                  <span 
-                    className="text-xs px-2 py-1 rounded-full"
-                    style={{
-                      backgroundColor: entry.status === Status.IN_PROGRESS 
-                        ? 'rgba(91, 150, 183, 0.15)' 
-                        : 'rgba(37, 157, 227, 0.15)',
-                      color: entry.status === Status.IN_PROGRESS 
-                        ? '#5B96B7' 
-                        : '#259DE3',
-                    }}
-                  >
-                    {entry.status === Status.IN_PROGRESS ? 'Em Atendimento' : 'Chamado'}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </div>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmCallNext}>
-              Chamar Próximo
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

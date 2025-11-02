@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { roomApi, queueApi } from "@/lib/api";
 import {
@@ -47,7 +47,15 @@ export function RoomSelectModal({ open, onSelect, onCancel }: RoomSelectModalPro
     ? rooms.filter(room => room.isActive && !occupations[room.id])
     : rooms.filter(room => room.isActive);
 
-  const handleConfirm = () => {
+  const sortedRooms = [...availableRooms].sort((a, b) => {
+    return a.name.localeCompare(b.name);
+  });
+
+  const selectedRoom = availableRooms.find(r => r.id === selectedRoomId);
+  const selectedOccupation = selectedRoom ? occupations[selectedRoomId] : null;
+  const isSelectedDisabled = isRecepcao && !selectedOccupation;
+
+  const handleConfirm = useCallback(() => {
     if (selectedRoomId) {
       if (isVet) {
         const occupation = occupations[selectedRoomId];
@@ -60,15 +68,24 @@ export function RoomSelectModal({ open, onSelect, onCancel }: RoomSelectModalPro
       }
       onSelect(selectedRoomId);
     }
-  };
+  }, [selectedRoomId, isVet, isRecepcao, occupations, onSelect]);
 
-  const sortedRooms = [...availableRooms].sort((a, b) => {
-    return a.name.localeCompare(b.name);
-  });
+  useEffect(() => {
+    if (!open) return;
 
-  const selectedRoom = availableRooms.find(r => r.id === selectedRoomId);
-  const selectedOccupation = selectedRoom ? occupations[selectedRoomId] : null;
-  const isSelectedDisabled = isRecepcao && !selectedOccupation;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Enter" && selectedRoomId && !isSelectedDisabled) {
+        e.preventDefault();
+        handleConfirm();
+      } else if (e.key === "Escape") {
+        e.preventDefault();
+        onCancel();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [open, selectedRoomId, isSelectedDisabled, handleConfirm, onCancel]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">

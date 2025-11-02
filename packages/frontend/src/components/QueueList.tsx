@@ -38,45 +38,62 @@ export function QueueList({
     );
   }
 
-  const sortedEntries = [...entries].sort((a, b) => {
-    if (a.status !== b.status) {
-      const statusOrder = {
-        [Status.WAITING]: 1,
-        [Status.CALLED]: 2,
-        [Status.IN_PROGRESS]: 3,
-        [Status.COMPLETED]: 4,
-        [Status.CANCELLED]: 5,
-      };
-      return statusOrder[a.status] - statusOrder[b.status];
-    }
+  const sortEntries = (entries: QueueEntry[]) => {
+    return [...entries].sort((a, b) => {
+      if (a.priority !== b.priority) {
+        return a.priority - b.priority;
+      }
+      return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+    });
+  };
 
-    if (a.priority !== b.priority) {
-      return a.priority - b.priority;
-    }
-
-    return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+  const inProgress = sortEntries(
+    entries.filter(e => e.status === Status.CALLED || e.status === Status.IN_PROGRESS)
+  ).sort((a, b) => {
+    if (a.status === Status.CALLED && b.status === Status.IN_PROGRESS) return -1;
+    if (a.status === Status.IN_PROGRESS && b.status === Status.CALLED) return 1;
+    return 0;
   });
 
-  const waitingEntries = sortedEntries.filter(e => e.status === Status.WAITING);
+  const waiting = sortEntries(
+    entries.filter(e => e.status === Status.WAITING)
+  );
+
+  const renderSection = (title: string, sectionEntries: QueueEntry[], showPosition: boolean) => {
+    if (sectionEntries.length === 0) return null;
+
+    return (
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold">{title}</h3>
+          <span className="text-sm text-muted-foreground">
+            {sectionEntries.length} {sectionEntries.length === 1 ? "entrada" : "entradas"}
+          </span>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {sectionEntries.map((entry, index) => {
+            const position = showPosition ? index + 1 : undefined;
+            return (
+              <QueueCard
+                key={entry.id}
+                entry={entry}
+                position={position}
+                onStart={onStart}
+                onComplete={onComplete}
+                onCancel={onCancel}
+                onCall={onCall}
+              />
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {sortedEntries.map((entry, index) => {
-        const position = entry.status === Status.WAITING 
-          ? waitingEntries.findIndex(e => e.id === entry.id) + 1 
-          : undefined;
-        return (
-          <QueueCard
-            key={entry.id}
-            entry={entry}
-            position={position}
-            onStart={onStart}
-            onComplete={onComplete}
-            onCancel={onCancel}
-            onCall={onCall}
-          />
-        );
-      })}
+    <div className="space-y-8">
+      {renderSection("Em Atendimento", inProgress, false)}
+      {renderSection("Fila de Espera", waiting, true)}
     </div>
   );
 }

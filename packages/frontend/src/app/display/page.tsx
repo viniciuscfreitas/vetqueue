@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { queueApi, Status, Priority, roomApi } from "@/lib/api";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertTriangle, Volume2 } from "lucide-react";
+import { calculateServiceTime } from "@/lib/utils";
 
 function formatTime(date: Date): string {
   return date.toLocaleTimeString("pt-BR", {
@@ -100,6 +101,7 @@ export default function DisplayPage() {
 
   const called = entries.filter((e) => e.status === Status.CALLED);
   const waiting = entries.filter((e) => e.status === Status.WAITING);
+  const inProgress = entries.filter((e) => e.status === Status.IN_PROGRESS);
 
   const getRoomName = (roomId?: string | null) => {
     if (!roomId) return null;
@@ -154,6 +156,57 @@ export default function DisplayPage() {
               Fila de Atendimento
             </h1>
           </div>
+
+          {!isLoading && inProgress.length > 0 && (
+            <section aria-labelledby="em-atendimento-heading" className="bg-white rounded-lg shadow-sm p-6 mb-6">
+              <h2 id="em-atendimento-heading" className="text-4xl md:text-5xl font-bold mb-6 tracking-tight text-gray-800 border-b-4 border-[#5B96B7] pb-3">
+                Em Atendimento
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {inProgress.map((entry) => {
+                  const roomName = getRoomName(entry.roomId);
+                  const isEmergency = entry.priority === Priority.EMERGENCY;
+                  const serviceTime = entry.calledAt 
+                    ? calculateServiceTime(entry.calledAt, entry.completedAt || currentTime || null)
+                    : null;
+                  return (
+                    <article
+                      key={entry.id}
+                      className={`bg-white rounded-lg p-6 shadow-md border-l-4 ${
+                        isEmergency ? 'border-red-600 animate-pulse' : 'border-[#5B96B7]'
+                      } transition-all duration-300 hover:shadow-lg`}
+                      aria-label={`Paciente ${entry.patientName} em atendimento na ${roomName || 'sala'}`}
+                    >
+                      <h3 className="text-4xl md:text-5xl font-bold mb-3 tracking-tight text-gray-900 flex items-center gap-3">
+                        {isEmergency && <AlertTriangle className="h-10 w-10 text-red-600" />}
+                        {entry.patientName}
+                      </h3>
+                      <div className="text-2xl md:text-3xl mb-2 font-medium text-gray-700">
+                        Tutor: {entry.tutorName}
+                      </div>
+                      <div className={`text-2xl md:text-3xl mb-2 font-semibold ${
+                        isEmergency ? 'text-red-600' : 'text-[#5B96B7]'
+                      }`}>
+                        {entry.serviceType}
+                      </div>
+                      {roomName && (
+                        <div className={`text-3xl md:text-4xl font-bold mt-3 ${
+                          isEmergency ? 'text-red-600' : 'text-[#5B96B7]'
+                        }`}>
+                          → {roomName}
+                        </div>
+                      )}
+                      {serviceTime && (
+                        <div className="text-xl md:text-2xl mt-3 text-[#5B96B7]">
+                          {serviceTime}
+                        </div>
+                      )}
+                    </article>
+                  );
+                })}
+              </div>
+            </section>
+          )}
 
           {isLoading ? (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

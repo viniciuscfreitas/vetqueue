@@ -13,8 +13,7 @@ import {
 import { Label } from "./ui/label";
 import { Button } from "./ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { CheckCircle2, XCircle, AlertCircle } from "lucide-react";
-import { Badge } from "./ui/badge";
+import { CheckCircle2, AlertCircle } from "lucide-react";
 
 interface RoomSelectModalProps {
   open: boolean;
@@ -24,7 +23,7 @@ interface RoomSelectModalProps {
 
 export function RoomSelectModal({ open, onSelect, onCancel }: RoomSelectModalProps) {
   const [selectedRoomId, setSelectedRoomId] = useState<string>("");
-  const { user } = useAuth();
+  const { user, currentRoom } = useAuth();
   const isVet = user?.role === "VET";
   const isRecepcao = user?.role === "RECEPCAO";
   
@@ -50,9 +49,11 @@ export function RoomSelectModal({ open, onSelect, onCancel }: RoomSelectModalPro
 
   const handleConfirm = () => {
     if (selectedRoomId) {
-      const occupation = occupations[selectedRoomId];
-      if (isVet && occupation) {
-        return;
+      if (isVet) {
+        const occupation = occupations[selectedRoomId];
+        if (occupation) {
+          return;
+        }
       }
       if (isRecepcao && !occupations[selectedRoomId]) {
         return;
@@ -62,15 +63,12 @@ export function RoomSelectModal({ open, onSelect, onCancel }: RoomSelectModalPro
   };
 
   const sortedRooms = [...availableRooms].sort((a, b) => {
-    const aOccupied = isVet && !!occupations[a.id];
-    const bOccupied = isVet && !!occupations[b.id];
-    if (aOccupied === bOccupied) return a.name.localeCompare(b.name);
-    return aOccupied ? 1 : -1;
+    return a.name.localeCompare(b.name);
   });
 
   const selectedRoom = availableRooms.find(r => r.id === selectedRoomId);
   const selectedOccupation = selectedRoom ? occupations[selectedRoomId] : null;
-  const isSelectedDisabled = (isVet && !!selectedOccupation) || (isRecepcao && !selectedOccupation);
+  const isSelectedDisabled = isRecepcao && !selectedOccupation;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
@@ -97,58 +95,20 @@ export function RoomSelectModal({ open, onSelect, onCancel }: RoomSelectModalPro
               </SelectTrigger>
               <SelectContent>
                 {sortedRooms.map((room) => {
-                  const occupation = occupations[room.id];
-                  const isDisabled = isVet && !!occupation;
                   return (
                     <SelectItem 
                       key={room.id} 
                       value={room.id}
-                      disabled={isDisabled}
-                      className={isDisabled ? "opacity-60 cursor-not-allowed" : ""}
                     >
                       <div className="flex items-center gap-2">
-                        {isDisabled ? (
-                          <XCircle className="h-4 w-4 text-red-500" />
-                        ) : (
-                          <CheckCircle2 className="h-4 w-4 text-green-500" />
-                        )}
+                        <CheckCircle2 className="h-4 w-4 text-green-500" />
                         <span>{room.name}</span>
-                        {isDisabled && (
-                          <Badge 
-                            variant="outline" 
-                            className="ml-auto text-xs"
-                            style={{
-                              backgroundColor: 'rgba(214, 39, 39, 0.1)',
-                              color: '#D62727',
-                              borderColor: '#D62727',
-                            }}
-                          >
-                            Ocupada
-                          </Badge>
-                        )}
                       </div>
                     </SelectItem>
                   );
                 })}
               </SelectContent>
             </Select>
-            {selectedRoom && selectedOccupation && isVet && (
-              <div 
-                className="mt-3 p-3 border rounded-md flex items-start gap-2"
-                style={{
-                  backgroundColor: 'rgba(214, 39, 39, 0.1)',
-                  borderColor: '#D62727',
-                }}
-              >
-                <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" style={{ color: '#D62727' }} />
-                <div className="flex-1">
-                  <p className="text-sm font-medium" style={{ color: '#D62727' }}>Sala ocupada</p>
-                  <p className="text-xs mt-0.5" style={{ color: '#D62727' }}>
-                    A sala {selectedRoom.name} está ocupada por {selectedOccupation.vetName}
-                  </p>
-                </div>
-              </div>
-            )}
             {selectedRoom && !selectedOccupation && isVet && (
               <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-md flex items-center gap-2">
                 <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0" />

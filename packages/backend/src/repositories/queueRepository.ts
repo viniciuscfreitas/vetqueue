@@ -573,6 +573,9 @@ export class QueueRepository {
     
     occupiedEntries.forEach((entry) => {
       if (entry.roomId && entry.assignedVet) {
+        if (currentVetId && entry.assignedVet.id === currentVetId) {
+          return;
+        }
         occupations[entry.roomId] = {
           vetId: entry.assignedVet.id,
           vetName: entry.assignedVet.name,
@@ -581,11 +584,16 @@ export class QueueRepository {
     });
 
     vetsCheckedIn.forEach((vet) => {
-      if (vet.currentRoomId && !occupations[vet.currentRoomId]) {
-        occupations[vet.currentRoomId] = {
-          vetId: vet.id,
-          vetName: vet.name,
-        };
+      if (vet.currentRoomId) {
+        if (currentVetId && vet.id === currentVetId) {
+          return;
+        }
+        if (!occupations[vet.currentRoomId]) {
+          occupations[vet.currentRoomId] = {
+            vetId: vet.id,
+            vetName: vet.name,
+          };
+        }
       }
     });
 

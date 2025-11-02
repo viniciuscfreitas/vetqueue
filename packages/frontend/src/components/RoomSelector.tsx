@@ -65,11 +65,7 @@ export function RoomSelector() {
   });
 
   const changeRoomMutation = useMutation({
-    mutationFn: async (roomId: string) => {
-      await userApi.checkOutRoom();
-      const updatedUser = await userApi.checkInRoom(roomId);
-      return updatedUser.data;
-    },
+    mutationFn: (roomId: string) => userApi.changeRoom(roomId).then((res) => res.data),
     onSuccess: (updatedUser) => {
       const room = rooms.find((r) => r.id === updatedUser.currentRoomId);
       if (room) {

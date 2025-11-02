@@ -100,5 +100,19 @@ router.post("/:vetId/rooms/check-out", authMiddleware, requireRole(["RECEPCAO"])
   }
 });
 
+router.post("/rooms/:roomId/change", authMiddleware, requireRole(["VET"]), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const vetId = req.user?.id;
+    if (!vetId) {
+      res.status(401).json({ error: "Não autenticado" });
+      return;
+    }
+    const user = await userService.changeRoom(vetId, req.params.roomId);
+    res.json(user);
+  } catch (error) {
+    res.status(400).json({ error: (error as Error).message });
+  }
+});
+
 export default router;
 

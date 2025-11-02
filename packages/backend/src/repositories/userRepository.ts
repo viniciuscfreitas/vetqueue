@@ -73,8 +73,19 @@ export class UserRepository {
 
   async checkInRoom(vetId: string, roomId: string): Promise<User> {
     const user = await prisma.$transaction(async (tx) => {
+      const currentUser = await tx.user.findUnique({
+        where: { id: vetId },
+      });
+
+      if (currentUser && currentUser.currentRoomId === roomId) {
+        return currentUser;
+      }
+
       const existingUserInRoom = await tx.user.findFirst({
-        where: { currentRoomId: roomId },
+        where: { 
+          currentRoomId: roomId,
+          id: { not: vetId },
+        },
       });
 
       if (existingUserInRoom) {
@@ -105,6 +116,34 @@ export class UserRepository {
         lastActivityAt: null,
       },
     });
+    return mapPrismaToDomain(user);
+  }
+
+  async changeRoom(vetId: string, newRoomId: string): Promise<User> {
+    const user = await prisma.$transaction(async (tx) => {
+      const existingUserInRoom = await tx.user.findFirst({
+        where: { 
+          currentRoomId: newRoomId,
+          id: { not: vetId },
+        },
+      });
+
+      if (existingUserInRoom) {
+        throw new Error(`Sala já está ocupada por ${existingUserInRoom.name}`);
+      }
+
+      const user = await tx.user.update({
+        where: { id: vetId },
+        data: {
+          currentRoomId: newRoomId,
+          roomCheckedInAt: new Date(),
+          lastActivityAt: new Date(),
+        },
+      });
+
+      return user;
+    });
+
     return mapPrismaToDomain(user);
   }
 

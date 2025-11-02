@@ -255,6 +255,8 @@ export const userApi = {
   
   checkOutRoomForVet: (vetId: string) => api.post<User>(`/api/users/${vetId}/rooms/check-out`),
   
+  changeRoom: (roomId: string) => api.post<User>(`/api/users/rooms/${roomId}/change`),
+  
   create: (data: { username: string; password: string; name: string; role: Role }) =>
     api.post<User>("/api/users", data),
   

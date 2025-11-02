@@ -538,24 +538,6 @@ export class QueueRepository {
   }
 
   async getRoomOccupations(currentVetId?: string): Promise<Record<string, { vetId: string; vetName: string } | null>> {
-    const occupiedEntries = await prisma.queueEntry.findMany({
-      where: {
-        roomId: { not: null },
-        assignedVetId: currentVetId ? { not: currentVetId } : { not: null },
-        status: {
-          in: [Status.CALLED, Status.IN_PROGRESS],
-        },
-      },
-      include: {
-        assignedVet: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-      },
-    });
-
     const vetsCheckedIn = await prisma.user.findMany({
       where: {
         currentRoomId: { not: null },
@@ -570,30 +552,16 @@ export class QueueRepository {
     });
 
     const occupations: Record<string, { vetId: string; vetName: string } | null> = {};
-    
-    occupiedEntries.forEach((entry) => {
-      if (entry.roomId && entry.assignedVet) {
-        if (currentVetId && entry.assignedVet.id === currentVetId) {
-          return;
-        }
-        occupations[entry.roomId] = {
-          vetId: entry.assignedVet.id,
-          vetName: entry.assignedVet.name,
-        };
-      }
-    });
 
     vetsCheckedIn.forEach((vet) => {
       if (vet.currentRoomId) {
         if (currentVetId && vet.id === currentVetId) {
           return;
         }
-        if (!occupations[vet.currentRoomId]) {
-          occupations[vet.currentRoomId] = {
-            vetId: vet.id,
-            vetName: vet.name,
-          };
-        }
+        occupations[vet.currentRoomId] = {
+          vetId: vet.id,
+          vetName: vet.name,
+        };
       }
     });
 
@@ -651,6 +619,18 @@ export class QueueRepository {
       include: { assignedVet: true, room: true },
     });
     return mapPrismaToDomain(entry);
+  }
+
+  async hasVetActivePatients(vetId: string): Promise<boolean> {
+    const activePatient = await prisma.queueEntry.findFirst({
+      where: {
+        assignedVetId: vetId,
+        status: {
+          in: [Status.CALLED, Status.IN_PROGRESS],
+        },
+      },
+    });
+    return !!activePatient;
   }
 }
 

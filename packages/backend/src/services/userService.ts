@@ -1,9 +1,14 @@
 import bcrypt from "bcrypt";
 import { UserRepository } from "../repositories/userRepository";
+import { QueueRepository } from "../repositories/queueRepository";
 import { User, Role } from "../core/types";
 
 export class UserService {
-  constructor(private repository: UserRepository) {}
+  private queueRepository: QueueRepository;
+  
+  constructor(private repository: UserRepository) {
+    this.queueRepository = new QueueRepository();
+  }
 
   async listUsers(): Promise<User[]> {
     return this.repository.findAll();
@@ -117,11 +122,42 @@ export class UserService {
         throw new Error("Usuário não está em nenhuma sala");
       }
       
+      const hasActivePatients = await this.queueRepository.hasVetActivePatients(vetId);
+      if (hasActivePatients) {
+        console.error(`[ROOM] ✗ Vet ${vetId} tentou checkout com pacientes ativos`);
+        throw new Error("Não é possível sair da sala com pacientes em atendimento");
+      }
+      
       const result = await this.repository.checkOutRoom(vetId);
       console.log(`[ROOM] ✓ Check-out - ${result.name} saiu da sala`);
       return result;
     } catch (error) {
       console.error(`[ROOM] ✗ Erro no check-out:`, error);
+      throw error;
+    }
+  }
+
+  async changeRoom(vetId: string, roomId: string): Promise<User> {
+    console.log(`[ROOM] changeRoom - UserId: ${vetId}, NewRoomId: ${roomId}`);
+    
+    try {
+      const user = await this.repository.findById(vetId);
+      if (!user) {
+        console.error(`[ROOM] ✗ Usuário ${vetId} não encontrado`);
+        throw new Error("Usuário não encontrado");
+      }
+      
+      const hasActivePatients = await this.queueRepository.hasVetActivePatients(vetId);
+      if (hasActivePatients) {
+        console.error(`[ROOM] ✗ Vet ${vetId} tentou trocar de sala com pacientes ativos`);
+        throw new Error("Não é possível trocar de sala com pacientes em atendimento");
+      }
+      
+      const result = await this.repository.changeRoom(vetId, roomId);
+      console.log(`[ROOM] ✓ Troca de sala - ${result.name} → Sala ${roomId}`);
+      return result;
+    } catch (error) {
+      console.error(`[ROOM] ✗ Erro na troca de sala:`, error);
       throw error;
     }
   }

@@ -58,7 +58,6 @@ export class QueueService {
   async callNext(vetId?: string, roomId?: string): Promise<QueueEntry | null> {
     console.log(`[QUEUE] callNext - vetId: ${vetId || 'none'}, roomId: ${roomId || 'none'}`);
     
-    // If vet is calling, ensure they're checked into a room
     if (vetId && !roomId) {
       const vet = await this.userRepository.findById(vetId);
       if (!vet?.currentRoomId) {
@@ -69,8 +68,8 @@ export class QueueService {
     }
     
     if (vetId && roomId) {
-      const roomOccupied = await this.repository.hasOtherVetActivePatient(roomId, vetId);
-      if (roomOccupied) {
+      const roomOccupied = await this.repository.getVetInRoom(roomId);
+      if (roomOccupied && roomOccupied.vetId !== vetId) {
         console.error(`[QUEUE] ✗ Sala ${roomId} ocupada por outro veterinário`);
         throw new Error(`Sala já está ocupada por veterinário ${roomOccupied.vetName}`);
       }
@@ -125,8 +124,8 @@ export class QueueService {
     }
 
     if (vetId && roomId) {
-      const roomOccupied = await this.repository.hasOtherVetActivePatient(roomId, vetId);
-      if (roomOccupied) {
+      const roomOccupied = await this.repository.getVetInRoom(roomId);
+      if (roomOccupied && roomOccupied.vetId !== vetId) {
         throw new Error(`Sala já está ocupada por veterinário ${roomOccupied.vetName}`);
       }
     }

@@ -91,19 +91,6 @@ export function QueueCard({
   const canEdit = entry.status === Status.WAITING && userRole === Role.RECEPCAO;
   const queryClient = useQueryClient();
   
-  if (entry.status === Status.IN_PROGRESS) {
-    console.log('[QueueCard DEBUG]', {
-      patientName: entry.patientName,
-      status: entry.status,
-      serviceType: entry.serviceType,
-      serviceTypeIsConsulta: entry.serviceType === ServiceType.CONSULTA,
-      serviceTypeIsConsultaLiteral: entry.serviceType === "Consulta",
-      patientId: entry.patientId,
-      hasOnRegisterConsultation: !!onRegisterConsultation,
-      userRole,
-    });
-  }
-  
   return (
     <>
       <Card className="transition-all hover:shadow-md">

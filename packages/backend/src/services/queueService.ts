@@ -29,6 +29,9 @@ export class QueueService {
     const toleranceMs = 15 * 60 * 1000;
     
     if (now >= scheduledTime + toleranceMs) {
+      if (basePriority === Priority.EMERGENCY) {
+        return Priority.EMERGENCY;
+      }
       return Priority.HIGH;
     }
     

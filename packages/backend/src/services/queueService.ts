@@ -73,7 +73,6 @@ export class QueueService {
     }
 
     console.log(`[QUEUE] addToQueue - Paciente: ${data.patientName}, Tutor: ${data.tutorName}, Serviço: ${data.serviceType}, Prioridade: ${processed.priority}`);
-    console.log(`[QUEUE] patientId recebido:`, data.patientId || 'UNDEFINED');
     
     try {
       if (!data.patientName.trim() || !data.tutorName.trim()) {
@@ -91,7 +90,7 @@ export class QueueService {
         patientId: data.patientId,
       });
       
-      console.log(`[QUEUE] ✓ Criado - ID: ${entry.id}, patientId salvo: ${entry.patientId || 'NULL'}`);
+      console.log(`[QUEUE] ✓ Criado - ID: ${entry.id}, Posição na fila calculada`);
       return entry;
     } catch (error) {
       console.error(`[QUEUE] ✗ Erro ao criar entrada:`, error);

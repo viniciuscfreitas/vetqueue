@@ -35,9 +35,7 @@ export function PatientAutocomplete({
   const [debouncedSearch, setDebouncedSearch] = useState("");
 
   useEffect(() => {
-    console.log('[AUTOCOMPLETE] useEffect value:', value, 'searchTerm:', searchTerm);
     if (value !== undefined && value !== searchTerm) {
-      console.log('[AUTOCOMPLETE] Sincronizando value com searchTerm');
       setSearchTerm(value);
     }
     if (!tutorName.trim()) {
@@ -85,7 +83,6 @@ export function PatientAutocomplete({
   }, []);
 
   const handleSelect = (patient: Patient) => {
-    console.log('[AUTOCOMPLETE] Paciente selecionado:', patient.id, patient.name);
     setSelectedPatient(patient);
     setSearchTerm(patient.name);
     setShowDropdown(false);
@@ -98,7 +95,6 @@ export function PatientAutocomplete({
     setShowDropdown(newValue.length > 0 && tutorName.trim().length > 0);
     
     if (selectedPatient && newValue !== selectedPatient.name) {
-      console.log('[AUTOCOMPLETE] Limpando paciente - valor mudou:', { de: selectedPatient.name, para: newValue });
       setSelectedPatient(null);
       onChange(null);
       onPatientNameChange?.(newValue);

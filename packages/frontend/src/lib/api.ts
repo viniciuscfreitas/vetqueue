@@ -302,3 +302,56 @@ export const auditApi = {
     api.get<AuditLog[]>(`/api/queue/entry/${entryId}/audit`),
 };
 
+export interface Patient {
+  id: string;
+  name: string;
+  species?: string | null;
+  breed?: string | null;
+  birthDate?: string | null;
+  gender?: string | null;
+  tutorName: string;
+  tutorPhone?: string | null;
+  tutorEmail?: string | null;
+  notes?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreatePatientData {
+  name: string;
+  species?: string;
+  breed?: string;
+  birthDate?: string;
+  gender?: string;
+  tutorName: string;
+  tutorPhone?: string;
+  tutorEmail?: string;
+  notes?: string;
+}
+
+export interface UpdatePatientData {
+  name?: string;
+  species?: string;
+  breed?: string;
+  birthDate?: string;
+  gender?: string;
+  tutorName?: string;
+  tutorPhone?: string;
+  tutorEmail?: string;
+  notes?: string;
+}
+
+export const patientApi = {
+  list: (filters?: { name?: string; tutorName?: string }) => 
+    api.get<Patient[]>("/api/patients", { params: filters }),
+  
+  getById: (id: string) => api.get<Patient>(`/api/patients/${id}`),
+  
+  create: (data: CreatePatientData) => api.post<Patient>("/api/patients", data),
+  
+  update: (id: string, data: UpdatePatientData) => 
+    api.patch<Patient>(`/api/patients/${id}`, data),
+  
+  delete: (id: string) => api.delete(`/api/patients/${id}`),
+};
+

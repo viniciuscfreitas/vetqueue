@@ -5,6 +5,7 @@ import authRoutes from "./api/routes/authRoutes";
 import roomRoutes from "./api/routes/roomRoutes";
 import userRoutes from "./api/routes/userRoutes";
 import serviceRoutes from "./api/routes/serviceRoutes";
+import patientRoutes from "./api/routes/patientRoutes";
 import { checkAndCleanupInactiveRooms } from "./jobs/inactivityCheck";
 import { prisma } from "./lib/prisma";
 
@@ -61,6 +62,7 @@ app.use("/api/rooms", roomRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/queue", queueRoutes);
 app.use("/api/services", serviceRoutes);
+app.use("/api/patients", patientRoutes);
 
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   console.error(`[ERROR] ${req.method} ${req.path}`, {

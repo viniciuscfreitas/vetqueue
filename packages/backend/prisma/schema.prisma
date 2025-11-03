@@ -86,4 +86,24 @@ model AuditLog {
   @@index([timestamp])
 }
 
+model Patient {
+  id          String    @id @default(uuid())
+  name        String
+  species     String?
+  breed       String?
+  birthDate   DateTime?
+  gender      String?
+  tutorName   String
+  tutorPhone  String?
+  tutorEmail  String?
+  notes       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("patients")
+  @@index([name])
+  @@index([tutorName])
+  @@index([tutorPhone])
+}
+
 

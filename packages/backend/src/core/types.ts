@@ -85,3 +85,18 @@ export interface ActiveVet {
   roomId: string;
   roomName: string;
 }
+
+export interface Patient {
+  id: string;
+  name: string;
+  species?: string | null;
+  breed?: string | null;
+  birthDate?: Date | null;
+  gender?: string | null;
+  tutorName: string;
+  tutorPhone?: string | null;
+  tutorEmail?: string | null;
+  notes?: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}

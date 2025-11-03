@@ -66,6 +66,12 @@ export function AddQueueFormInline({ onSuccess, onClose, inline = true }: AddQue
         ? new Date(today.getFullYear(), today.getMonth(), today.getDate(), parseInt(hours), parseInt(minutes))
         : undefined;
 
+      console.log('[FORM] Enviando dados para API:', {
+        patientName: formData.patientName,
+        tutorName: formData.tutorName,
+        patientId: formData.patientId || 'UNDEFINED',
+      });
+
       await queueApi.add({
         patientName: formData.patientName,
         tutorName: formData.tutorName,
@@ -125,6 +131,7 @@ export function AddQueueFormInline({ onSuccess, onClose, inline = true }: AddQue
             tutorName={formData.tutorName}
             value={formData.patientName}
             onChange={(patient: Patient | null) => {
+              console.log('[FORM] onChange chamado com patient:', patient?.id || 'null');
               setFormData({
                 ...formData,
                 patientId: patient?.id,
@@ -132,6 +139,7 @@ export function AddQueueFormInline({ onSuccess, onClose, inline = true }: AddQue
               });
             }}
             onPatientNameChange={(name) => {
+              console.log('[FORM] onPatientNameChange chamado com name:', name);
               setFormData({
                 ...formData,
                 patientName: name,

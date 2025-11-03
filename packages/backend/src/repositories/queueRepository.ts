@@ -59,19 +59,23 @@ export class QueueRepository {
     scheduledAt?: Date;
     patientId?: string;
   }): Promise<QueueEntry> {
+    console.log(`[REPO] QueueRepository.create - patientId:`, data.patientId || 'UNDEFINED');
     let patientName = data.patientName;
     let tutorName = data.tutorName;
 
     if (data.patientId) {
+      console.log(`[REPO] Buscando paciente com ID: ${data.patientId}`);
       const patient = await prisma.patient.findUnique({
         where: { id: data.patientId },
       });
+      console.log(`[REPO] Paciente encontrado:`, patient ? `Sim (${patient.name})` : 'NÃO');
       if (patient) {
         patientName = patient.name;
         tutorName = patient.tutorName;
       }
     }
 
+    console.log(`[REPO] Criando queueEntry com patientId:`, data.patientId || 'NULL');
     const entry = await prisma.queueEntry.create({
       data: {
         patientName,
@@ -86,6 +90,7 @@ export class QueueRepository {
       },
       include: { assignedVet: true, room: true, patient: true },
     });
+    console.log(`[REPO] QueueEntry criado - ID: ${entry.id}, patientId no DB:`, entry.patientId || 'NULL');
     return mapPrismaToDomain(entry);
   }
 

@@ -35,7 +35,9 @@ export function PatientAutocomplete({
   const [debouncedSearch, setDebouncedSearch] = useState("");
 
   useEffect(() => {
+    console.log('[AUTOCOMPLETE] useEffect value:', value, 'searchTerm:', searchTerm);
     if (value !== undefined && value !== searchTerm) {
+      console.log('[AUTOCOMPLETE] Sincronizando value com searchTerm');
       setSearchTerm(value);
     }
     if (!tutorName.trim()) {

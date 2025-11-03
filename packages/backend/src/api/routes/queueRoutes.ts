@@ -290,10 +290,6 @@ router.get("/room-occupations", authMiddleware, asyncHandler(async (req: Authent
   res.json(occupations);
 }));
 
-router.post("/upgrade-priorities", authMiddleware, asyncHandler(async (req: Request, res: Response) => {
-  const upgradedEntries = await queueService.upgradeScheduledPriorities();
-  res.json({ upgraded: upgradedEntries.map(e => e.id), entries: upgradedEntries });
-}));
 
 router.patch("/:id", authMiddleware, requireRole(["RECEPCAO"]), async (req: AuthenticatedRequest, res: Response) => {
   try {

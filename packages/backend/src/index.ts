@@ -5,7 +5,6 @@ import authRoutes from "./api/routes/authRoutes";
 import roomRoutes from "./api/routes/roomRoutes";
 import userRoutes from "./api/routes/userRoutes";
 import serviceRoutes from "./api/routes/serviceRoutes";
-import { checkAndUpgradePriorities } from "./jobs/priorityUpgradeCheck";
 import { checkAndCleanupInactiveRooms } from "./jobs/inactivityCheck";
 import { prisma } from "./lib/prisma";
 
@@ -87,6 +86,5 @@ app.listen(Number(PORT), HOST, () => {
   console.log(`Server running on http://${HOST}:${PORT}`);
 });
 
-setInterval(checkAndUpgradePriorities, 1 * 60 * 1000);
 setInterval(checkAndCleanupInactiveRooms, 5 * 60 * 1000);
 

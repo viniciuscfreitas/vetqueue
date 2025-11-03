@@ -15,13 +15,21 @@ export class QueueService {
     }
   }
 
-  private calculatePriority(
+  private processPriorityAndSchedule(
     basePriority: Priority,
     hasScheduledAppointment?: boolean,
     scheduledAt?: Date
-  ): Priority {
+  ): {
+    priority: Priority;
+    hasScheduledAppointment: boolean;
+    scheduledAt: Date | null;
+  } {
     if (!hasScheduledAppointment || !scheduledAt) {
-      return basePriority;
+      return {
+        priority: basePriority,
+        hasScheduledAppointment: false,
+        scheduledAt: null,
+      };
     }
 
     const scheduledTime = new Date(scheduledAt).getTime();
@@ -29,13 +37,19 @@ export class QueueService {
     const toleranceMs = 15 * 60 * 1000;
     
     if (now >= scheduledTime + toleranceMs) {
-      if (basePriority === Priority.EMERGENCY) {
-        return Priority.EMERGENCY;
-      }
-      return Priority.HIGH;
+      const finalPriority = basePriority === Priority.EMERGENCY ? Priority.EMERGENCY : Priority.NORMAL;
+      return {
+        priority: finalPriority,
+        hasScheduledAppointment: false,
+        scheduledAt: null,
+      };
     }
     
-    return basePriority;
+    return {
+      priority: basePriority,
+      hasScheduledAppointment: true,
+      scheduledAt: scheduledAt,
+    };
   }
 
   async addToQueue(data: {
@@ -47,13 +61,17 @@ export class QueueService {
     hasScheduledAppointment?: boolean;
     scheduledAt?: Date;
   }): Promise<QueueEntry> {
-    const priority = this.calculatePriority(
+    const processed = this.processPriorityAndSchedule(
       data.priority || Priority.NORMAL,
       data.hasScheduledAppointment,
       data.scheduledAt
     );
 
-    console.log(`[QUEUE] addToQueue - Paciente: ${data.patientName}, Tutor: ${data.tutorName}, Serviço: ${data.serviceType}, Prioridade: ${priority}`);
+    if (data.hasScheduledAppointment && !processed.hasScheduledAppointment) {
+      console.log(`[QUEUE] addToQueue - Agendamento atrasado >15min, convertido para walk-in - Paciente: ${data.patientName}`);
+    }
+
+    console.log(`[QUEUE] addToQueue - Paciente: ${data.patientName}, Tutor: ${data.tutorName}, Serviço: ${data.serviceType}, Prioridade: ${processed.priority}`);
     
     try {
       if (!data.patientName.trim() || !data.tutorName.trim()) {
@@ -64,10 +82,10 @@ export class QueueService {
         patientName: data.patientName.trim(),
         tutorName: data.tutorName.trim(),
         serviceType: data.serviceType,
-        priority,
+        priority: processed.priority,
         assignedVetId: data.assignedVetId,
-        hasScheduledAppointment: data.hasScheduledAppointment,
-        scheduledAt: data.scheduledAt,
+        hasScheduledAppointment: processed.hasScheduledAppointment,
+        scheduledAt: processed.scheduledAt || undefined,
       });
       
       console.log(`[QUEUE] ✓ Criado - ID: ${entry.id}, Posição na fila calculada`);
@@ -306,17 +324,6 @@ export class QueueService {
     return this.repository.getRoomOccupations(currentVetId);
   }
 
-  async upgradeScheduledPriorities(): Promise<QueueEntry[]> {
-    const entriesNeedingUpgrade = await this.repository.findScheduledEntriesNeedingUpgrade();
-    
-    const upgradedEntries: QueueEntry[] = [];
-    for (const entry of entriesNeedingUpgrade) {
-      const upgraded = await this.repository.updatePriority(entry.id, Priority.HIGH);
-      upgradedEntries.push(upgraded);
-    }
-    
-    return upgradedEntries;
-  }
 
   async updateEntry(
     id: string,
@@ -345,20 +352,29 @@ export class QueueService {
       throw new Error("Apenas atendimentos aguardando podem ser editados");
     }
 
-    const finalPriority = this.calculatePriority(
+    const processed = this.processPriorityAndSchedule(
       data.priority !== undefined ? data.priority : entry.priority,
       data.hasScheduledAppointment !== undefined ? data.hasScheduledAppointment : entry.hasScheduledAppointment,
       data.scheduledAt !== undefined ? data.scheduledAt : (entry.scheduledAt || undefined)
     );
+
+    const wasScheduled = entry.hasScheduledAppointment;
+    const becomesWalkIn = wasScheduled && !processed.hasScheduledAppointment;
+    
+    if (becomesWalkIn) {
+      console.log(`[QUEUE] updateEntry - Agendamento atrasado >15min, convertido para walk-in - Paciente: ${entry.patientName}`);
+    }
 
     console.log(`[QUEUE] updateEntry - EntryId: ${id}, Dados:`, data);
 
     try {
       const updated = await this.repository.update(id, {
         ...data,
-        priority: finalPriority,
+        priority: processed.priority,
+        hasScheduledAppointment: processed.hasScheduledAppointment,
+        scheduledAt: processed.scheduledAt || undefined,
       });
-      console.log(`[QUEUE] ✓ Atualizado - Paciente: ${updated.patientName}, Prioridade: ${finalPriority}`);
+      console.log(`[QUEUE] ✓ Atualizado - Paciente: ${updated.patientName}, Prioridade: ${processed.priority}`);
       return updated;
     } catch (error) {
       console.error(`[QUEUE] ✗ Erro ao atualizar entrada:`, error);

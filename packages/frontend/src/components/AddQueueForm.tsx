@@ -17,6 +17,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { createErrorHandler } from "@/lib/errors";
 import { SERVICE_TYPE_OPTIONS } from "@/lib/constants";
 import { PatientAutocomplete } from "./PatientAutocomplete";
+import { TutorAutocomplete } from "./TutorAutocomplete";
 
 export function AddQueueForm() {
   const router = useRouter();
@@ -64,43 +65,42 @@ export function AddQueueForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 max-w-md">
+      <TutorAutocomplete
+        value={formData.tutorName}
+        onChange={(tutorName) => {
+          setFormData({
+            ...formData,
+            tutorName,
+            patientName: "",
+            patientId: undefined,
+          });
+        }}
+        label="Tutor"
+        placeholder="Buscar tutor ou digite..."
+        required
+      />
+
       <PatientAutocomplete
+        tutorName={formData.tutorName}
+        value={formData.patientName}
         onChange={(patient: Patient | null) => {
           setFormData({
             ...formData,
             patientId: patient?.id,
-            patientName: patient?.name || "",
-            tutorName: patient?.tutorName || "",
+            patientName: patient?.name || formData.patientName,
           });
         }}
-        label="Paciente"
-        placeholder="Buscar paciente cadastrado ou digite manualmente..."
+        onPatientNameChange={(name) => {
+          setFormData({
+            ...formData,
+            patientName: name,
+            patientId: undefined,
+          });
+        }}
+        label="Pet"
+        placeholder={formData.tutorName ? "Buscar pet ou digite..." : "Digite o tutor primeiro"}
         required
       />
-      
-      <div>
-        <Label htmlFor="patientName">Nome do Paciente</Label>
-        <Input
-          id="patientName"
-          value={formData.patientName}
-          onChange={(e) =>
-            setFormData({ ...formData, patientName: e.target.value, patientId: undefined })
-          }
-          required
-        />
-      </div>
-
-      <div>
-        <Label htmlFor="tutorName">Nome do Tutor</Label>
-        <Input
-          id="tutorName"
-          value={formData.tutorName}
-          onChange={(e) =>
-            setFormData({ ...formData, tutorName: e.target.value, patientId: undefined })
-          }
-          required
-        />
-      </div>
 
       <div>
         <Label htmlFor="serviceType">Tipo de Serviço</Label>

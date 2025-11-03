@@ -2,34 +2,30 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { patientApi, Patient } from "@/lib/api";
+import { patientApi } from "@/lib/api";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 
-interface PatientAutocompleteProps {
-  tutorName: string;
+interface TutorAutocompleteProps {
   value?: string;
-  onChange: (patient: Patient | null) => void;
-  onPatientNameChange?: (name: string) => void;
+  onChange: (tutorName: string) => void;
   label?: string;
   placeholder?: string;
   required?: boolean;
   id?: string;
 }
 
-export function PatientAutocomplete({
-  tutorName,
+export function TutorAutocomplete({
   value,
   onChange,
-  onPatientNameChange,
   label,
-  placeholder = "Buscar pet...",
+  placeholder = "Buscar tutor...",
   required = false,
-  id = "patientAutocomplete",
-}: PatientAutocompleteProps) {
+  id = "tutorAutocomplete",
+}: TutorAutocompleteProps) {
   const [searchTerm, setSearchTerm] = useState(value || "");
   const [showDropdown, setShowDropdown] = useState(false);
-  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [selectedTutor, setSelectedTutor] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -37,12 +33,9 @@ export function PatientAutocomplete({
   useEffect(() => {
     if (value !== undefined && value !== searchTerm) {
       setSearchTerm(value);
+      setSelectedTutor(null);
     }
-    if (!tutorName.trim()) {
-      setSelectedPatient(null);
-      setSearchTerm("");
-    }
-  }, [value, tutorName]);
+  }, [value]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -53,18 +46,19 @@ export function PatientAutocomplete({
   }, [searchTerm]);
 
   const { data: patients = [], isLoading } = useQuery({
-    queryKey: ["patients", "search", tutorName, debouncedSearch],
+    queryKey: ["patients", "tutors", debouncedSearch],
     queryFn: () => {
-      if (!debouncedSearch.trim() || !tutorName.trim()) {
+      if (!debouncedSearch.trim()) {
         return Promise.resolve([]);
       }
-      return patientApi.list({ 
-        tutorName: tutorName.trim(),
-        name: debouncedSearch.trim()
-      }).then((res) => res.data);
+      return patientApi.list({ tutorName: debouncedSearch }).then((res) => res.data);
     },
-    enabled: debouncedSearch.trim().length > 0 && tutorName.trim().length > 0,
+    enabled: debouncedSearch.trim().length > 0,
   });
+
+  const uniqueTutors = Array.from(
+    new Set(patients.map(p => p.tutorName).filter(Boolean))
+  ).slice(0, 8);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -82,24 +76,20 @@ export function PatientAutocomplete({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleSelect = (patient: Patient) => {
-    setSelectedPatient(patient);
-    setSearchTerm(patient.name);
+  const handleSelect = (tutorName: string) => {
+    setSelectedTutor(tutorName);
+    setSearchTerm(tutorName);
     setShowDropdown(false);
-    onChange(patient);
-    onPatientNameChange?.(patient.name);
+    onChange(tutorName);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     setSearchTerm(newValue);
-    setShowDropdown(newValue.length > 0 && tutorName.trim().length > 0);
-    setSelectedPatient(null);
-    onChange(null);
-    onPatientNameChange?.(newValue);
+    setShowDropdown(newValue.length > 0);
+    setSelectedTutor(null);
+    onChange(newValue);
   };
-
-  const displayValue = selectedPatient ? selectedPatient.name : searchTerm;
 
   return (
     <div className="relative space-y-2">
@@ -112,10 +102,9 @@ export function PatientAutocomplete({
         ref={inputRef}
         id={id}
         type="text"
-        value={displayValue}
+        value={searchTerm}
         onChange={handleInputChange}
-        onFocus={() => setShowDropdown(searchTerm.length > 0 && patients.length > 0 && tutorName.trim().length > 0)}
-        disabled={!tutorName.trim()}
+        onFocus={() => setShowDropdown(searchTerm.length > 0 && uniqueTutors.length > 0)}
         placeholder={placeholder}
         required={required}
         className="w-full"
@@ -127,19 +116,19 @@ export function PatientAutocomplete({
         >
           {isLoading ? (
             <div className="p-2 text-sm text-muted-foreground">Buscando...</div>
-          ) : patients.length === 0 ? (
+          ) : uniqueTutors.length === 0 ? (
             <div className="p-2 text-sm text-muted-foreground">
-              Nenhum paciente encontrado
+              Nenhum tutor encontrado
             </div>
           ) : (
-            patients.map((patient) => (
+            uniqueTutors.map((tutorName, index) => (
               <button
-                key={patient.id}
+                key={`${tutorName}-${index}`}
                 type="button"
-                onClick={() => handleSelect(patient)}
+                onClick={() => handleSelect(tutorName)}
                 className="w-full text-left px-4 py-2 hover:bg-accent hover:text-accent-foreground text-sm"
               >
-                {patient.name}
+                {tutorName}
               </button>
             ))
           )}

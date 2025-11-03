@@ -33,6 +33,7 @@ services:
     command: >
       sh -c "
         npm run generate &&
+        npm run migrate:resolve-failed || true &&
         npm run migrate:deploy &&
         npm run db:seed || true &&
         npm start

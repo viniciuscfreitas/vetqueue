@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { usePathname } from "next/navigation";
 import { roomApi, userApi } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -17,6 +18,7 @@ export function RoomSelector() {
   const { user, currentRoom, setCurrentRoom } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const pathname = usePathname();
 
   const { data: rooms = [] } = useQuery({
     queryKey: ["rooms"],
@@ -96,7 +98,10 @@ export function RoomSelector() {
     }
   };
 
-  if (user?.role !== "VET") return null;
+  const roomRoutes = ['/queue', '/display'];
+  const isInRoomContext = roomRoutes.some(route => pathname.startsWith(route));
+
+  if (user?.role !== "VET" || !isInRoomContext) return null;
 
   return (
     <div className="flex items-center gap-2 min-w-0 flex-shrink">

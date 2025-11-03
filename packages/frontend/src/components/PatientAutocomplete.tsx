@@ -88,7 +88,6 @@ export function PatientAutocomplete({
     setSearchTerm(patient.name);
     setShowDropdown(false);
     onChange(patient);
-    onPatientNameChange?.(patient.name);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {

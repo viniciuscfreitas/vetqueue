@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { QueueEntry, Status, Role } from "@/lib/api";
+import { useRef, useEffect } from "react";
 
 interface QueueHeaderProps {
   entries: QueueEntry[];
@@ -23,6 +24,24 @@ export function QueueHeader({
   onCallNextClick,
   callNextPending,
 }: QueueHeaderProps) {
+  const onCallNextClickRef = useRef(onCallNextClick);
+  
+  useEffect(() => {
+    if (onCallNextClickRef.current !== onCallNextClick) {
+      console.log("[DEBUG QueueHeader] onCallNextClick prop MUDOU");
+      onCallNextClickRef.current = onCallNextClick;
+    }
+  }, [onCallNextClick]);
+
+  const handleCallNextClick = () => {
+    console.log("[DEBUG QueueHeader] Botão 'Chamar Próximo' CLICADO", {
+      callNextPending,
+      waitingCount,
+      onCallNextClickRef: !!onCallNextClickRef.current,
+    });
+    onCallNextClickRef.current();
+  };
+
   return (
     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
       <div className="w-full sm:w-auto">
@@ -56,7 +75,7 @@ export function QueueHeader({
           </Button>
         )}
         <Button
-          onClick={onCallNextClick}
+          onClick={handleCallNextClick}
           disabled={callNextPending || waitingCount === 0}
           size="lg"
           className="font-semibold flex-1 sm:flex-initial px-6 py-6 text-base shadow-lg hover:shadow-xl transition-all"

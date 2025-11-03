@@ -4,7 +4,7 @@ import { PriorityBadge } from "./PriorityBadge";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { calculateWaitTime, calculateServiceTime } from "@/lib/utils";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Clock, User, Stethoscope, CheckCircle2, XCircle, UserCircle, DoorOpen } from "lucide-react";
 
 interface QueueCardProps {
@@ -65,6 +65,20 @@ export function QueueCard({
   const status = statusConfig[entry.status];
   const canStart = entry.status === Status.CALLED || entry.status === Status.WAITING;
   const canComplete = entry.status === Status.IN_PROGRESS || entry.status === Status.CALLED;
+  
+  const onCallRef = useRef(onCall);
+  
+  useEffect(() => {
+    if (onCallRef.current !== onCall) {
+      console.log("[DEBUG QueueCard] onCall prop MUDOU", {
+        entryId: entry.id,
+        patientName: entry.patientName,
+        wasNull: !onCallRef.current,
+        isNowNull: !onCall,
+      });
+      onCallRef.current = onCall;
+    }
+  }, [onCall, entry.id, entry.patientName]);
   
   const [, setCurrentTime] = useState(Date.now());
   
@@ -188,7 +202,16 @@ export function QueueCard({
           <div className="flex gap-2 pt-3 border-t">
             {entry.status === Status.WAITING && onCall && (
               <Button
-                onClick={() => onCall(entry.id)}
+                onClick={() => {
+                  console.log("[DEBUG QueueCard] Botão 'Chamar' CLICADO", {
+                    entryId: entry.id,
+                    patientName: entry.patientName,
+                    onCallRef: !!onCallRef.current,
+                  });
+                  if (onCallRef.current) {
+                    onCallRef.current(entry.id);
+                  }
+                }}
                 size="sm"
                 className="flex-1"
               >

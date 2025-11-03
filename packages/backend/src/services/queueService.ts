@@ -15,6 +15,26 @@ export class QueueService {
     }
   }
 
+  private calculatePriority(
+    basePriority: Priority,
+    hasScheduledAppointment?: boolean,
+    scheduledAt?: Date
+  ): Priority {
+    if (!hasScheduledAppointment || !scheduledAt) {
+      return basePriority;
+    }
+
+    const scheduledTime = new Date(scheduledAt).getTime();
+    const now = Date.now();
+    const toleranceMs = 15 * 60 * 1000;
+    
+    if (now >= scheduledTime + toleranceMs) {
+      return Priority.HIGH;
+    }
+    
+    return basePriority;
+  }
+
   async addToQueue(data: {
     patientName: string;
     tutorName: string;
@@ -24,17 +44,11 @@ export class QueueService {
     hasScheduledAppointment?: boolean;
     scheduledAt?: Date;
   }): Promise<QueueEntry> {
-    let priority = data.priority || Priority.NORMAL;
-
-    if (data.hasScheduledAppointment && data.scheduledAt) {
-      const scheduledTime = new Date(data.scheduledAt).getTime();
-      const now = Date.now();
-      const toleranceMs = 15 * 60 * 1000;
-      
-      if (now >= scheduledTime + toleranceMs) {
-        priority = Priority.HIGH;
-      }
-    }
+    const priority = this.calculatePriority(
+      data.priority || Priority.NORMAL,
+      data.hasScheduledAppointment,
+      data.scheduledAt
+    );
 
     console.log(`[QUEUE] addToQueue - Paciente: ${data.patientName}, Tutor: ${data.tutorName}, Serviço: ${data.serviceType}, Prioridade: ${priority}`);
     
@@ -328,11 +342,20 @@ export class QueueService {
       throw new Error("Apenas atendimentos aguardando podem ser editados");
     }
 
+    const finalPriority = this.calculatePriority(
+      data.priority !== undefined ? data.priority : entry.priority,
+      data.hasScheduledAppointment !== undefined ? data.hasScheduledAppointment : entry.hasScheduledAppointment,
+      data.scheduledAt !== undefined ? data.scheduledAt : (entry.scheduledAt || undefined)
+    );
+
     console.log(`[QUEUE] updateEntry - EntryId: ${id}, Dados:`, data);
 
     try {
-      const updated = await this.repository.update(id, data);
-      console.log(`[QUEUE] ✓ Atualizado - Paciente: ${updated.patientName}`);
+      const updated = await this.repository.update(id, {
+        ...data,
+        priority: finalPriority,
+      });
+      console.log(`[QUEUE] ✓ Atualizado - Paciente: ${updated.patientName}, Prioridade: ${finalPriority}`);
       return updated;
     } catch (error) {
       console.error(`[QUEUE] ✗ Erro ao atualizar entrada:`, error);

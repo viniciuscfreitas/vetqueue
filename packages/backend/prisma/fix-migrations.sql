@@ -5,8 +5,9 @@
 DELETE FROM _prisma_migrations WHERE migration_name = '20241031000000_init' AND finished_at IS NULL;
 
 -- Migration 20241031000000_init
-INSERT INTO _prisma_migrations (migration_name, checksum, finished_at, applied_steps_count, started_at)
+INSERT INTO _prisma_migrations (id, migration_name, checksum, finished_at, applied_steps_count, started_at)
 SELECT 
+  gen_random_uuid(),
   '20241031000000_init',
   '',
   NOW(),
@@ -19,8 +20,9 @@ WHERE NOT EXISTS (
 -- Migration 20250101000000_add_users_rooms_relations
 DELETE FROM _prisma_migrations WHERE migration_name = '20250101000000_add_users_rooms_relations' AND finished_at IS NULL;
 
-INSERT INTO _prisma_migrations (migration_name, checksum, finished_at, applied_steps_count, started_at)
+INSERT INTO _prisma_migrations (id, migration_name, checksum, finished_at, applied_steps_count, started_at)
 SELECT 
+  gen_random_uuid(),
   '20250101000000_add_users_rooms_relations',
   '',
   NOW(),
@@ -33,8 +35,9 @@ WHERE NOT EXISTS (
 -- Migration 20250101000001_add_services
 DELETE FROM _prisma_migrations WHERE migration_name = '20250101000001_add_services' AND finished_at IS NULL;
 
-INSERT INTO _prisma_migrations (migration_name, checksum, finished_at, applied_steps_count, started_at)
+INSERT INTO _prisma_migrations (id, migration_name, checksum, finished_at, applied_steps_count, started_at)
 SELECT 
+  gen_random_uuid(),
   '20250101000001_add_services',
   '',
   NOW(),
@@ -47,8 +50,9 @@ WHERE NOT EXISTS (
 -- Migration 20250101000002_add_audit
 DELETE FROM _prisma_migrations WHERE migration_name = '20250101000002_add_audit' AND finished_at IS NULL;
 
-INSERT INTO _prisma_migrations (migration_name, checksum, finished_at, applied_steps_count, started_at)
+INSERT INTO _prisma_migrations (id, migration_name, checksum, finished_at, applied_steps_count, started_at)
 SELECT 
+  gen_random_uuid(),
   '20250101000002_add_audit',
   '',
   NOW(),
@@ -61,8 +65,9 @@ WHERE NOT EXISTS (
 -- Migration 20250101000003_add_scheduled_appointment_fields
 DELETE FROM _prisma_migrations WHERE migration_name = '20250101000003_add_scheduled_appointment_fields' AND finished_at IS NULL;
 
-INSERT INTO _prisma_migrations (migration_name, checksum, finished_at, applied_steps_count, started_at)
+INSERT INTO _prisma_migrations (id, migration_name, checksum, finished_at, applied_steps_count, started_at)
 SELECT 
+  gen_random_uuid(),
   '20250101000003_add_scheduled_appointment_fields',
   '',
   NOW(),
@@ -75,8 +80,9 @@ WHERE NOT EXISTS (
 -- Migration 20250102000000_add_user_room_checkin_fields
 DELETE FROM _prisma_migrations WHERE migration_name = '20250102000000_add_user_room_checkin_fields' AND finished_at IS NULL;
 
-INSERT INTO _prisma_migrations (migration_name, checksum, finished_at, applied_steps_count, started_at)
+INSERT INTO _prisma_migrations (id, migration_name, checksum, finished_at, applied_steps_count, started_at)
 SELECT 
+  gen_random_uuid(),
   '20250102000000_add_user_room_checkin_fields',
   '',
   NOW(),

@@ -300,4 +300,43 @@ export class QueueService {
     
     return upgradedEntries;
   }
+
+  async updateEntry(
+    id: string,
+    data: {
+      patientName?: string;
+      tutorName?: string;
+      serviceType?: string;
+      priority?: Priority;
+      assignedVetId?: string | null;
+      hasScheduledAppointment?: boolean;
+      scheduledAt?: Date;
+    },
+    userRole?: string
+  ): Promise<QueueEntry> {
+    if (userRole !== "RECEPCAO") {
+      throw new Error("Apenas recepção pode editar atendimentos");
+    }
+
+    const entry = await this.repository.findById(id);
+
+    if (!entry) {
+      throw new Error("Entrada não encontrada");
+    }
+
+    if (entry.status !== Status.WAITING) {
+      throw new Error("Apenas atendimentos aguardando podem ser editados");
+    }
+
+    console.log(`[QUEUE] updateEntry - EntryId: ${id}, Dados:`, data);
+
+    try {
+      const updated = await this.repository.update(id, data);
+      console.log(`[QUEUE] ✓ Atualizado - Paciente: ${updated.patientName}`);
+      return updated;
+    } catch (error) {
+      console.error(`[QUEUE] ✗ Erro ao atualizar entrada:`, error);
+      throw error;
+    }
+  }
 }

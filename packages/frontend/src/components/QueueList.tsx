@@ -78,6 +78,7 @@ export function QueueList({
                 key={entry.id}
                 entry={entry}
                 position={position}
+                userRole={userRole}
                 onStart={onStart}
                 onComplete={onComplete}
                 onCancel={onCancel}

@@ -25,6 +25,16 @@ const addQueueSchema = z.object({
   scheduledAt: z.string().datetime().optional(),
 });
 
+const updateQueueSchema = z.object({
+  patientName: z.string().min(1, "Nome do paciente é obrigatório").optional(),
+  tutorName: z.string().min(1, "Nome do tutor é obrigatório").optional(),
+  serviceType: z.string().min(1, "Tipo de serviço é obrigatório").optional(),
+  priority: z.nativeEnum(Priority).optional(),
+  assignedVetId: z.string().nullable().optional(),
+  hasScheduledAppointment: z.boolean().optional(),
+  scheduledAt: z.string().datetime().optional(),
+});
+
 const callNextSchema = z.object({
   vetId: z.string().optional(),
   roomId: z.string().min(1, "Sala é obrigatória"),
@@ -284,6 +294,40 @@ router.post("/upgrade-priorities", authMiddleware, asyncHandler(async (req: Requ
   const upgradedEntries = await queueService.upgradeScheduledPriorities();
   res.json({ upgraded: upgradedEntries.map(e => e.id), entries: upgradedEntries });
 }));
+
+router.patch("/:id", authMiddleware, requireRole(["RECEPCAO"]), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const data = updateQueueSchema.parse(req.body);
+    const userRole = req.user?.role;
+    
+    const updatedEntry = await queueService.updateEntry(
+      req.params.id,
+      {
+        ...data,
+        scheduledAt: data.scheduledAt ? new Date(data.scheduledAt) : undefined,
+      },
+      userRole
+    );
+    
+    if (req.user) {
+      auditService.log({
+        userId: req.user.id,
+        action: "UPDATE",
+        entityType: "QueueEntry",
+        entityId: updatedEntry.id,
+        metadata: { patientName: updatedEntry.patientName, tutorName: updatedEntry.tutorName, serviceType: updatedEntry.serviceType },
+      }).catch(console.error);
+    }
+    
+    res.json(updatedEntry);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      res.status(400).json({ error: error.errors });
+      return;
+    }
+    res.status(400).json({ error: (error as Error).message });
+  }
+});
 
 export default router;
 

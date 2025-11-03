@@ -621,6 +621,23 @@ export class QueueRepository {
     return mapPrismaToDomain(entry);
   }
 
+  async update(entryId: string, data: {
+    patientName?: string;
+    tutorName?: string;
+    serviceType?: string;
+    priority?: Priority;
+    assignedVetId?: string | null;
+    hasScheduledAppointment?: boolean;
+    scheduledAt?: Date | null;
+  }): Promise<QueueEntry> {
+    const entry = await prisma.queueEntry.update({
+      where: { id: entryId },
+      data,
+      include: { assignedVet: true, room: true },
+    });
+    return mapPrismaToDomain(entry);
+  }
+
   async hasVetActivePatients(vetId: string): Promise<boolean> {
     const activePatient = await prisma.queueEntry.findFirst({
       where: {

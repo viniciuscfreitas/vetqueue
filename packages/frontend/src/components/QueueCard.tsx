@@ -1,15 +1,17 @@
-import { QueueEntry, Status } from "@/lib/api";
+import { QueueEntry, Status, Role } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { PriorityBadge } from "./PriorityBadge";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { calculateWaitTime, calculateServiceTime } from "@/lib/utils";
 import { useState, useEffect } from "react";
-import { Clock, User, Stethoscope, CheckCircle2, XCircle, UserCircle, DoorOpen } from "lucide-react";
+import { Clock, User, Stethoscope, CheckCircle2, XCircle, UserCircle, DoorOpen, Pencil } from "lucide-react";
+import { EditQueueDialog } from "./EditQueueDialog";
 
 interface QueueCardProps {
   entry: QueueEntry;
   position?: number;
+  userRole?: Role;
   onStart?: (id: string) => void;
   onComplete?: (id: string) => void;
   onCancel?: (id: string) => void;
@@ -57,6 +59,7 @@ const statusConfig = {
 export function QueueCard({
   entry,
   position,
+  userRole,
   onStart,
   onComplete,
   onCancel,
@@ -67,6 +70,7 @@ export function QueueCard({
   const canComplete = entry.status === Status.IN_PROGRESS || entry.status === Status.CALLED;
   
   const [, setCurrentTime] = useState(Date.now());
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
   
   useEffect(() => {
     if (entry.status === Status.WAITING || entry.status === Status.IN_PROGRESS) {
@@ -79,46 +83,58 @@ export function QueueCard({
   const serviceTime = calculateServiceTime(entry.calledAt, entry.completedAt);
 
   const StatusIcon = status.icon;
+  const canEdit = entry.status === Status.WAITING && userRole === Role.RECEPCAO;
   
   return (
-    <Card className="transition-all hover:shadow-md">
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
-              <CardTitle className="text-xl font-bold truncate">
-                {entry.patientName}
-              </CardTitle>
-              {position !== undefined && entry.status === Status.WAITING && (
+    <>
+      <Card className="transition-all hover:shadow-md">
+        <CardHeader className="pb-3">
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                <CardTitle className="text-xl font-bold truncate">
+                  {entry.patientName}
+                </CardTitle>
+                {position !== undefined && entry.status === Status.WAITING && (
+                  <Badge 
+                    className="flex-shrink-0 font-semibold"
+                    style={{
+                      backgroundColor: '#3B3839',
+                      color: 'white',
+                    }}
+                  >
+                    #{position}
+                  </Badge>
+                )}
+              </div>
+              <div className="flex items-center gap-2 mt-1">
+                <PriorityBadge priority={entry.priority} />
                 <Badge 
-                  className="flex-shrink-0 font-semibold"
+                  className="border flex items-center gap-1" 
+                  variant="outline"
                   style={{
-                    backgroundColor: '#3B3839',
-                    color: 'white',
+                    backgroundColor: status.bgColor,
+                    color: status.textColor,
+                    borderColor: status.borderColor,
                   }}
                 >
-                  #{position}
+                  <StatusIcon className="h-3 w-3" />
+                  {status.label}
                 </Badge>
-              )}
+              </div>
             </div>
-            <div className="flex items-center gap-2 mt-1">
-              <PriorityBadge priority={entry.priority} />
-              <Badge 
-                className="border flex items-center gap-1" 
-                variant="outline"
-                style={{
-                  backgroundColor: status.bgColor,
-                  color: status.textColor,
-                  borderColor: status.borderColor,
-                }}
+            {canEdit && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setEditDialogOpen(true)}
+                className="flex-shrink-0"
               >
-                <StatusIcon className="h-3 w-3" />
-                {status.label}
-              </Badge>
-            </div>
+                <Pencil className="h-4 w-4" />
+              </Button>
+            )}
           </div>
-        </div>
-      </CardHeader>
+        </CardHeader>
       <CardContent className="space-y-3">
         <div className="space-y-2.5">
           <div className="flex items-start gap-2">
@@ -229,6 +245,16 @@ export function QueueCard({
         ) : null}
       </CardContent>
     </Card>
+
+    <EditQueueDialog
+      entry={entry}
+      open={editDialogOpen}
+      onOpenChange={setEditDialogOpen}
+      onSuccess={() => {
+        window.location.reload();
+      }}
+    />
+    </>
   );
 }
 

@@ -200,6 +200,16 @@ export const queueApi = {
   claimPatient: (id: string) =>
     api.post<QueueEntry>(`/api/queue/${id}/claim`),
 
+  updateEntry: (id: string, data: {
+    patientName?: string;
+    tutorName?: string;
+    serviceType?: string;
+    priority?: Priority;
+    assignedVetId?: string | null;
+    hasScheduledAppointment?: boolean;
+    scheduledAt?: string;
+  }) => api.patch<QueueEntry>(`/api/queue/${id}`, data),
+
   getHistory: (filters?: {
     startDate?: string;
     endDate?: string;

@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "./ui/dialog";
 import { Badge } from "./ui/badge";
 import { QueueEntry, Status, patientApi, Patient } from "@/lib/api";
 import { Clock, CheckCircle2, XCircle, Stethoscope, UserCircle, Calendar } from "lucide-react";
@@ -78,9 +78,9 @@ export function PatientHistoryDialog({
       <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Histórico de Atendimentos</DialogTitle>
-          <p className="text-sm text-muted-foreground">
+          <DialogDescription>
             {patient.name} - {patient.tutorName}
-          </p>
+          </DialogDescription>
         </DialogHeader>
 
         {isLoading ? (

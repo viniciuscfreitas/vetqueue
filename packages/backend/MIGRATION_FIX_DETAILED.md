@@ -3,6 +3,24 @@
 ## Problema
 A migration `20241031000000_init` está marcada como falha no banco, bloqueando novas migrations.
 
+## Solução Rápida (Se apagou registros por engano)
+
+Se você já apagou os registros, execute este SQL para recriar:
+
+```bash
+# No container do backend
+docker exec -it vetqueue-backend-1 sh
+
+# Aplicar script SQL
+psql postgresql://vetqueue:vetqueue@db:5432/vetqueue < prisma/fix-migrations.sql
+
+# OU copiar e colar o conteúdo de fix-migrations.sql no psql
+```
+
+Depois execute: `npx prisma migrate deploy`
+
+---
+
 ## Solução Simples (RECOMENDADA - GrugBrain)
 
 ### Passo 1: Conectar ao banco de dados
@@ -26,13 +44,31 @@ psql postgresql://vetqueue:vetqueue@db:5432/vetqueue
 
 Se as tabelas `queue_entries`, `users`, `rooms` etc. existem, a migration foi aplicada com sucesso.
 
-### Passo 3: Apagar registro de falha (SIMPLES!)
+### Passo 3: Marcar migrations como aplicadas (CORRETO!)
+
+**IMPORTANTE:** Não apagar! Apenas marcar como aplicada, senão Prisma tenta aplicar novamente.
 
 ```sql
--- Apagar apenas o registro problemático
-DELETE FROM _prisma_migrations 
-WHERE migration_name = '20241031000000_init' 
-  AND finished_at IS NULL;
+-- Marcar a migration como aplicada (com timestamp de agora)
+INSERT INTO _prisma_migrations (migration_name, checksum, finished_at, applied_steps_count)
+VALUES (
+  '20241031000000_init',
+  '',  -- checksum vazio é ok para migrations antigas
+  NOW(),
+  1
+)
+ON CONFLICT (migration_name) DO UPDATE
+SET finished_at = NOW(),
+    rolled_back_at = NULL,
+    logs = NULL
+WHERE _prisma_migrations.finished_at IS NULL;
+```
+
+**OU mais simples - usar comando Prisma:**
+
+```bash
+# No container
+npx prisma migrate resolve --applied 20241031000000_init
 ```
 
 ### Passo 4: Verificar migrations restantes

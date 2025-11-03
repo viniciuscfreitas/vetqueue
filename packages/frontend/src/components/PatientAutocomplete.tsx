@@ -94,8 +94,12 @@ export function PatientAutocomplete({
     const newValue = e.target.value;
     setSearchTerm(newValue);
     setShowDropdown(newValue.length > 0 && tutorName.trim().length > 0);
-    setSelectedPatient(null);
-    onChange(null);
+    
+    if (selectedPatient && newValue !== selectedPatient.name) {
+      setSelectedPatient(null);
+      onChange(null);
+    }
+    
     onPatientNameChange?.(newValue);
   };
 

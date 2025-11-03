@@ -361,9 +361,19 @@ export interface Patient {
   breed?: string | null;
   birthDate?: string | null;
   gender?: string | null;
+  microchip?: string | null;
+  color?: string | null;
+  currentWeight?: number | null;
+  allergies?: string | null;
+  ongoingMedications?: string | null;
+  temperament?: string | null;
+  neutered?: boolean | null;
+  photoUrl?: string | null;
   tutorName: string;
   tutorPhone?: string | null;
   tutorEmail?: string | null;
+  tutorCpfCnpj?: string | null;
+  tutorAddress?: string | null;
   notes?: string | null;
   createdAt: string;
   updatedAt: string;
@@ -375,9 +385,19 @@ export interface CreatePatientData {
   breed?: string;
   birthDate?: string;
   gender?: string;
+  microchip?: string;
+  color?: string;
+  currentWeight?: number;
+  allergies?: string;
+  ongoingMedications?: string;
+  temperament?: string;
+  neutered?: boolean;
+  photoUrl?: string;
   tutorName: string;
   tutorPhone?: string;
   tutorEmail?: string;
+  tutorCpfCnpj?: string;
+  tutorAddress?: string;
   notes?: string;
 }
 
@@ -387,9 +407,19 @@ export interface UpdatePatientData {
   breed?: string;
   birthDate?: string;
   gender?: string;
+  microchip?: string;
+  color?: string;
+  currentWeight?: number;
+  allergies?: string;
+  ongoingMedications?: string;
+  temperament?: string;
+  neutered?: boolean;
+  photoUrl?: string;
   tutorName?: string;
   tutorPhone?: string;
   tutorEmail?: string;
+  tutorCpfCnpj?: string;
+  tutorAddress?: string;
   notes?: string;
 }
 

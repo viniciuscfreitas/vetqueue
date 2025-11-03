@@ -7,7 +7,9 @@ import { Badge } from "./ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "./ui/tabs";
 import { Button } from "./ui/button";
 import { Consultation, Vaccination, QueueEntry, Status, Priority, Patient, patientApi, consultationApi, vaccinationApi } from "@/lib/api";
-import { Clock, CheckCircle2, XCircle, Stethoscope, UserCircle, Calendar, Phone, Mail, AlertCircle, MapPin, Plus, FileText, Syringe } from "lucide-react";
+import { Clock, CheckCircle2, XCircle, Stethoscope, UserCircle, Calendar, Phone, Mail, AlertCircle, MapPin, Plus, FileText, Syringe, Ruler, CheckCircle } from "lucide-react";
+import { Separator } from "./ui/separator";
+import { Card, CardContent } from "./ui/card";
 import { Spinner } from "./ui/spinner";
 import { ConsultationForm } from "./ConsultationForm";
 import { VaccinationForm } from "./VaccinationForm";
@@ -187,11 +189,36 @@ export function PatientRecordDialog({
       <DialogContent className="max-w-4xl max-h-[85vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle>Prontuário - {patient.name}</DialogTitle>
-          <DialogDescription className="space-y-1">
+          <DialogDescription className="space-y-2">
             <div className="font-semibold text-foreground">
               {patient.name}
               {patient.species && ` - ${patient.species}`}
               {patient.breed && ` (${patient.breed})`}
+              {patient.gender && ` - ${patient.gender}`}
+              {patient.birthDate && calculateAge(patient.birthDate) && ` • ${calculateAge(patient.birthDate)}`}
+            </div>
+            <div className="flex flex-wrap gap-2 text-xs">
+              {patient.microchip && (
+                <Badge variant="outline">Microchip: {patient.microchip}</Badge>
+              )}
+              {patient.color && (
+                <Badge variant="outline">Cor: {patient.color}</Badge>
+              )}
+              {patient.currentWeight && (
+                <Badge variant="outline">
+                  <Ruler className="h-3 w-3 mr-1" />
+                  {patient.currentWeight} kg
+                </Badge>
+              )}
+              {patient.neutered && (
+                <Badge variant="outline">
+                  <CheckCircle className="h-3 w-3 mr-1" />
+                  Castrado
+                </Badge>
+              )}
+              {patient.temperament && (
+                <Badge variant="outline">Temperamento: {patient.temperament}</Badge>
+              )}
             </div>
             <div className="text-sm">
               Tutor: {patient.tutorName}
@@ -208,10 +235,31 @@ export function PatientRecordDialog({
                 </span>
               )}
             </div>
-            {patient.birthDate && (
-              <div className="text-xs text-muted-foreground">
-                Idade: {calculateAge(patient.birthDate) || "N/A"}
-              </div>
+            {patient.allergies && (
+              <Card className="border-red-300 bg-red-50 dark:bg-red-950">
+                <CardContent className="pt-3">
+                  <div className="flex items-start gap-2">
+                    <AlertCircle className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm font-semibold text-red-800 dark:text-red-200">Alergias Críticas</p>
+                      <p className="text-xs text-red-700 dark:text-red-300">{patient.allergies}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+            {patient.ongoingMedications && (
+              <Card className="border-orange-300 bg-orange-50 dark:bg-orange-950">
+                <CardContent className="pt-3">
+                  <div className="flex items-start gap-2">
+                    <Syringe className="h-4 w-4 text-orange-600 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm font-semibold text-orange-800 dark:text-orange-200">Medicações em Uso</p>
+                      <p className="text-xs text-orange-700 dark:text-orange-300">{patient.ongoingMedications}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             )}
           </DialogDescription>
         </DialogHeader>

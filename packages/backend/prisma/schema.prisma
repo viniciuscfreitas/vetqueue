@@ -93,25 +93,36 @@ model AuditLog {
 }
 
 model Patient {
-  id            String         @id @default(uuid())
-  name          String
-  species       String?
-  breed         String?
-  birthDate     DateTime?
-  gender        String?
-  tutorName     String
-  tutorPhone    String?
-  tutorEmail    String?
-  notes         String?
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  queueEntries  QueueEntry[]
-  consultations Consultation[]
-  vaccinations  Vaccination[]
+  id               String         @id @default(uuid())
+  name             String
+  species          String?
+  breed            String?
+  birthDate        DateTime?
+  gender           String?
+  microchip        String?
+  color            String?
+  currentWeight    Float?
+  allergies        String?
+  ongoingMedications String?
+  temperament      String?
+  neutered         Boolean?       @default(false)
+  photoUrl         String?
+  tutorName        String
+  tutorPhone       String?
+  tutorEmail       String?
+  tutorCpfCnpj     String?
+  tutorAddress     String?
+  notes            String?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  queueEntries     QueueEntry[]
+  consultations    Consultation[]
+  vaccinations     Vaccination[]
 
   @@index([name])
   @@index([tutorName])
   @@index([tutorPhone])
+  @@index([microchip])
   @@map("patients")
 }
 

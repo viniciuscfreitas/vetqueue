@@ -22,9 +22,19 @@ export class PatientService {
     breed?: string | null;
     birthDate?: Date | null;
     gender?: string | null;
+    microchip?: string | null;
+    color?: string | null;
+    currentWeight?: number | null;
+    allergies?: string | null;
+    ongoingMedications?: string | null;
+    temperament?: string | null;
+    neutered?: boolean | null;
+    photoUrl?: string | null;
     tutorName: string;
     tutorPhone?: string | null;
     tutorEmail?: string | null;
+    tutorCpfCnpj?: string | null;
+    tutorAddress?: string | null;
     notes?: string | null;
   }): Promise<Patient> {
     return this.repository.create(data);
@@ -36,9 +46,19 @@ export class PatientService {
     breed?: string | null;
     birthDate?: Date | null;
     gender?: string | null;
+    microchip?: string | null;
+    color?: string | null;
+    currentWeight?: number | null;
+    allergies?: string | null;
+    ongoingMedications?: string | null;
+    temperament?: string | null;
+    neutered?: boolean | null;
+    photoUrl?: string | null;
     tutorName?: string;
     tutorPhone?: string | null;
     tutorEmail?: string | null;
+    tutorCpfCnpj?: string | null;
+    tutorAddress?: string | null;
     notes?: string | null;
   }): Promise<Patient> {
     const patient = await this.repository.findById(id);

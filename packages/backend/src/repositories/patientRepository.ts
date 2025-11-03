@@ -10,9 +10,19 @@ function mapPrismaToDomain(patient: PrismaPatient): Patient {
     breed: patient.breed,
     birthDate: patient.birthDate,
     gender: patient.gender,
+    microchip: patient.microchip,
+    color: patient.color,
+    currentWeight: patient.currentWeight,
+    allergies: patient.allergies,
+    ongoingMedications: patient.ongoingMedications,
+    temperament: patient.temperament,
+    neutered: patient.neutered,
+    photoUrl: patient.photoUrl,
     tutorName: patient.tutorName,
     tutorPhone: patient.tutorPhone,
     tutorEmail: patient.tutorEmail,
+    tutorCpfCnpj: patient.tutorCpfCnpj,
+    tutorAddress: patient.tutorAddress,
     notes: patient.notes,
     createdAt: patient.createdAt,
     updatedAt: patient.updatedAt,
@@ -57,9 +67,19 @@ export class PatientRepository {
     breed?: string | null;
     birthDate?: Date | null;
     gender?: string | null;
+    microchip?: string | null;
+    color?: string | null;
+    currentWeight?: number | null;
+    allergies?: string | null;
+    ongoingMedications?: string | null;
+    temperament?: string | null;
+    neutered?: boolean | null;
+    photoUrl?: string | null;
     tutorName: string;
     tutorPhone?: string | null;
     tutorEmail?: string | null;
+    tutorCpfCnpj?: string | null;
+    tutorAddress?: string | null;
     notes?: string | null;
   }): Promise<Patient> {
     const patient = await prisma.patient.create({
@@ -74,9 +94,19 @@ export class PatientRepository {
     breed?: string | null;
     birthDate?: Date | null;
     gender?: string | null;
+    microchip?: string | null;
+    color?: string | null;
+    currentWeight?: number | null;
+    allergies?: string | null;
+    ongoingMedications?: string | null;
+    temperament?: string | null;
+    neutered?: boolean | null;
+    photoUrl?: string | null;
     tutorName?: string;
     tutorPhone?: string | null;
     tutorEmail?: string | null;
+    tutorCpfCnpj?: string | null;
+    tutorAddress?: string | null;
     notes?: string | null;
   }): Promise<Patient> {
     const patient = await prisma.patient.update({

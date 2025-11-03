@@ -14,8 +14,11 @@ import { useRouter } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Header } from "@/components/Header";
 import { Spinner } from "@/components/ui/spinner";
-import { Search, History } from "lucide-react";
+import { Search, History, AlertCircle } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Separator } from "@/components/ui/separator";
 import { PatientRecordDialog } from "@/components/PatientRecordDialog";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -34,6 +37,18 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+function calculateAge(birthDate: string | null | undefined): string | null {
+  if (!birthDate) return null;
+  const birth = new Date(birthDate);
+  const today = new Date();
+  let age = today.getFullYear() - birth.getFullYear();
+  const monthDiff = today.getMonth() - birth.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+    age--;
+  }
+  return `${age} ${age === 1 ? 'ano' : 'anos'}`;
+}
+
 export default function PatientsPage() {
   const router = useRouter();
   const { user, isLoading: authLoading } = useAuth();
@@ -51,9 +66,19 @@ export default function PatientsPage() {
     breed: "",
     birthDate: "",
     gender: "",
+    microchip: "",
+    color: "",
+    currentWeight: "",
+    allergies: "",
+    ongoingMedications: "",
+    temperament: "",
+    neutered: false,
+    photoUrl: "",
     tutorName: "",
     tutorPhone: "",
     tutorEmail: "",
+    tutorCpfCnpj: "",
+    tutorAddress: "",
     notes: "",
   });
 
@@ -85,9 +110,19 @@ export default function PatientsPage() {
       breed?: string;
       birthDate?: string;
       gender?: string;
+      microchip?: string;
+      color?: string;
+      currentWeight?: string;
+      allergies?: string;
+      ongoingMedications?: string;
+      temperament?: string;
+      neutered?: boolean;
+      photoUrl?: string;
       tutorName: string;
       tutorPhone?: string;
       tutorEmail?: string;
+      tutorCpfCnpj?: string;
+      tutorAddress?: string;
       notes?: string;
     }) => patientApi.create({
       ...data,
@@ -95,8 +130,18 @@ export default function PatientsPage() {
       breed: data.breed || undefined,
       birthDate: data.birthDate ? `${data.birthDate}T00:00:00.000Z` : undefined,
       gender: data.gender || undefined,
+      microchip: data.microchip || undefined,
+      color: data.color || undefined,
+      currentWeight: data.currentWeight ? parseFloat(data.currentWeight) : undefined,
+      allergies: data.allergies || undefined,
+      ongoingMedications: data.ongoingMedications || undefined,
+      temperament: data.temperament || undefined,
+      neutered: data.neutered,
+      photoUrl: data.photoUrl || undefined,
       tutorPhone: data.tutorPhone || undefined,
       tutorEmail: data.tutorEmail || undefined,
+      tutorCpfCnpj: data.tutorCpfCnpj || undefined,
+      tutorAddress: data.tutorAddress || undefined,
       notes: data.notes || undefined,
     }),
     onSuccess: () => {
@@ -112,16 +157,26 @@ export default function PatientsPage() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data: { id: string; name: string; species?: string; breed?: string; birthDate?: string; gender?: string; tutorName: string; tutorPhone?: string; tutorEmail?: string; notes?: string }) =>
+    mutationFn: (data: { id: string; name: string; species?: string; breed?: string; birthDate?: string; gender?: string; microchip?: string; color?: string; currentWeight?: string; allergies?: string; ongoingMedications?: string; temperament?: string; neutered?: boolean; photoUrl?: string; tutorName: string; tutorPhone?: string; tutorEmail?: string; tutorCpfCnpj?: string; tutorAddress?: string; notes?: string }) =>
       patientApi.update(data.id, {
         name: data.name,
         species: data.species || undefined,
         breed: data.breed || undefined,
         birthDate: data.birthDate ? `${data.birthDate}T00:00:00.000Z` : undefined,
         gender: data.gender || undefined,
+        microchip: data.microchip || undefined,
+        color: data.color || undefined,
+        currentWeight: data.currentWeight ? parseFloat(data.currentWeight) : undefined,
+        allergies: data.allergies || undefined,
+        ongoingMedications: data.ongoingMedications || undefined,
+        temperament: data.temperament || undefined,
+        neutered: data.neutered,
+        photoUrl: data.photoUrl || undefined,
         tutorName: data.tutorName,
         tutorPhone: data.tutorPhone || undefined,
         tutorEmail: data.tutorEmail || undefined,
+        tutorCpfCnpj: data.tutorCpfCnpj || undefined,
+        tutorAddress: data.tutorAddress || undefined,
         notes: data.notes || undefined,
       }),
     onSuccess: () => {
@@ -156,9 +211,19 @@ export default function PatientsPage() {
       breed: "",
       birthDate: "",
       gender: "",
+      microchip: "",
+      color: "",
+      currentWeight: "",
+      allergies: "",
+      ongoingMedications: "",
+      temperament: "",
+      neutered: false,
+      photoUrl: "",
       tutorName: "",
       tutorPhone: "",
       tutorEmail: "",
+      tutorCpfCnpj: "",
+      tutorAddress: "",
       notes: "",
     });
   };
@@ -188,9 +253,19 @@ export default function PatientsPage() {
       breed: patient.breed || "",
       birthDate: patient.birthDate ? patient.birthDate.split('T')[0] : "",
       gender: patient.gender || "",
+      microchip: patient.microchip || "",
+      color: patient.color || "",
+      currentWeight: patient.currentWeight?.toString() || "",
+      allergies: patient.allergies || "",
+      ongoingMedications: patient.ongoingMedications || "",
+      temperament: patient.temperament || "",
+      neutered: patient.neutered || false,
+      photoUrl: patient.photoUrl || "",
       tutorName: patient.tutorName || "",
       tutorPhone: patient.tutorPhone || "",
       tutorEmail: patient.tutorEmail || "",
+      tutorCpfCnpj: patient.tutorCpfCnpj || "",
+      tutorAddress: patient.tutorAddress || "",
       notes: patient.notes || "",
     });
     setShowForm(true);
@@ -246,100 +321,222 @@ export default function PatientsPage() {
               </div>
             </CardHeader>
             <CardContent className="pt-6">
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label>Nome do Paciente *</Label>
-                    <Input
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      placeholder="Ex: Rex"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label>Espécie</Label>
-                    <Select
-                      value={formData.species}
-                      onValueChange={(value) => setFormData({ ...formData, species: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Cão">Cão</SelectItem>
-                        <SelectItem value="Gato">Gato</SelectItem>
-                        <SelectItem value="Outro">Outro</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label>Raça</Label>
-                    <Input
-                      value={formData.breed}
-                      onChange={(e) => setFormData({ ...formData, breed: e.target.value })}
-                      placeholder="Ex: Labrador"
-                    />
-                  </div>
-                  <div>
-                    <Label>Data de Nascimento</Label>
-                    <Input
-                      type="date"
-                      value={formData.birthDate}
-                      onChange={(e) => setFormData({ ...formData, birthDate: e.target.value })}
-                    />
-                  </div>
-                  <div>
-                    <Label>Gênero</Label>
-                    <Select
-                      value={formData.gender}
-                      onValueChange={(value) => setFormData({ ...formData, gender: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Macho">Macho</SelectItem>
-                        <SelectItem value="Fêmea">Fêmea</SelectItem>
-                        <SelectItem value="Indefinido">Indefinido</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label>Nome do Tutor *</Label>
-                    <Input
-                      value={formData.tutorName}
-                      onChange={(e) => setFormData({ ...formData, tutorName: e.target.value })}
-                      placeholder="Ex: João Silva"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label>Telefone do Tutor</Label>
-                    <Input
-                      value={formData.tutorPhone}
-                      onChange={(e) => setFormData({ ...formData, tutorPhone: e.target.value })}
-                      placeholder="Ex: (11) 99999-9999"
-                    />
-                  </div>
-                  <div>
-                    <Label>Email do Tutor</Label>
-                    <Input
-                      type="email"
-                      value={formData.tutorEmail}
-                      onChange={(e) => setFormData({ ...formData, tutorEmail: e.target.value })}
-                      placeholder="Ex: joao@email.com"
-                    />
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">Dados do Paciente</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label>Nome do Paciente *</Label>
+                      <Input
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        placeholder="Ex: Rex"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label>Espécie</Label>
+                      <Select
+                        value={formData.species}
+                        onValueChange={(value) => setFormData({ ...formData, species: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Cão">Cão</SelectItem>
+                          <SelectItem value="Gato">Gato</SelectItem>
+                          <SelectItem value="Outro">Outro</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label>Raça</Label>
+                      <Input
+                        value={formData.breed}
+                        onChange={(e) => setFormData({ ...formData, breed: e.target.value })}
+                        placeholder="Ex: Labrador"
+                      />
+                    </div>
+                    <div>
+                      <Label>Cor</Label>
+                      <Input
+                        value={formData.color}
+                        onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                        placeholder="Ex: Preto e Branco"
+                      />
+                    </div>
+                    <div>
+                      <Label>Data de Nascimento</Label>
+                      <Input
+                        type="date"
+                        value={formData.birthDate}
+                        onChange={(e) => setFormData({ ...formData, birthDate: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <Label>Gênero</Label>
+                      <Select
+                        value={formData.gender}
+                        onValueChange={(value) => setFormData({ ...formData, gender: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Macho">Macho</SelectItem>
+                          <SelectItem value="Fêmea">Fêmea</SelectItem>
+                          <SelectItem value="Indefinido">Indefinido</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label>Microchip</Label>
+                      <Input
+                        value={formData.microchip}
+                        onChange={(e) => setFormData({ ...formData, microchip: e.target.value })}
+                        placeholder="Ex: 123456789012345"
+                      />
+                    </div>
+                    <div>
+                      <Label>Peso Atual (kg)</Label>
+                      <Input
+                        type="number"
+                        step="0.1"
+                        value={formData.currentWeight}
+                        onChange={(e) => setFormData({ ...formData, currentWeight: e.target.value })}
+                        placeholder="Ex: 15.5"
+                      />
+                    </div>
+                    <div>
+                      <Label>URL da Foto</Label>
+                      <Input
+                        value={formData.photoUrl}
+                        onChange={(e) => setFormData({ ...formData, photoUrl: e.target.value })}
+                        placeholder="https://..."
+                      />
+                    </div>
+                    <div className="flex items-center space-x-2 pt-6">
+                      <Checkbox
+                        id="neutered"
+                        checked={formData.neutered}
+                        onCheckedChange={(checked) => setFormData({ ...formData, neutered: checked as boolean })}
+                      />
+                      <Label htmlFor="neutered" className="cursor-pointer">Castrado</Label>
+                    </div>
                   </div>
                 </div>
-                <div>
-                  <Label>Prontuário / Observações</Label>
-                  <textarea
-                    className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    value={formData.notes}
-                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                    placeholder="Anotações e informações sobre o paciente..."
-                  />
+
+                <Separator />
+
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">Dados do Tutor</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label>Nome do Tutor *</Label>
+                      <Input
+                        value={formData.tutorName}
+                        onChange={(e) => setFormData({ ...formData, tutorName: e.target.value })}
+                        placeholder="Ex: João Silva"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label>CPF/CNPJ</Label>
+                      <Input
+                        value={formData.tutorCpfCnpj}
+                        onChange={(e) => setFormData({ ...formData, tutorCpfCnpj: e.target.value })}
+                        placeholder="Ex: 123.456.789-00"
+                      />
+                    </div>
+                    <div>
+                      <Label>Telefone do Tutor</Label>
+                      <Input
+                        value={formData.tutorPhone}
+                        onChange={(e) => setFormData({ ...formData, tutorPhone: e.target.value })}
+                        placeholder="Ex: (11) 99999-9999"
+                      />
+                    </div>
+                    <div>
+                      <Label>Email do Tutor</Label>
+                      <Input
+                        type="email"
+                        value={formData.tutorEmail}
+                        onChange={(e) => setFormData({ ...formData, tutorEmail: e.target.value })}
+                        placeholder="Ex: joao@email.com"
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <Label>Endereço</Label>
+                      <textarea
+                        className="flex min-h-[60px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        value={formData.tutorAddress}
+                        onChange={(e) => setFormData({ ...formData, tutorAddress: e.target.value })}
+                        placeholder="Ex: Rua das Flores, 123 - Centro - São Paulo, SP"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <Separator />
+
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">Informações de Saúde</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <Label className="flex items-center gap-2 text-red-600 font-semibold">
+                        <AlertCircle className="h-4 w-4" />
+                        Alergias
+                      </Label>
+                      <textarea
+                        className="flex min-h-[80px] w-full rounded-md border-2 border-red-300 bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        value={formData.allergies}
+                        onChange={(e) => setFormData({ ...formData, allergies: e.target.value })}
+                        placeholder="Liste todas as alergias conhecidas..."
+                      />
+                    </div>
+                    <div>
+                      <Label>Medicações em Uso</Label>
+                      <textarea
+                        className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        value={formData.ongoingMedications}
+                        onChange={(e) => setFormData({ ...formData, ongoingMedications: e.target.value })}
+                        placeholder="Liste medicações contínuas..."
+                      />
+                    </div>
+                    <div>
+                      <Label>Temperamento</Label>
+                      <Select
+                        value={formData.temperament}
+                        onValueChange={(value) => setFormData({ ...formData, temperament: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Calmo">Calmo</SelectItem>
+                          <SelectItem value="Agitado">Agitado</SelectItem>
+                          <SelectItem value="Agressivo">Agressivo</SelectItem>
+                          <SelectItem value="Medroso">Medroso</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
+
+                <Separator />
+
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">Prontuário / Observações</h3>
+                  <div>
+                    <Label>Observações Gerais</Label>
+                    <textarea
+                      className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      value={formData.notes}
+                      onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                      placeholder="Anotações e informações sobre o paciente..."
+                    />
+                  </div>
                 </div>
                 <div className="flex gap-2">
                   <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
@@ -388,8 +585,24 @@ export default function PatientsPage() {
                           <p className="font-semibold text-lg">{patient.name}</p>
                           {patient.species && (
                             <span className="text-sm text-muted-foreground">
-                              ({patient.species})
+                              {patient.species}
                             </span>
+                          )}
+                          {patient.gender && (
+                            <span className="text-sm text-muted-foreground">
+                              • {patient.gender}
+                            </span>
+                          )}
+                          {calculateAge(patient.birthDate) && (
+                            <span className="text-sm text-muted-foreground">
+                              • {calculateAge(patient.birthDate)}
+                            </span>
+                          )}
+                          {patient.allergies && (
+                            <Badge variant="destructive" className="ml-2">
+                              <AlertCircle className="h-3 w-3 mr-1" />
+                              ALERGIAS
+                            </Badge>
                           )}
                         </div>
                         <div className="space-y-1 text-sm">
@@ -404,11 +617,6 @@ export default function PatientsPage() {
                           {patient.tutorPhone && (
                             <p className="text-muted-foreground">
                               <span className="font-medium">Telefone:</span> {patient.tutorPhone}
-                            </p>
-                          )}
-                          {patient.notes && (
-                            <p className="text-muted-foreground mt-2 border-t pt-2">
-                              <span className="font-medium">Prontuário:</span> {patient.notes}
                             </p>
                           )}
                         </div>

@@ -100,9 +100,10 @@ export function PatientAutocomplete({
       console.log('[AUTOCOMPLETE] Limpando paciente - valor mudou:', { de: selectedPatient.name, para: newValue });
       setSelectedPatient(null);
       onChange(null);
+      onPatientNameChange?.(newValue);
+    } else if (!selectedPatient) {
+      onPatientNameChange?.(newValue);
     }
-    
-    onPatientNameChange?.(newValue);
   };
 
   const displayValue = selectedPatient ? selectedPatient.name : searchTerm;

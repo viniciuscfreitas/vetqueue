@@ -178,8 +178,6 @@ export function PatientHistoryDialog({
                 ? new Date(entry.completedAt).getTime() - new Date(entry.calledAt).getTime()
                 : null;
 
-              const patientData = entry.patient || patient;
-
               return (
                 <div
                   key={entry.id}
@@ -219,62 +217,17 @@ export function PatientHistoryDialog({
                       <div className="space-y-2">
                         <div>
                           <p className="font-semibold text-base">{entry.serviceType}</p>
+                          {entry.assignedVet && (
+                            <p className="text-sm text-muted-foreground mt-1">
+                              <UserCircle className="inline h-4 w-4 mr-1" />
+                              <strong>Veterinário:</strong> {entry.assignedVet.name}
+                            </p>
+                          )}
                           {entry.patient?.notes && (
-                            <p className="text-sm text-muted-foreground mt-1 p-2 bg-muted rounded">
+                            <p className="text-sm text-muted-foreground mt-2 p-2 bg-muted rounded">
                               <strong>Prontuário:</strong> {entry.patient.notes}
                             </p>
                           )}
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                          <div className="space-y-1">
-                            {entry.assignedVet && (
-                              <p className="text-muted-foreground">
-                                <UserCircle className="inline h-4 w-4 mr-1" />
-                                <strong>Veterinário:</strong> {entry.assignedVet.name}
-                              </p>
-                            )}
-                            
-                            {patientData.species && (
-                              <p className="text-muted-foreground">
-                                <strong>Espécie:</strong> {patientData.species}
-                              </p>
-                            )}
-                            
-                            {patientData.breed && (
-                              <p className="text-muted-foreground">
-                                <strong>Raça:</strong> {patientData.breed}
-                              </p>
-                            )}
-                            
-                            {patientData.gender && (
-                              <p className="text-muted-foreground">
-                                <strong>Gênero:</strong> {patientData.gender}
-                              </p>
-                            )}
-                          </div>
-
-                          <div className="space-y-1">
-                            {patientData.tutorPhone && (
-                              <p className="text-muted-foreground">
-                                <Phone className="inline h-4 w-4 mr-1" />
-                                <strong>Telefone:</strong> {patientData.tutorPhone}
-                              </p>
-                            )}
-                            
-                            {patientData.tutorEmail && (
-                              <p className="text-muted-foreground">
-                                <Mail className="inline h-4 w-4 mr-1" />
-                                <strong>Email:</strong> {patientData.tutorEmail}
-                              </p>
-                            )}
-                            
-                            {patientData.birthDate && (
-                              <p className="text-muted-foreground">
-                                <strong>Idade:</strong> {calculateAge(patientData.birthDate) || "N/A"}
-                              </p>
-                            )}
-                          </div>
                         </div>
 
                         <div className="pt-2 border-t space-y-1 text-xs text-muted-foreground">

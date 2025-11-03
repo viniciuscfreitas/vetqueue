@@ -382,9 +382,9 @@ export default function PatientsPage() {
               patients.map((patient) => (
                 <Card key={patient.id}>
                   <CardContent className="pt-6">
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-2 flex-wrap">
                           <p className="font-semibold text-lg">{patient.name}</p>
                           {patient.species && (
                             <span className="text-sm text-muted-foreground">
@@ -413,11 +413,12 @@ export default function PatientsPage() {
                           )}
                         </div>
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 flex-wrap sm:flex-nowrap">
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => setHistoryPatient(patient)}
+                          className="flex-1 sm:flex-none"
                         >
                           <History className="h-4 w-4 mr-1" />
                           Histórico
@@ -426,6 +427,7 @@ export default function PatientsPage() {
                           variant="outline"
                           size="sm"
                           onClick={() => handleEdit(patient)}
+                          className="flex-1 sm:flex-none"
                         >
                           Editar
                         </Button>
@@ -433,6 +435,7 @@ export default function PatientsPage() {
                           variant="destructive"
                           size="sm"
                           onClick={() => setDeletePatient(patient)}
+                          className="flex-1 sm:flex-none"
                         >
                           Deletar
                         </Button>

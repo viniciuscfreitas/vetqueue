@@ -9,6 +9,12 @@ export class QueueService {
     this.userRepository = new UserRepository();
   }
 
+  private updateActivityIfNeeded(vetId?: string | null): void {
+    if (vetId) {
+      this.userRepository.updateLastActivity(vetId).catch(console.error);
+    }
+  }
+
   async addToQueue(data: {
     patientName: string;
     tutorName: string;
@@ -104,9 +110,7 @@ export class QueueService {
     }
 
     const actualVetId = vetId || (next.assignedVetId || undefined);
-    if (actualVetId) {
-      this.userRepository.updateLastActivity(actualVetId).catch(console.error);
-    }
+    this.updateActivityIfNeeded(actualVetId);
 
     console.log(`[QUEUE] ✓ Chamando - Paciente: ${next.patientName} (${next.id}), Sala: ${roomId}`);
     return result;
@@ -152,9 +156,7 @@ export class QueueService {
       result = await this.repository.updateAssignedVet(id, vetId);
     }
 
-    if (vetId) {
-      this.userRepository.updateLastActivity(vetId).catch(console.error);
-    }
+    this.updateActivityIfNeeded(vetId);
 
     return result;
   }
@@ -182,9 +184,7 @@ export class QueueService {
       ? await this.repository.updateStatus(id, Status.IN_PROGRESS, new Date())
       : await this.repository.updateStatus(id, Status.IN_PROGRESS);
 
-    if (entry.assignedVetId) {
-      this.userRepository.updateLastActivity(entry.assignedVetId).catch(console.error);
-    }
+    this.updateActivityIfNeeded(entry.assignedVetId);
 
     console.log(`[QUEUE] ✓ Iniciado atendimento - Paciente: ${entry.patientName}`);
     return result;
@@ -209,9 +209,7 @@ export class QueueService {
 
     const result = await this.repository.updateStatus(id, Status.COMPLETED, undefined, new Date());
 
-    if (entry.assignedVetId) {
-      this.userRepository.updateLastActivity(entry.assignedVetId).catch(console.error);
-    }
+    this.updateActivityIfNeeded(entry.assignedVetId);
 
     console.log(`[QUEUE] ✓ Completado - Paciente: ${entry.patientName}, Vet: ${entry.assignedVet?.name || 'N/A'}`);
     return result;

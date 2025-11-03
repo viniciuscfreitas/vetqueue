@@ -1,0 +1,71 @@
+[33mcommit ce9f05868c17b1da6a5c7291b8159cf79b8c5074[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m
+Author: Prime League Developer <developer@primeleague.com>
+Date:   Sun Nov 2 14:56:20 2025 -0300
+
+    feat: separar visualizaÃ§Ã£o da fila e atendimento em andamento
+    
+    Divide a visualizaÃ§Ã£o em duas seÃ§Ãµes distintas: 'Em Atendimento' (CALLED + IN_PROGRESS) no topo e 'Fila de Espera' (WAITING) abaixo. Facilita identificar pacientes em atendimento quando a fila cresce.
+
+M	packages/frontend/src/components/QueueList.tsx
+
+[33mcommit 9af82d9f1ac17728b42962ebf0052ef4b2a7a594[m
+Author: Prime League Developer <developer@primeleague.com>
+Date:   Sun Nov 2 14:49:09 2025 -0300
+
+    feat(display): separar visualizaÃ§Ã£o de atendimentos em andamento
+    
+    Adiciona seÃ§Ã£o destacada no topo da pÃ¡gina de display para exibir
+    atendimentos com status IN_PROGRESS, separando-os da fila de chamados
+    e aguardando. Facilita visualizaÃ§Ã£o quando a fila cresce.
+    
+    - Adiciona filtro para status IN_PROGRESS
+    - Cria seÃ§Ã£o 'Em Atendimento' com layout em grid responsivo
+    - Aplica cor azul (#5B96B7) consistente com QueueCard
+    - Exibe tempo de atendimento atualizado em tempo real
+
+M	packages/frontend/src/app/display/page.tsx
+
+[33mcommit 30ce4465dc93060009ca5962062f05e62ff0216a[m
+Author: Prime League Developer <developer@primeleague.com>
+Date:   Sun Nov 2 14:31:42 2025 -0300
+
+    fix: elimina race condition na troca de sala com fonte unica de verdade
+    
+    - Implementa changeRoom() atomico no backend (transacao)
+    
+    - Valida pacientes ativos antes de checkout/troca de sala
+    
+    - Remove hasOtherVetActivePatient() duplicado
+    
+    - Usa User.currentRoomId como fonte unica de ocupacao
+    
+    - Frontend usa endpoint atomico ao trocar sala
+
+M	packages/backend/src/api/routes/userRoutes.ts
+M	packages/backend/src/repositories/queueRepository.ts
+M	packages/backend/src/repositories/userRepository.ts
+M	packages/backend/src/services/queueService.ts
+M	packages/backend/src/services/userService.ts
+M	packages/frontend/src/components/RoomSelector.tsx
+M	packages/frontend/src/lib/api.ts
+
+[33mcommit 138f9940e3ecaaee9ab201670aeb6041a472334f[m
+Author: Prime League Developer <developer@primeleague.com>
+Date:   Sun Nov 2 14:11:35 2025 -0300
+
+    feat: auto-desocupar salas inativas apÃ³s 1h
+    
+    Implementa job periÃ³dico que verifica e desocupa salas onde veterinÃ¡rios
+    estÃ£o inativos hÃ¡ mais de 1 hora, prevenindo bugs de salas presas quando
+    usuÃ¡rios fecham navegador sem fazer check-out.
+    
+    - Job roda a cada 5 minutos verificando check-ins inativos
+    - Usa lastActivityAt quando disponÃ­vel, roomCheckedInAt como fallback
+    - Limpa automaticamente currentRoomId, roomCheckedInAt e lastActivityAt
+    - Logs detalhados para debugging
+
+M	packages/backend/src/index.ts
+A	packages/backend/src/jobs/inactivityCheck.ts
+M	packages/backend/src/repositories/userRepository.ts
+M	packages/backend/src/services/userService.ts
+M	packages/frontend/src/app/display/page.tsx

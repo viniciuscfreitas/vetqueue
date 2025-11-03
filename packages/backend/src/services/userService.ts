@@ -164,18 +164,14 @@ export class UserService {
 
   async cleanupInactiveRoomCheckins(maxAgeMinutes: number = 60): Promise<User[]> {
     const inactiveUsers = await this.repository.findInactiveRoomCheckins(maxAgeMinutes);
-    const cleanedUsers: User[] = [];
+    
+    const results = await Promise.allSettled(
+      inactiveUsers.map(user => this.repository.clearRoomCheckin(user.id))
+    );
 
-    for (const user of inactiveUsers) {
-      try {
-        const cleaned = await this.repository.clearRoomCheckin(user.id);
-        cleanedUsers.push(cleaned);
-      } catch (error) {
-        console.error(`[CLEANUP] ✗ Erro ao limpar check-in de ${user.name}:`, error);
-      }
-    }
-
-    return cleanedUsers;
+    return results
+      .filter((result): result is PromiseFulfilledResult<User> => result.status === 'fulfilled')
+      .map(result => result.value);
   }
 }
 

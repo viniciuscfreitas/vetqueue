@@ -38,8 +38,6 @@ export function RoomSelectModal({ open, onSelect, onCancel }: RoomSelectModalPro
     enabled: (isVet || isRecepcao) && open,
   });
 
-  if (!open) return null;
-
   const roomsWithVets = Object.keys(occupations);
   const availableRooms = isRecepcao 
     ? rooms.filter(room => roomsWithVets.includes(room.id))
@@ -86,6 +84,8 @@ export function RoomSelectModal({ open, onSelect, onCancel }: RoomSelectModalPro
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [open, selectedRoomId, isSelectedDisabled, handleConfirm, onCancel]);
+
+  if (!open) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">

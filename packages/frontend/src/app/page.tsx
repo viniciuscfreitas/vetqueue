@@ -43,7 +43,9 @@ export default function Home() {
   const router = useRouter();
   const { user, currentRoom, isLoading: authLoading } = useAuth();
   const queryClient = useQueryClient();
-  const { toast } = useToast();
+  const { toast: toastFn } = useToast();
+  const toastRef = useRef(toastFn);
+  toastRef.current = toastFn;
   
   const [showRoomModal, setShowRoomModal] = useState(false);
   const [showAddQueueModal, setShowAddQueueModal] = useState(false);
@@ -52,10 +54,6 @@ export default function Home() {
   const [entryToCancel, setEntryToCancel] = useState<string | null>(null);
 
   const previousEntriesRef = useRef<any[]>([]);
-  const renderCountRef = useRef(0);
-  renderCountRef.current += 1;
-  
-  console.log("[DEBUG page.tsx] Component render #", renderCountRef.current);
 
   const { data: entries = [] } = useQuery({
     queryKey: ["queue", "active", user?.role === "VET" ? user.id : undefined],
@@ -66,62 +64,18 @@ export default function Home() {
     enabled: !authLoading && !!user,
   });
 
-  const onCallNextSuccessRef = useRef<() => void>();
-  const onCallPatientSuccessRef = useRef<() => void>();
-
   const onCallNextSuccess = useCallback(() => {
-    console.log("[DEBUG page.tsx] onCallNextSuccess called");
     setShowRoomModal(false);
   }, []);
 
   const onCallPatientSuccess = useCallback(() => {
-    console.log("[DEBUG page.tsx] onCallPatientSuccess called");
     setShowRoomModal(false);
   }, []);
-
-  useEffect(() => {
-    if (onCallNextSuccessRef.current !== onCallNextSuccess) {
-      console.log("[DEBUG page.tsx] onCallNextSuccess callback RECRIADO");
-      onCallNextSuccessRef.current = onCallNextSuccess;
-    }
-  }, [onCallNextSuccess]);
-  
-  useEffect(() => {
-    if (onCallPatientSuccessRef.current !== onCallPatientSuccess) {
-      console.log("[DEBUG page.tsx] onCallPatientSuccess callback RECRIADO");
-      onCallPatientSuccessRef.current = onCallPatientSuccess;
-    }
-  }, [onCallPatientSuccess]);
 
   const queueMutations = useQueueMutations({
     user,
     onCallNextSuccess,
     onCallPatientSuccess,
-  });
-
-  const queueMutationsRef = useRef(queueMutations);
-  
-  useEffect(() => {
-    const prevQueueMutations = queueMutationsRef.current;
-    if (prevQueueMutations !== queueMutations) {
-      console.log("[DEBUG page.tsx] queueMutations objeto RECRIADO", {
-        callNextChanged: prevQueueMutations.callNext !== queueMutations.callNext,
-        callPatientChanged: prevQueueMutations.callPatient !== queueMutations.callPatient,
-        callNextPendingChanged: prevQueueMutations.callNextPending !== queueMutations.callNextPending,
-        isPending: queueMutations.callNextPending,
-        prevCallNextFn: prevQueueMutations.callNext,
-        newCallNextFn: queueMutations.callNext,
-      });
-      queueMutationsRef.current = queueMutations;
-    }
-  }, [queueMutations]);
-  
-  console.log("[DEBUG page.tsx] Durante render - verificando queueMutations", {
-    callNextFn: queueMutations.callNext,
-    callPatientFn: queueMutations.callPatient,
-    callNextPending: queueMutations.callNextPending,
-    user: user?.id,
-    currentRoom: currentRoom?.id,
   });
 
   useEffect(() => {
@@ -140,7 +94,7 @@ export default function Home() {
           newEntry.priority === Priority.HIGH &&
           newEntry.hasScheduledAppointment
         ) {
-          toast({
+          toastRef.current({
             variant: "default",
             title: "Prioridade Atualizada",
             description: `${newEntry.patientName} agora tem prioridade ALTA (horário agendado)`,
@@ -148,51 +102,19 @@ export default function Home() {
         }
       });
     }
-    previousEntriesRef.current = entries;
-  }, [entries, toast]);
+      previousEntriesRef.current = entries;
+  }, [entries]);
 
   const callNextFnRef = useRef(queueMutations.callNext);
-  
-  useEffect(() => {
-    if (callNextFnRef.current !== queueMutations.callNext) {
-      console.log("[DEBUG page.tsx] callNextFnRef MUDOU", {
-        prevFn: callNextFnRef.current,
-        newFn: queueMutations.callNext,
-      });
-      callNextFnRef.current = queueMutations.callNext;
-    }
-  }, [queueMutations.callNext]);
-  
-  console.log("[DEBUG page.tsx] Criando handleCallNext useCallback", {
-    currentRoom: currentRoom?.id,
-    callNextFnRef: !!callNextFnRef.current,
-    renderCount: renderCountRef.current,
-  });
+  callNextFnRef.current = queueMutations.callNext;
   
   const handleCallNext = useCallback(() => {
-    console.log("[DEBUG page.tsx] handleCallNext EXECUTADO", { currentRoom: currentRoom?.id });
     if (currentRoom) {
-      console.log("[DEBUG page.tsx] handleCallNext - chamando callNext", { roomId: currentRoom.id });
       callNextFnRef.current(currentRoom.id);
     } else {
-      console.log("[DEBUG page.tsx] handleCallNext - opening room modal (no currentRoom)");
       setShowRoomModal(true);
     }
   }, [currentRoom]);
-  
-  console.log("[DEBUG page.tsx] handleCallNext criado", { 
-    functionName: handleCallNext.name,
-    renderCount: renderCountRef.current 
-  });
-  
-  const handleCallNextRef = useRef(handleCallNext);
-  
-  useEffect(() => {
-    if (handleCallNextRef.current !== handleCallNext) {
-      console.log("[DEBUG page.tsx] handleCallNext callback RECRIADO");
-      handleCallNextRef.current = handleCallNext;
-    }
-  }, [handleCallNext]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -219,91 +141,61 @@ export default function Home() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [user?.role, entries, showRoomModal, showAddQueueModal, handleCallNext]);
 
-  const handleStart = (id: string) => {
-    queueMutations.startService(id);
-  };
-
-  const handleComplete = (id: string) => {
-    queueMutations.completeService(id);
-  };
-
+  const startServiceFnRef = useRef(queueMutations.startService);
+  const completeServiceFnRef = useRef(queueMutations.completeService);
   const callPatientFnRef = useRef(queueMutations.callPatient);
+  const cancelEntryFnRef = useRef(queueMutations.cancelEntry);
   
-  useEffect(() => {
-    if (callPatientFnRef.current !== queueMutations.callPatient) {
-      console.log("[DEBUG page.tsx] callPatientFnRef MUDOU", {
-        prevFn: callPatientFnRef.current,
-        newFn: queueMutations.callPatient,
-      });
-      callPatientFnRef.current = queueMutations.callPatient;
-    }
-  }, [queueMutations.callPatient]);
-  
-  console.log("[DEBUG page.tsx] Criando handleCall useCallback", {
-    currentRoom: currentRoom?.id,
-    userRole: user?.role,
-    callPatientFnRef: !!callPatientFnRef.current,
-    toastFn: !!toast,
-    renderCount: renderCountRef.current,
-  });
-  
+  startServiceFnRef.current = queueMutations.startService;
+  completeServiceFnRef.current = queueMutations.completeService;
+  callPatientFnRef.current = queueMutations.callPatient;
+  cancelEntryFnRef.current = queueMutations.cancelEntry;
+
+  const handleStart = useCallback((id: string) => {
+    startServiceFnRef.current(id);
+  }, []);
+
+  const handleComplete = useCallback((id: string) => {
+    completeServiceFnRef.current(id);
+  }, []);
+
   const handleCall = useCallback((entryId: string) => {
-    console.log("[DEBUG page.tsx] handleCall EXECUTADO", { entryId, currentRoom: currentRoom?.id, userRole: user?.role });
     if (currentRoom) {
-      console.log("[DEBUG page.tsx] handleCall - chamando callPatient", { entryId, roomId: currentRoom.id });
       callPatientFnRef.current({ entryId, roomId: currentRoom.id });
     } else {
       if (user?.role === Role.RECEPCAO) {
-        console.log("[DEBUG page.tsx] handleCall - opening room modal for RECEPCAO");
         setShowRoomModal(true);
         setEntryToCall(entryId);
       } else {
-        console.log("[DEBUG page.tsx] handleCall - showing check-in required toast");
-        toast({
+        toastRef.current({
           variant: "destructive",
           title: "Check-in necessário",
           description: "Você precisa fazer check-in em uma sala antes de chamar pacientes.",
         });
       }
     }
-  }, [currentRoom, user?.role, toast]);
-  
-  console.log("[DEBUG page.tsx] handleCall criado", { 
-    functionName: handleCall.name,
-    renderCount: renderCountRef.current 
-  });
-  
-  const handleCallRef = useRef(handleCall);
-  
-  useEffect(() => {
-    if (handleCallRef.current !== handleCall) {
-      console.log("[DEBUG page.tsx] handleCall callback RECRIADO");
-      handleCallRef.current = handleCall;
-    }
-  }, [handleCall]);
+  }, [currentRoom, user?.role]);
 
   const handleShowRoomModal = useCallback(() => {
-    console.log("[DEBUG page.tsx] handleShowRoomModal called");
     setShowRoomModal(true);
   }, []);
 
   const handleShowAddQueueModal = useCallback(() => {
-    console.log("[DEBUG page.tsx] handleShowAddQueueModal called");
     setShowAddQueueModal(true);
   }, []);
 
-  const handleCancel = (id: string) => {
+  const handleCancel = useCallback((id: string) => {
     setEntryToCancel(id);
     setCancelDialogOpen(true);
-  };
+  }, []);
 
-  const confirmCancel = () => {
+  const confirmCancel = useCallback(() => {
     if (entryToCancel) {
-      queueMutations.cancelEntry(entryToCancel);
+      cancelEntryFnRef.current(entryToCancel);
       setCancelDialogOpen(false);
       setEntryToCancel(null);
     }
-  };
+  }, [entryToCancel]);
 
   if (authLoading || !user) {
     return (
@@ -429,7 +321,7 @@ export default function Home() {
             inline={false}
             onSuccess={() => {
               queryClient.invalidateQueries({ queryKey: ["queue"] });
-              toast({
+              toastRef.current({
                 variant: "default",
                 title: "Sucesso",
                 description: "Entrada adicionada à fila com sucesso",

@@ -8,7 +8,6 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { useQueryClient } from "@tanstack/react-query";
-import { useEffect, useRef } from "react";
 
 interface QueueTabProps {
   user: { id: string; role: Role } | null;
@@ -38,31 +37,6 @@ export function QueueTab({
   callNextPending,
 }: QueueTabProps) {
   const queryClient = useQueryClient();
-  const renderCountRef = useRef(0);
-  const propsRef = useRef({ onCall, onCallNext });
-  
-  renderCountRef.current += 1;
-  console.log("[DEBUG QueueTab] Component render #", renderCountRef.current, {
-    hasOnCall: !!onCall,
-    hasOnCallNext: !!onCallNext,
-    userRole: user?.role,
-    callNextPending,
-  });
-
-  useEffect(() => {
-    const prevProps = propsRef.current;
-    if (prevProps.onCall !== onCall) {
-      console.log("[DEBUG QueueTab] onCall prop MUDOU", {
-        wasNull: !prevProps.onCall,
-        isNowNull: !onCall,
-      });
-      propsRef.current.onCall = onCall;
-    }
-    if (prevProps.onCallNext !== onCallNext) {
-      console.log("[DEBUG QueueTab] onCallNext prop MUDOU");
-      propsRef.current.onCallNext = onCallNext;
-    }
-  }, [onCall, onCallNext]);
 
   const { data: entries = [], isLoading, isError } = useQuery<QueueEntry[]>({
     queryKey: ["queue", "active", user?.role === "VET" ? user.id : undefined],

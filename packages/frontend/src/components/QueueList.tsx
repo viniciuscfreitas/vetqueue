@@ -14,6 +14,7 @@ interface QueueListProps {
   emptyMessage?: string;
   userRole?: Role;
   onAddClick?: () => void;
+  mode?: "history";
 }
 
 export function QueueList({
@@ -27,6 +28,7 @@ export function QueueList({
   emptyMessage = "Nenhuma entrada na fila no momento",
   userRole,
   onAddClick,
+  mode,
 }: QueueListProps) {
   if (entries.length === 0) {
     return (
@@ -50,6 +52,28 @@ export function QueueList({
       return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
     });
   };
+
+  if (mode === "history") {
+    const sortedHistory = sortEntries(entries).reverse();
+
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {sortedHistory.map((entry) => (
+          <QueueCard
+            key={entry.id}
+            entry={entry}
+            userRole={userRole}
+            onStart={onStart}
+            onComplete={onComplete}
+            onCancel={onCancel}
+            onCall={onCall}
+            onViewRecord={onViewRecord}
+            onRegisterConsultation={onRegisterConsultation}
+          />
+        ))}
+      </div>
+    );
+  }
 
   const inProgress = sortEntries(
     entries.filter(e => e.status === Status.CALLED || e.status === Status.IN_PROGRESS)

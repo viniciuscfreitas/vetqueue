@@ -194,6 +194,7 @@ export function HistoryTab({ authLoading }: HistoryTabProps) {
             )}
             <QueueList
               entries={historyEntries}
+              mode="history"
               emptyMessage={
                 hasActiveFilters
                   ? "Nenhum atendimento encontrado com os filtros aplicados"

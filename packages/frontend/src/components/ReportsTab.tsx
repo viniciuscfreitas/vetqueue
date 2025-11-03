@@ -1,14 +1,14 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { queueApi, ReportStats, PatientStats, ConsultationStats, VaccinationStats, RoomUtilizationStats } from "@/lib/api";
+import { queueApi, ReportStats, RoomUtilizationStats } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDateRange } from "@/hooks/useDateRange";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area, LineChart, Line } from "recharts";
-import { Users, Activity, Syringe, MapPin, TrendingUp, Clock, Calendar } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area } from "recharts";
+import { Activity, MapPin, TrendingUp, Clock, Calendar } from "lucide-react";
 
 interface ReportsTabProps {
   authLoading: boolean;
@@ -32,45 +32,6 @@ export function ReportsTab({ authLoading }: ReportsTabProps) {
     staleTime: 30000,
   });
 
-  const { data: patientStats, isLoading: isLoadingPatients } = useQuery<PatientStats>({
-    queryKey: ["queue", "reports", "patients", startDate, endDate],
-    queryFn: () =>
-      queueApi
-        .getPatientStats({
-          startDate,
-          endDate,
-        })
-        .then((res) => res.data),
-    enabled: !authLoading,
-    staleTime: 30000,
-  });
-
-  const { data: consultationStats, isLoading: isLoadingConsultations } = useQuery<ConsultationStats>({
-    queryKey: ["queue", "reports", "consultations", startDate, endDate],
-    queryFn: () =>
-      queueApi
-        .getConsultationStats({
-          startDate,
-          endDate,
-        })
-        .then((res) => res.data),
-    enabled: !authLoading,
-    staleTime: 30000,
-  });
-
-  const { data: vaccinationStats, isLoading: isLoadingVaccinations } = useQuery<VaccinationStats>({
-    queryKey: ["queue", "reports", "vaccinations", startDate, endDate],
-    queryFn: () =>
-      queueApi
-        .getVaccinationStats({
-          startDate,
-          endDate,
-        })
-        .then((res) => res.data),
-    enabled: !authLoading,
-    staleTime: 30000,
-  });
-
   const { data: roomStats, isLoading: isLoadingRooms } = useQuery<RoomUtilizationStats>({
     queryKey: ["queue", "reports", "rooms", startDate, endDate],
     queryFn: () =>
@@ -84,7 +45,7 @@ export function ReportsTab({ authLoading }: ReportsTabProps) {
     staleTime: 30000,
   });
 
-  const isLoading = isLoadingReports || isLoadingPatients || isLoadingConsultations || isLoadingVaccinations || isLoadingRooms;
+  const isLoading = isLoadingReports || isLoadingRooms;
 
   const serviceChartData = stats?.byService ? Object.entries(stats.byService).map(([name, value]) => ({
     name,
@@ -97,21 +58,18 @@ export function ReportsTab({ authLoading }: ReportsTabProps) {
     { name: "Normal", value: stats.byPriority.normal, color: "#10b981" },
   ] : [];
 
-  const speciesChartData = patientStats?.topSpecies || [];
-  const topDiagnosesData = consultationStats?.topDiagnoses || [];
-  const topVaccinesData = vaccinationStats?.topVaccines || [];
   const peakHoursData = roomStats?.peakHours.map(h => ({ ...h, time: `${h.hour}h` })) || [];
   const roomUtilizationData = roomStats?.utilizationPerRoom || [];
 
-  const topVetsChartData = stats?.topVets ? stats.topVets.slice(0, 5) : [];
+  const topVetsChartData = stats?.topVets || [];
 
   return (
     <div className="space-y-6">
       <div className="space-y-4">
         <div>
-          <h2 className="text-xl font-semibold">Relatórios Executivos</h2>
+          <h2 className="text-xl font-semibold">Relatórios da Fila</h2>
           <p className="text-sm text-muted-foreground mt-1">
-            Dashboard completo de gestão hospitalar veterinária
+            Estatísticas e métricas de atendimentos
           </p>
         </div>
 
@@ -146,21 +104,21 @@ export function ReportsTab({ authLoading }: ReportsTabProps) {
       </div>
 
       {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map((i) => (
             <Card key={i}>
               <CardHeader>
                 <Skeleton className="h-6 w-32" />
               </CardHeader>
               <CardContent>
-                <Skeleton className="h-32 w-full" />
+                <Skeleton className="h-10 w-24" />
               </CardContent>
             </Card>
           ))}
         </div>
       ) : (
         <>
-          {stats?.total === 0 && !patientStats && !consultationStats && !vaccinationStats ? (
+          {stats?.total === 0 && !roomStats ? (
             <Card>
               <CardContent className="pt-6">
                 <div className="text-center py-8">
@@ -293,7 +251,7 @@ export function ReportsTab({ authLoading }: ReportsTabProps) {
               {topVetsChartData.length > 0 && (
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-base">Top Veterinários por Atendimentos</CardTitle>
+                    <CardTitle className="text-base">Top Veterinários</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <ResponsiveContainer width="100%" height={300}>
@@ -308,131 +266,6 @@ export function ReportsTab({ authLoading }: ReportsTabProps) {
                   </CardContent>
                 </Card>
               )}
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between pb-2">
-                    <CardTitle className="text-base">Estatísticas de Pacientes</CardTitle>
-                    <Users className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-center pb-2 border-b">
-                        <span className="text-sm text-muted-foreground">Total de Pacientes</span>
-                        <span className="text-lg font-semibold">{patientStats?.totalPatients || 0}</span>
-                      </div>
-                      <div className="flex justify-between items-center pb-2 border-b">
-                        <span className="text-sm text-muted-foreground">Novos no Período</span>
-                        <span className="text-lg font-semibold">{patientStats?.newPatientsInPeriod || 0}</span>
-                      </div>
-                      <div className="flex justify-between items-center pb-2 border-b">
-                        <span className="text-sm text-muted-foreground">Idade Média</span>
-                        <span className="text-lg font-semibold">{patientStats?.averageAge || 0} anos</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-muted-foreground">Múltiplas Visitas</span>
-                        <span className="text-lg font-semibold">{patientStats?.patientsWithMultipleVisits || 0}</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between pb-2">
-                    <CardTitle className="text-base">Espécies Mais Atendidas</CardTitle>
-                    <Users className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    {speciesChartData.length > 0 ? (
-                      <ResponsiveContainer width="100%" height={200}>
-                        <PieChart>
-                          <Pie
-                            data={speciesChartData}
-                            cx="50%"
-                            cy="50%"
-                            labelLine={false}
-                            label={({ species, percent }: any) => `${species}: ${(percent * 100).toFixed(0)}%`}
-                            outerRadius={70}
-                            fill="#8884d8"
-                            dataKey="count"
-                          >
-                            {speciesChartData.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                            ))}
-                          </Pie>
-                          <Tooltip />
-                        </PieChart>
-                      </ResponsiveContainer>
-                    ) : (
-                      <div className="h-[200px] flex items-center justify-center">
-                        <p className="text-sm text-muted-foreground">Sem dados disponíveis</p>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between pb-2">
-                    <CardTitle className="text-base">Estatísticas de Consultas</CardTitle>
-                    <Activity className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-center pb-2 border-b">
-                        <span className="text-sm text-muted-foreground">Total de Consultas</span>
-                        <span className="text-lg font-semibold">{consultationStats?.totalConsultations || 0}</span>
-                      </div>
-                      <div className="flex justify-between items-center pb-2 border-b">
-                        <span className="text-sm text-muted-foreground">Peso Médio</span>
-                        <span className="text-lg font-semibold">{consultationStats?.averageWeight || 0} kg</span>
-                      </div>
-                    </div>
-                    {topDiagnosesData.length > 0 && (
-                      <div className="mt-4 space-y-2">
-                        <p className="text-xs font-medium text-muted-foreground mb-2">Top Diagnósticos</p>
-                        {topDiagnosesData.slice(0, 3).map((item, index) => (
-                          <div key={index} className="flex justify-between items-center text-sm">
-                            <span className="truncate">{item.diagnosis}</span>
-                            <span className="font-semibold ml-2">{item.count}</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between pb-2">
-                    <CardTitle className="text-base">Estatísticas de Vacinações</CardTitle>
-                    <Syringe className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-center pb-2 border-b">
-                        <span className="text-sm text-muted-foreground">Total de Vacinas</span>
-                        <span className="text-lg font-semibold">{vaccinationStats?.totalVaccinations || 0}</span>
-                      </div>
-                      <div className="flex justify-between items-center pb-2 border-b">
-                        <span className="text-sm text-muted-foreground">Doses Pendentes</span>
-                        <span className="text-lg font-semibold">{vaccinationStats?.upcomingDoses || 0}</span>
-                      </div>
-                    </div>
-                    {topVaccinesData.length > 0 && (
-                      <div className="mt-4 space-y-2">
-                        <p className="text-xs font-medium text-muted-foreground mb-2">Vacinas Mais Aplicadas</p>
-                        {topVaccinesData.slice(0, 3).map((item, index) => (
-                          <div key={index} className="flex justify-between items-center text-sm">
-                            <span className="truncate">{item.vaccineName}</span>
-                            <span className="font-semibold ml-2">{item.count}</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
 
               {roomStats && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

@@ -809,5 +809,313 @@ export class QueueRepository {
     });
     return !!activePatient;
   }
+
+  async getPatientStats(startDate: Date, endDate: Date) {
+    const [totalPatients, newPatients, patientsWithVisits, speciesCount] = await Promise.all([
+      prisma.patient.count(),
+      prisma.patient.count({
+        where: {
+          createdAt: {
+            gte: startDate,
+            lte: endDate,
+          },
+        },
+      }),
+      prisma.patient.findMany({
+        include: {
+          queueEntries: {
+            where: {
+              status: Status.COMPLETED,
+              completedAt: {
+                gte: startDate,
+                lte: endDate,
+              },
+            },
+          },
+        },
+      }),
+      prisma.patient.groupBy({
+        by: ['species'],
+        where: {
+          species: { not: null },
+        },
+        _count: true,
+      }),
+    ]);
+
+    const topSpecies = speciesCount
+      .filter(item => item.species)
+      .map(item => ({
+        species: item.species!,
+        count: item._count,
+      }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+
+    const patientsMultipleVisits = patientsWithVisits.filter(
+      patient => patient.queueEntries.length > 1
+    ).length;
+
+    const patientsWithBirthDate = await prisma.patient.findMany({
+      where: {
+        birthDate: { not: null },
+      },
+      select: {
+        birthDate: true,
+      },
+    });
+
+    const avgAge = patientsWithBirthDate.length > 0
+      ? patientsWithBirthDate.reduce((sum, patient) => {
+          const birthYear = patient.birthDate!.getFullYear();
+          const currentYear = new Date().getFullYear();
+          return sum + (currentYear - birthYear);
+        }, 0) / patientsWithBirthDate.length
+      : 0;
+
+    return {
+      totalPatients,
+      newPatientsInPeriod: newPatients,
+      topSpecies,
+      averageAge: Math.round(avgAge * 10) / 10,
+      patientsWithMultipleVisits: patientsMultipleVisits,
+    };
+  }
+
+  async getConsultationStats(startDate: Date, endDate: Date) {
+    const [consultations, topDiagnoses, consultationsByVet] = await Promise.all([
+      prisma.consultation.findMany({
+        where: {
+          date: {
+            gte: startDate,
+            lte: endDate,
+          },
+        },
+        include: {
+          vet: {
+            select: {
+              name: true,
+            },
+          },
+        },
+      }),
+      prisma.consultation.groupBy({
+        by: ['diagnosis'],
+        where: {
+          diagnosis: { not: null },
+          date: {
+            gte: startDate,
+            lte: endDate,
+          },
+        },
+        _count: true,
+      }),
+      prisma.consultation.groupBy({
+        by: ['vetId'],
+        where: {
+          date: {
+            gte: startDate,
+            lte: endDate,
+          },
+          vetId: { not: null },
+        },
+        _count: true,
+      }),
+    ]);
+
+    const consultationsWithWeight = consultations.filter(c => c.weightInKg !== null);
+    const avgWeight = consultationsWithWeight.length > 0
+      ? consultationsWithWeight.reduce((sum, c) => sum + (c.weightInKg || 0), 0) / consultationsWithWeight.length
+      : 0;
+
+    const topDiagnosesList = topDiagnoses
+      .filter(item => item.diagnosis)
+      .map(item => ({
+        diagnosis: item.diagnosis!,
+        count: item._count,
+      }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+
+    const vetIdToName = new Map<string, string>();
+    consultations.forEach(c => {
+      if (c.vet && c.vetId) {
+        vetIdToName.set(c.vetId, c.vet.name);
+      }
+    });
+
+    const consultationsPerVet = consultationsByVet
+      .map(item => ({
+        vetName: vetIdToName.get(item.vetId!) || 'Desconhecido',
+        count: item._count,
+      }))
+      .sort((a, b) => b.count - a.count);
+
+    return {
+      totalConsultations: consultations.length,
+      averageWeight: Math.round(avgWeight * 10) / 10,
+      topDiagnoses: topDiagnosesList,
+      consultationsPerVet,
+    };
+  }
+
+  async getVaccinationStats(startDate: Date, endDate: Date) {
+    const [vaccinations, topVaccines, vaccinationsByVet, upcomingDoses] = await Promise.all([
+      prisma.vaccination.findMany({
+        where: {
+          appliedDate: {
+            gte: startDate,
+            lte: endDate,
+          },
+        },
+        include: {
+          vet: {
+            select: {
+              name: true,
+            },
+          },
+        },
+      }),
+      prisma.vaccination.groupBy({
+        by: ['vaccineName'],
+        where: {
+          appliedDate: {
+            gte: startDate,
+            lte: endDate,
+          },
+        },
+        _count: true,
+      }),
+      prisma.vaccination.groupBy({
+        by: ['vetId'],
+        where: {
+          appliedDate: {
+            gte: startDate,
+            lte: endDate,
+          },
+          vetId: { not: null },
+        },
+        _count: true,
+      }),
+      prisma.vaccination.count({
+        where: {
+          nextDoseDate: {
+            gte: startDate,
+            lte: endDate,
+          },
+        },
+      }),
+    ]);
+
+    const topVaccinesList = topVaccines
+      .map(item => ({
+        vaccineName: item.vaccineName,
+        count: item._count,
+      }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+
+    const vetIdToName = new Map<string, string>();
+    vaccinations.forEach(v => {
+      if (v.vet && v.vetId) {
+        vetIdToName.set(v.vetId, v.vet.name);
+      }
+    });
+
+    const vaccinationsPerVet = vaccinationsByVet
+      .map(item => ({
+        vetName: vetIdToName.get(item.vetId!) || 'Desconhecido',
+        count: item._count,
+      }))
+      .sort((a, b) => b.count - a.count);
+
+    return {
+      totalVaccinations: vaccinations.length,
+      topVaccines: topVaccinesList,
+      upcomingDoses,
+      vaccinationsPerVet,
+    };
+  }
+
+  async getRoomUtilizationStats(startDate: Date, endDate: Date) {
+    const entries = await prisma.queueEntry.findMany({
+      where: {
+        status: Status.COMPLETED,
+        completedAt: {
+          gte: startDate,
+          lte: endDate,
+        },
+        calledAt: { not: null },
+        roomId: { not: null },
+      },
+      include: {
+        room: {
+          select: {
+            name: true,
+          },
+        },
+      },
+    });
+
+    const roomUtilization: Record<string, { hoursUsed: number; count: number }> = {};
+
+    entries.forEach(entry => {
+      if (entry.room && entry.calledAt && entry.completedAt) {
+        const serviceTimeMs = entry.completedAt.getTime() - entry.calledAt.getTime();
+        const serviceTimeHours = serviceTimeMs / (1000 * 60 * 60);
+
+        if (!roomUtilization[entry.roomId!]) {
+          roomUtilization[entry.roomId!] = { hoursUsed: 0, count: 0 };
+        }
+        roomUtilization[entry.roomId!].hoursUsed += serviceTimeHours;
+        roomUtilization[entry.roomId!].count += 1;
+      }
+    });
+
+    const allRooms = await prisma.room.findMany({
+      where: { isActive: true },
+    });
+
+    const totalHours = Object.values(roomUtilization).reduce(
+      (sum, room) => sum + room.hoursUsed, 0
+    );
+
+    const daysInPeriod = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) || 1;
+    const maxPossibleHours = allRooms.length * 24 * daysInPeriod;
+
+    const utilizationPerRoom = allRooms.map(room => {
+      const stats = roomUtilization[room.id] || { hoursUsed: 0, count: 0 };
+      const roomMaxHours = 24 * daysInPeriod;
+      const utilizationRate = roomMaxHours > 0
+        ? Math.round((stats.hoursUsed / roomMaxHours) * 100)
+        : 0;
+
+      return {
+        roomName: room.name,
+        hoursUsed: Math.round(stats.hoursUsed * 10) / 10,
+        utilizationRate,
+        count: stats.count,
+      };
+    }).sort((a, b) => b.utilizationRate - a.utilizationRate);
+
+    const hourCounts: Record<number, number> = {};
+    entries.forEach(entry => {
+      if (entry.calledAt) {
+        const hour = entry.calledAt.getHours();
+        hourCounts[hour] = (hourCounts[hour] || 0) + 1;
+      }
+    });
+
+    const peakHours = Object.entries(hourCounts)
+      .map(([hour, count]) => ({ hour: parseInt(hour), count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 6);
+
+    return {
+      totalHours: Math.round(totalHours * 10) / 10,
+      utilizationPerRoom,
+      peakHours,
+    };
+  }
 }
 

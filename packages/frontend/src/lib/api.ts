@@ -170,6 +170,34 @@ export interface AuditLog {
   timestamp: string;
 }
 
+export interface PatientStats {
+  totalPatients: number;
+  newPatientsInPeriod: number;
+  topSpecies: Array<{ species: string; count: number }>;
+  averageAge: number;
+  patientsWithMultipleVisits: number;
+}
+
+export interface ConsultationStats {
+  totalConsultations: number;
+  averageWeight: number;
+  topDiagnoses: Array<{ diagnosis: string; count: number }>;
+  consultationsPerVet: Array<{ vetName: string; count: number }>;
+}
+
+export interface VaccinationStats {
+  totalVaccinations: number;
+  topVaccines: Array<{ vaccineName: string; count: number }>;
+  upcomingDoses: number;
+  vaccinationsPerVet: Array<{ vetName: string; count: number }>;
+}
+
+export interface RoomUtilizationStats {
+  totalHours: number;
+  utilizationPerRoom: Array<{ roomName: string; hoursUsed: number; utilizationRate: number; count: number }>;
+  peakHours: Array<{ hour: number; count: number }>;
+}
+
 export const queueApi = {
   add: (data: {
     patientName: string;
@@ -236,6 +264,26 @@ export const queueApi = {
 
   getRoomOccupations: () => 
     api.get<Record<string, { vetId: string; vetName: string } | null>>("/api/queue/room-occupations"),
+
+  getPatientStats: (filters?: {
+    startDate?: string;
+    endDate?: string;
+  }) => api.get<PatientStats>("/api/queue/reports/patients", { params: filters }),
+
+  getConsultationStats: (filters?: {
+    startDate?: string;
+    endDate?: string;
+  }) => api.get<ConsultationStats>("/api/queue/reports/consultations", { params: filters }),
+
+  getVaccinationStats: (filters?: {
+    startDate?: string;
+    endDate?: string;
+  }) => api.get<VaccinationStats>("/api/queue/reports/vaccinations", { params: filters }),
+
+  getRoomUtilization: (filters?: {
+    startDate?: string;
+    endDate?: string;
+  }) => api.get<RoomUtilizationStats>("/api/queue/reports/rooms", { params: filters }),
 };
 
 export const authApi = {

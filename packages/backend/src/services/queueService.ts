@@ -318,6 +318,21 @@ export class QueueService {
     return this.repository.getRoomOccupations(currentVetId);
   }
 
+  async getPatientStatistics(startDate: Date, endDate: Date) {
+    return this.repository.getPatientStats(startDate, endDate);
+  }
+
+  async getConsultationStatistics(startDate: Date, endDate: Date) {
+    return this.repository.getConsultationStats(startDate, endDate);
+  }
+
+  async getVaccinationStatistics(startDate: Date, endDate: Date) {
+    return this.repository.getVaccinationStats(startDate, endDate);
+  }
+
+  async getRoomUtilization(startDate: Date, endDate: Date) {
+    return this.repository.getRoomUtilizationStats(startDate, endDate);
+  }
 
   async updateEntry(
     id: string,

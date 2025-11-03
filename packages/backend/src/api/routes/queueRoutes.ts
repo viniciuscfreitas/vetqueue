@@ -249,6 +249,42 @@ router.get("/vet-stats/:vetId", authMiddleware, asyncHandler(async (req: Request
   res.json(stats);
 }));
 
+router.get("/reports/patients", authMiddleware, asyncHandler(async (req: Request, res: Response) => {
+  const dateRange = parseDateRange(req.query);
+  const startDate = dateRange.start || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  const endDate = dateRange.end || new Date();
+
+  const stats = await queueService.getPatientStatistics(startDate, endDate);
+  res.json(stats);
+}));
+
+router.get("/reports/consultations", authMiddleware, asyncHandler(async (req: Request, res: Response) => {
+  const dateRange = parseDateRange(req.query);
+  const startDate = dateRange.start || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  const endDate = dateRange.end || new Date();
+
+  const stats = await queueService.getConsultationStatistics(startDate, endDate);
+  res.json(stats);
+}));
+
+router.get("/reports/vaccinations", authMiddleware, asyncHandler(async (req: Request, res: Response) => {
+  const dateRange = parseDateRange(req.query);
+  const startDate = dateRange.start || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  const endDate = dateRange.end || new Date();
+
+  const stats = await queueService.getVaccinationStatistics(startDate, endDate);
+  res.json(stats);
+}));
+
+router.get("/reports/rooms", authMiddleware, asyncHandler(async (req: Request, res: Response) => {
+  const dateRange = parseDateRange(req.query);
+  const startDate = dateRange.start || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  const endDate = dateRange.end || new Date();
+
+  const stats = await queueService.getRoomUtilization(startDate, endDate);
+  res.json(stats);
+}));
+
 router.get("/entry/:id/audit", authMiddleware, requireRole(["RECEPCAO"]), asyncHandler(async (req: Request, res: Response) => {
   const logs = await auditService.getAuditLogsByEntity("QueueEntry", req.params.id);
   res.json(logs);

@@ -131,6 +131,13 @@ export function useQueueMutations({ user, onCallNextSuccess, onCallPatientSucces
     onError: handleError,
   });
 
+  console.log("[DEBUG useQueueMutations] Antes do useMemo - verificando mutações", {
+    callNextMutationMutate: callNextMutation.mutate,
+    callNextMutationPending: callNextMutation.isPending,
+    callPatientMutationMutate: callPatientMutation.mutate,
+    hookRenderCount: hookRenderCountRef.current,
+  });
+
   const result = useMemo(() => {
     const obj = {
       callNext: callNextMutation.mutate,
@@ -142,10 +149,12 @@ export function useQueueMutations({ user, onCallNextSuccess, onCallPatientSucces
       completeService: completeServiceMutation.mutate,
       cancelEntry: cancelEntryMutation.mutate,
     };
-    console.log("[DEBUG useQueueMutations] Objeto result criado/atualizado", {
+    console.log("[DEBUG useQueueMutations] Objeto result criado/atualizado dentro useMemo", {
       callNextPending: obj.callNextPending,
       callNextFn: !!obj.callNext,
       callPatientFn: !!obj.callPatient,
+      callNextFnReference: obj.callNext,
+      callPatientFnReference: obj.callPatient,
     });
     return obj;
   }, [
@@ -158,6 +167,12 @@ export function useQueueMutations({ user, onCallNextSuccess, onCallPatientSucces
     completeServiceMutation.mutate,
     cancelEntryMutation.mutate,
   ]);
+  
+  console.log("[DEBUG useQueueMutations] Depois do useMemo - result", {
+    callNextPending: result.callNextPending,
+    callNextFn: result.callNext,
+    callPatientFn: result.callPatient,
+  });
 
   const resultRef = useRef(result);
   const prevResult = resultRef.current;

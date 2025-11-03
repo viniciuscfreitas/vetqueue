@@ -107,11 +107,22 @@ export default function Home() {
       console.log("[DEBUG page.tsx] queueMutations objeto RECRIADO", {
         callNextChanged: prevQueueMutations.callNext !== queueMutations.callNext,
         callPatientChanged: prevQueueMutations.callPatient !== queueMutations.callPatient,
+        callNextPendingChanged: prevQueueMutations.callNextPending !== queueMutations.callNextPending,
         isPending: queueMutations.callNextPending,
+        prevCallNextFn: prevQueueMutations.callNext,
+        newCallNextFn: queueMutations.callNext,
       });
       queueMutationsRef.current = queueMutations;
     }
   }, [queueMutations]);
+  
+  console.log("[DEBUG page.tsx] Durante render - verificando queueMutations", {
+    callNextFn: queueMutations.callNext,
+    callPatientFn: queueMutations.callPatient,
+    callNextPending: queueMutations.callNextPending,
+    user: user?.id,
+    currentRoom: currentRoom?.id,
+  });
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -141,17 +152,38 @@ export default function Home() {
   }, [entries, toast]);
 
   const callNextFnRef = useRef(queueMutations.callNext);
-  callNextFnRef.current = queueMutations.callNext;
+  
+  useEffect(() => {
+    if (callNextFnRef.current !== queueMutations.callNext) {
+      console.log("[DEBUG page.tsx] callNextFnRef MUDOU", {
+        prevFn: callNextFnRef.current,
+        newFn: queueMutations.callNext,
+      });
+      callNextFnRef.current = queueMutations.callNext;
+    }
+  }, [queueMutations.callNext]);
+  
+  console.log("[DEBUG page.tsx] Criando handleCallNext useCallback", {
+    currentRoom: currentRoom?.id,
+    callNextFnRef: !!callNextFnRef.current,
+    renderCount: renderCountRef.current,
+  });
   
   const handleCallNext = useCallback(() => {
-    console.log("[DEBUG page.tsx] handleCallNext called", { currentRoom: currentRoom?.id });
+    console.log("[DEBUG page.tsx] handleCallNext EXECUTADO", { currentRoom: currentRoom?.id });
     if (currentRoom) {
+      console.log("[DEBUG page.tsx] handleCallNext - chamando callNext", { roomId: currentRoom.id });
       callNextFnRef.current(currentRoom.id);
     } else {
       console.log("[DEBUG page.tsx] handleCallNext - opening room modal (no currentRoom)");
       setShowRoomModal(true);
     }
   }, [currentRoom]);
+  
+  console.log("[DEBUG page.tsx] handleCallNext criado", { 
+    functionName: handleCallNext.name,
+    renderCount: renderCountRef.current 
+  });
   
   const handleCallNextRef = useRef(handleCallNext);
   
@@ -196,11 +228,29 @@ export default function Home() {
   };
 
   const callPatientFnRef = useRef(queueMutations.callPatient);
-  callPatientFnRef.current = queueMutations.callPatient;
+  
+  useEffect(() => {
+    if (callPatientFnRef.current !== queueMutations.callPatient) {
+      console.log("[DEBUG page.tsx] callPatientFnRef MUDOU", {
+        prevFn: callPatientFnRef.current,
+        newFn: queueMutations.callPatient,
+      });
+      callPatientFnRef.current = queueMutations.callPatient;
+    }
+  }, [queueMutations.callPatient]);
+  
+  console.log("[DEBUG page.tsx] Criando handleCall useCallback", {
+    currentRoom: currentRoom?.id,
+    userRole: user?.role,
+    callPatientFnRef: !!callPatientFnRef.current,
+    toastFn: !!toast,
+    renderCount: renderCountRef.current,
+  });
   
   const handleCall = useCallback((entryId: string) => {
-    console.log("[DEBUG page.tsx] handleCall called", { entryId, currentRoom: currentRoom?.id, userRole: user?.role });
+    console.log("[DEBUG page.tsx] handleCall EXECUTADO", { entryId, currentRoom: currentRoom?.id, userRole: user?.role });
     if (currentRoom) {
+      console.log("[DEBUG page.tsx] handleCall - chamando callPatient", { entryId, roomId: currentRoom.id });
       callPatientFnRef.current({ entryId, roomId: currentRoom.id });
     } else {
       if (user?.role === Role.RECEPCAO) {
@@ -217,6 +267,11 @@ export default function Home() {
       }
     }
   }, [currentRoom, user?.role, toast]);
+  
+  console.log("[DEBUG page.tsx] handleCall criado", { 
+    functionName: handleCall.name,
+    renderCount: renderCountRef.current 
+  });
   
   const handleCallRef = useRef(handleCall);
   

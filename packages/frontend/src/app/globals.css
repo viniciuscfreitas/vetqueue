@@ -42,6 +42,11 @@
     padding-right: 2.5rem;
     width: 120px;
   }
+  a:focus-visible,
+  button:focus-visible,
+  [role="button"]:focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+  }
 }
 
 @keyframes pulse-subtle {

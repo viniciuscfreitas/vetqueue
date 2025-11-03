@@ -11,11 +11,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
-import { ServiceType, Priority, queueApi } from "@/lib/api";
+import { ServiceType, Priority, queueApi, Patient } from "@/lib/api";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/use-toast";
 import { createErrorHandler } from "@/lib/errors";
 import { SERVICE_TYPE_OPTIONS } from "@/lib/constants";
+import { PatientAutocomplete } from "./PatientAutocomplete";
 
 export function AddQueueForm() {
   const router = useRouter();
@@ -29,6 +30,7 @@ export function AddQueueForm() {
     priority: Priority.NORMAL as Priority,
     hasScheduledAppointment: false,
     scheduledAt: "",
+    patientId: undefined as string | undefined,
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -49,6 +51,7 @@ export function AddQueueForm() {
         priority: formData.priority,
         hasScheduledAppointment: formData.hasScheduledAppointment,
         scheduledAt: scheduledDateTime?.toISOString(),
+        patientId: formData.patientId,
       });
       router.push("/");
       router.refresh();
@@ -61,13 +64,27 @@ export function AddQueueForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 max-w-md">
+      <PatientAutocomplete
+        onChange={(patient: Patient | null) => {
+          setFormData({
+            ...formData,
+            patientId: patient?.id,
+            patientName: patient?.name || "",
+            tutorName: patient?.tutorName || "",
+          });
+        }}
+        label="Paciente"
+        placeholder="Buscar paciente cadastrado ou digite manualmente..."
+        required
+      />
+      
       <div>
         <Label htmlFor="patientName">Nome do Paciente</Label>
         <Input
           id="patientName"
           value={formData.patientName}
           onChange={(e) =>
-            setFormData({ ...formData, patientName: e.target.value })
+            setFormData({ ...formData, patientName: e.target.value, patientId: undefined })
           }
           required
         />
@@ -79,7 +96,7 @@ export function AddQueueForm() {
           id="tutorName"
           value={formData.tutorName}
           onChange={(e) =>
-            setFormData({ ...formData, tutorName: e.target.value })
+            setFormData({ ...formData, tutorName: e.target.value, patientId: undefined })
           }
           required
         />

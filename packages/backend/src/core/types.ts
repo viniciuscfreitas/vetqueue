@@ -48,6 +48,8 @@ export interface QueueEntry {
   room?: Room | null;
   hasScheduledAppointment?: boolean;
   scheduledAt?: Date | null;
+  patientId?: string | null;
+  patient?: Patient | null;
 }
 
 export interface User {

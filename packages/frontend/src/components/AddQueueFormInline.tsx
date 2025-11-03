@@ -12,10 +12,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
-import { Priority, queueApi, userApi, serviceApi, Role, ActiveVet } from "@/lib/api";
+import { Priority, queueApi, userApi, serviceApi, Role, ActiveVet, Patient } from "@/lib/api";
 import { useToast } from "@/components/ui/use-toast";
 import { createErrorHandler } from "@/lib/errors";
 import { useAuth } from "@/contexts/AuthContext";
+import { PatientAutocomplete } from "./PatientAutocomplete";
 
 interface AddQueueFormInlineProps {
   onSuccess?: () => void;
@@ -37,6 +38,7 @@ export function AddQueueFormInline({ onSuccess, onClose, inline = true }: AddQue
     assignedVetId: "NONE",
     hasScheduledAppointment: false,
     scheduledAt: "",
+    patientId: undefined as string | undefined,
   });
 
   const isRecepcao = user?.role === Role.RECEPCAO;
@@ -79,6 +81,7 @@ export function AddQueueFormInline({ onSuccess, onClose, inline = true }: AddQue
         assignedVetId: formData.assignedVetId === "NONE" ? undefined : formData.assignedVetId,
         hasScheduledAppointment: formData.hasScheduledAppointment,
         scheduledAt: scheduledDateTime?.toISOString(),
+        patientId: formData.patientId,
       });
       setFormData({
         patientName: "",
@@ -88,6 +91,7 @@ export function AddQueueFormInline({ onSuccess, onClose, inline = true }: AddQue
         assignedVetId: "NONE",
         hasScheduledAppointment: false,
         scheduledAt: "",
+        patientId: undefined,
       });
       toast({
         title: "Sucesso",
@@ -105,16 +109,32 @@ export function AddQueueFormInline({ onSuccess, onClose, inline = true }: AddQue
   return (
     <form onSubmit={handleSubmit} className={inline ? "bg-card p-5 rounded-lg border space-y-5" : "space-y-5"}>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-2">
+        <div className="md:col-span-2">
+          <PatientAutocomplete
+            onChange={(patient: Patient | null) => {
+              setFormData({
+                ...formData,
+                patientId: patient?.id,
+                patientName: patient?.name || "",
+                tutorName: patient?.tutorName || "",
+              });
+            }}
+            label="Paciente"
+            placeholder="Buscar paciente cadastrado ou digite manualmente..."
+            required
+            id="patientAutocomplete"
+          />
+        </div>
+        <div className="space-y-2 md:col-span-1">
           <Label htmlFor="patientName" className="text-sm font-medium">
-            Paciente
+            Nome do Paciente
           </Label>
           <Input
             ref={patientNameInputRef}
             id="patientName"
             value={formData.patientName}
             onChange={(e) =>
-              setFormData({ ...formData, patientName: e.target.value })
+              setFormData({ ...formData, patientName: e.target.value, patientId: undefined })
             }
             required
             placeholder="Nome do paciente"
@@ -125,13 +145,13 @@ export function AddQueueFormInline({ onSuccess, onClose, inline = true }: AddQue
 
         <div className="space-y-2">
           <Label htmlFor="tutorName" className="text-sm font-medium">
-            Tutor
+            Nome do Tutor
           </Label>
           <Input
             id="tutorName"
             value={formData.tutorName}
             onChange={(e) =>
-              setFormData({ ...formData, tutorName: e.target.value })
+              setFormData({ ...formData, tutorName: e.target.value, patientId: undefined })
             }
             required
             placeholder="Nome do tutor"

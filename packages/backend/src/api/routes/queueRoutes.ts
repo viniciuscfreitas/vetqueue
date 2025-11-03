@@ -23,6 +23,7 @@ const addQueueSchema = z.object({
   assignedVetId: z.string().optional(),
   hasScheduledAppointment: z.boolean().optional(),
   scheduledAt: z.string().datetime().optional(),
+  patientId: z.string().optional(),
 });
 
 const updateQueueSchema = z.object({
@@ -33,6 +34,7 @@ const updateQueueSchema = z.object({
   assignedVetId: z.string().nullable().optional(),
   hasScheduledAppointment: z.boolean().optional(),
   scheduledAt: z.string().datetime().optional(),
+  patientId: z.string().nullable().optional(),
 });
 
 const callNextSchema = z.object({
@@ -51,6 +53,7 @@ router.post("/", authMiddleware, async (req: AuthenticatedRequest, res: Response
     const entry = await queueService.addToQueue({
       ...data,
       scheduledAt: data.scheduledAt ? new Date(data.scheduledAt) : undefined,
+      patientId: data.patientId,
     });
     if (req.user) {
       auditService.log({
@@ -301,6 +304,7 @@ router.patch("/:id", authMiddleware, requireRole(["RECEPCAO"]), async (req: Auth
       {
         ...data,
         scheduledAt: data.scheduledAt ? new Date(data.scheduledAt) : undefined,
+        patientId: data.patientId || null,
       },
       userRole
     );

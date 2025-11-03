@@ -50,39 +50,23 @@ router.get("/:id", authMiddleware, asyncHandler(async (req: Request, res: Respon
   res.json(patient);
 }));
 
-router.post("/", authMiddleware, async (req: Request, res: Response) => {
-  try {
-    const data = createPatientSchema.parse(req.body);
-    const patient = await patientService.createPatient({
-      ...data,
-      birthDate: data.birthDate ? new Date(data.birthDate) : undefined,
-    });
-    res.status(201).json(patient);
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      res.status(400).json({ error: error.errors });
-      return;
-    }
-    res.status(400).json({ error: (error as Error).message });
-  }
-});
+router.post("/", authMiddleware, asyncHandler(async (req: Request, res: Response) => {
+  const data = createPatientSchema.parse(req.body);
+  const patient = await patientService.createPatient({
+    ...data,
+    birthDate: data.birthDate ? new Date(data.birthDate) : undefined,
+  });
+  res.status(201).json(patient);
+}));
 
-router.patch("/:id", authMiddleware, async (req: Request, res: Response) => {
-  try {
-    const data = updatePatientSchema.parse(req.body);
-    const patient = await patientService.updatePatient(req.params.id, {
-      ...data,
-      birthDate: data.birthDate ? new Date(data.birthDate) : undefined,
-    });
-    res.json(patient);
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      res.status(400).json({ error: error.errors });
-      return;
-    }
-    res.status(400).json({ error: (error as Error).message });
-  }
-});
+router.patch("/:id", authMiddleware, asyncHandler(async (req: Request, res: Response) => {
+  const data = updatePatientSchema.parse(req.body);
+  const patient = await patientService.updatePatient(req.params.id, {
+    ...data,
+    birthDate: data.birthDate ? new Date(data.birthDate) : undefined,
+  });
+  res.json(patient);
+}));
 
 router.delete("/:id", authMiddleware, requireRole(["RECEPCAO"]), asyncHandler(async (req: Request, res: Response) => {
   await patientService.deletePatient(req.params.id);

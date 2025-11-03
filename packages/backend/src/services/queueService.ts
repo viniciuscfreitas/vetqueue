@@ -60,6 +60,7 @@ export class QueueService {
     assignedVetId?: string;
     hasScheduledAppointment?: boolean;
     scheduledAt?: Date;
+    patientId?: string;
   }): Promise<QueueEntry> {
     const processed = this.processPriorityAndSchedule(
       data.priority || Priority.NORMAL,
@@ -86,6 +87,7 @@ export class QueueService {
         assignedVetId: data.assignedVetId,
         hasScheduledAppointment: processed.hasScheduledAppointment,
         scheduledAt: processed.scheduledAt || undefined,
+        patientId: data.patientId,
       });
       
       console.log(`[QUEUE] ✓ Criado - ID: ${entry.id}, Posição na fila calculada`);
@@ -335,6 +337,7 @@ export class QueueService {
       assignedVetId?: string | null;
       hasScheduledAppointment?: boolean;
       scheduledAt?: Date;
+      patientId?: string | null;
     },
     userRole?: string
   ): Promise<QueueEntry> {

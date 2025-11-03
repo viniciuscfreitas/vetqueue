@@ -61,6 +61,8 @@ model QueueEntry {
   room                  Room?     @relation(fields: [roomId], references: [id])
   hasScheduledAppointment Boolean @default(false)
   scheduledAt           DateTime?
+  patientId             String?
+  patient               Patient?   @relation(fields: [patientId], references: [id])
 
   @@map("queue_entries")
   @@index([status])
@@ -68,6 +70,7 @@ model QueueEntry {
   @@index([serviceType])
   @@index([assignedVetId])
   @@index([roomId])
+  @@index([patientId])
 }
 
 model AuditLog {
@@ -87,7 +90,7 @@ model AuditLog {
 }
 
 model Patient {
-  id          String    @id @default(uuid())
+  id          String       @id @default(uuid())
   name        String
   species     String?
   breed       String?
@@ -97,8 +100,9 @@ model Patient {
   tutorPhone  String?
   tutorEmail  String?
   notes       String?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  queueEntries QueueEntry[]
 
   @@map("patients")
   @@index([name])

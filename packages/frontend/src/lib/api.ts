@@ -106,6 +106,8 @@ export interface QueueEntry {
   room?: Room | null;
   hasScheduledAppointment?: boolean;
   scheduledAt?: string | null;
+  patientId?: string | null;
+  patient?: Patient | null;
 }
 
 export interface User {
@@ -177,6 +179,7 @@ export const queueApi = {
     assignedVetId?: string;
     hasScheduledAppointment?: boolean;
     scheduledAt?: string;
+    patientId?: string;
   }) => api.post<QueueEntry>("/api/queue", data),
 
   listActive: (vetId?: string | null) => 
@@ -208,6 +211,7 @@ export const queueApi = {
     assignedVetId?: string | null;
     hasScheduledAppointment?: boolean;
     scheduledAt?: string;
+    patientId?: string | null;
   }) => api.patch<QueueEntry>(`/api/queue/${id}`, data),
 
   getHistory: (filters?: {

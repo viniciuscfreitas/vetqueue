@@ -267,7 +267,7 @@ export default function QueuePage() {
               onCancel={user?.role === Role.RECEPCAO ? handleCancel : undefined}
               onCall={(user?.role === Role.RECEPCAO || user?.role === Role.VET) ? handleCall : undefined}
               onViewRecord={handleViewRecord}
-              onRegisterConsultation={handleRegisterConsultation}
+              onRegisterConsultation={user?.role === Role.VET ? handleRegisterConsultation : undefined}
               onCallNext={handleCallNext}
               callNextPending={queueMutations.callNextPending}
             />

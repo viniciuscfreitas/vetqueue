@@ -27,15 +27,6 @@ export class PatientService {
     tutorEmail?: string | null;
     notes?: string | null;
   }): Promise<Patient> {
-    if (!data.name.trim()) {
-      throw new Error("Nome do paciente é obrigatório");
-    }
-
-    if (!data.tutorName.trim()) {
-      throw new Error("Nome do tutor é obrigatório");
-    }
-
-    console.log(`[PATIENT] ✓ Criando paciente - Nome: ${data.name}, Tutor: ${data.tutorName}`);
     return this.repository.create(data);
   }
 
@@ -55,15 +46,6 @@ export class PatientService {
       throw new Error("Paciente não encontrado");
     }
 
-    if (data.name && !data.name.trim()) {
-      throw new Error("Nome do paciente é obrigatório");
-    }
-
-    if (data.tutorName && !data.tutorName.trim()) {
-      throw new Error("Nome do tutor é obrigatório");
-    }
-
-    console.log(`[PATIENT] ✓ Atualizando paciente - ID: ${id}, Nome: ${data.name || patient.name}`);
     return this.repository.update(id, data);
   }
 
@@ -73,7 +55,11 @@ export class PatientService {
       throw new Error("Paciente não encontrado");
     }
 
-    console.log(`[PATIENT] ✓ Deletando paciente - ID: ${id}, Nome: ${patient.name}`);
+    const hasEntries = await this.repository.hasQueueEntries(id);
+    if (hasEntries) {
+      throw new Error("Não é possível deletar paciente com histórico de atendimentos. Use exclusão lógica ou remova os registros de atendimento primeiro.");
+    }
+
     await this.repository.delete(id);
   }
 }

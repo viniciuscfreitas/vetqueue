@@ -23,6 +23,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function PatientsPage() {
   const router = useRouter();
@@ -34,6 +44,7 @@ export default function PatientsPage() {
   const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [historyPatient, setHistoryPatient] = useState<Patient | null>(null);
+  const [deletePatient, setDeletePatient] = useState<Patient | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     species: "",
@@ -421,11 +432,7 @@ export default function PatientsPage() {
                         <Button
                           variant="destructive"
                           size="sm"
-                          onClick={() => {
-                            if (confirm(`Deseja deletar o paciente ${patient.name}?`)) {
-                              deleteMutation.mutate(patient.id);
-                            }
-                          }}
+                          onClick={() => setDeletePatient(patient)}
                         >
                           Deletar
                         </Button>
@@ -446,6 +453,32 @@ export default function PatientsPage() {
           onOpenChange={(open) => !open && setHistoryPatient(null)}
         />
       )}
+
+      <AlertDialog open={!!deletePatient} onOpenChange={(open) => !open && setDeletePatient(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja deletar o paciente <strong>{deletePatient?.name}</strong>?
+              Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (deletePatient) {
+                  deleteMutation.mutate(deletePatient.id);
+                  setDeletePatient(null);
+                }
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Deletar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

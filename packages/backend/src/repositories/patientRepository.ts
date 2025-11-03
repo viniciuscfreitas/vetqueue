@@ -91,5 +91,12 @@ export class PatientRepository {
       where: { id },
     });
   }
+
+  async hasQueueEntries(id: string): Promise<boolean> {
+    const count = await prisma.queueEntry.count({
+      where: { patientId: id },
+    });
+    return count > 0;
+  }
 }
 

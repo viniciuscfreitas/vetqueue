@@ -20,6 +20,7 @@ interface QueueTabProps {
   onCancel?: (id: string) => void;
   onCall?: (entryId: string) => void;
   onViewRecord?: (patientId: string, queueEntryId: string) => void;
+  onRegisterConsultation?: (patientId: string, queueEntryId: string) => void;
   onCallNext: () => void;
   callNextPending: boolean;
 }
@@ -35,6 +36,7 @@ export function QueueTab({
   onCancel,
   onCall,
   onViewRecord,
+  onRegisterConsultation,
   onCallNext,
   callNextPending,
 }: QueueTabProps) {
@@ -108,6 +110,7 @@ export function QueueTab({
           onCancel={onCancel}
           onCall={onCall}
           onViewRecord={onViewRecord}
+          onRegisterConsultation={onRegisterConsultation}
           userRole={user?.role}
           onAddClick={onShowAddQueueModal}
         />

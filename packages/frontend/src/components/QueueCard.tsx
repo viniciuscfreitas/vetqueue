@@ -1,4 +1,4 @@
-import { QueueEntry, Status, Role } from "@/lib/api";
+import { QueueEntry, Status, Role, ServiceType } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { PriorityBadge } from "./PriorityBadge";
 import { Badge } from "./ui/badge";
@@ -18,6 +18,7 @@ interface QueueCardProps {
   onCancel?: (id: string) => void;
   onCall?: (id: string) => void;
   onViewRecord?: (patientId: string, queueEntryId: string) => void;
+  onRegisterConsultation?: (patientId: string, queueEntryId: string) => void;
 }
 
 const statusConfig = {
@@ -67,6 +68,7 @@ export function QueueCard({
   onCancel,
   onCall,
   onViewRecord,
+  onRegisterConsultation,
 }: QueueCardProps) {
   const status = statusConfig[entry.status];
   const canStart = entry.status === Status.CALLED || entry.status === Status.WAITING;
@@ -224,7 +226,24 @@ export function QueueCard({
                 Iniciar
               </Button>
             )}
-            {entry.status === Status.IN_PROGRESS && entry.patientId && onViewRecord && (
+            {entry.status === Status.IN_PROGRESS && 
+             entry.serviceType === ServiceType.CONSULTA && 
+             entry.patientId && 
+             onRegisterConsultation && (
+              <Button
+                onClick={() => onRegisterConsultation(entry.patientId!, entry.id)}
+                size="sm"
+                variant="secondary"
+                className="flex-1"
+              >
+                <Stethoscope className="h-4 w-4 mr-1" />
+                Registrar Consulta
+              </Button>
+            )}
+            {entry.status === Status.IN_PROGRESS && 
+             entry.serviceType !== ServiceType.CONSULTA &&
+             entry.patientId && 
+             onViewRecord && (
               <Button
                 onClick={() => onViewRecord(entry.patientId!, entry.id)}
                 size="sm"

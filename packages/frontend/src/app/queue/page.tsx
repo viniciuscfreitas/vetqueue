@@ -167,6 +167,11 @@ export default function QueuePage() {
     setRecordQueueEntryId(queueEntryId);
   }, []);
 
+  const handleRegisterConsultation = useCallback((patientId: string, queueEntryId: string) => {
+    setRecordPatientId(patientId);
+    setRecordQueueEntryId(queueEntryId);
+  }, []);
+
   const handleCall = useCallback((entryId: string) => {
     if (currentRoom) {
       callPatientFnRef.current({ entryId, roomId: currentRoom.id });
@@ -262,6 +267,7 @@ export default function QueuePage() {
               onCancel={user?.role === Role.RECEPCAO ? handleCancel : undefined}
               onCall={(user?.role === Role.RECEPCAO || user?.role === Role.VET) ? handleCall : undefined}
               onViewRecord={handleViewRecord}
+              onRegisterConsultation={handleRegisterConsultation}
               onCallNext={handleCallNext}
               callNextPending={queueMutations.callNextPending}
             />

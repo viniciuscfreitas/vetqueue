@@ -10,6 +10,7 @@ interface QueueListProps {
   onCancel?: (id: string) => void;
   onCall?: (id: string) => void;
   onViewRecord?: (patientId: string, queueEntryId: string) => void;
+  onRegisterConsultation?: (patientId: string, queueEntryId: string) => void;
   emptyMessage?: string;
   userRole?: Role;
   onAddClick?: () => void;
@@ -22,6 +23,7 @@ export function QueueList({
   onCancel,
   onCall,
   onViewRecord,
+  onRegisterConsultation,
   emptyMessage = "Nenhuma entrada na fila no momento",
   userRole,
   onAddClick,
@@ -86,6 +88,7 @@ export function QueueList({
                 onCancel={onCancel}
                 onCall={onCall}
                 onViewRecord={onViewRecord}
+                onRegisterConsultation={onRegisterConsultation}
               />
             );
           })}

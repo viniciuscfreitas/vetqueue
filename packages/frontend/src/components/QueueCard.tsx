@@ -227,7 +227,7 @@ export function QueueCard({
               </Button>
             )}
             {entry.status === Status.IN_PROGRESS && 
-             entry.serviceType === ServiceType.CONSULTA && 
+             (entry.serviceType === ServiceType.CONSULTA || entry.serviceType === "Consulta") && 
              entry.patientId && 
              onRegisterConsultation && (
               <Button
@@ -242,6 +242,7 @@ export function QueueCard({
             )}
             {entry.status === Status.IN_PROGRESS && 
              entry.serviceType !== ServiceType.CONSULTA &&
+             entry.serviceType !== "Consulta" &&
              entry.patientId && 
              onViewRecord && (
               <Button

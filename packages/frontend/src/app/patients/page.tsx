@@ -14,6 +14,8 @@ import { useRouter } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Header } from "@/components/Header";
 import { Spinner } from "@/components/ui/spinner";
+import { Search, History } from "lucide-react";
+import { PatientHistoryDialog } from "@/components/PatientHistoryDialog";
 import {
   Select,
   SelectContent,
@@ -30,6 +32,8 @@ export default function PatientsPage() {
   const handleError = createErrorHandler(toast);
   const [showForm, setShowForm] = useState(false);
   const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [historyPatient, setHistoryPatient] = useState<Patient | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     species: "",
@@ -50,11 +54,18 @@ export default function PatientsPage() {
 
   const isAuthorized = !authLoading && !!user;
 
-  const { data: patients = [], isLoading } = useQuery({
+  const { data: allPatients = [], isLoading } = useQuery({
     queryKey: ["patients"],
     queryFn: () => patientApi.list().then((res) => res.data),
     enabled: isAuthorized,
   });
+
+  const patients = searchTerm.trim()
+    ? allPatients.filter(p => 
+        p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        p.tutorName.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    : allPatients;
 
   const createMutation = useMutation({
     mutationFn: (data: {
@@ -192,6 +203,21 @@ export default function PatientsPage() {
             </Button>
           )}
         </div>
+
+        {!showForm && (
+          <div className="mb-6">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Buscar por paciente ou tutor..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+          </div>
+        )}
 
         {showForm && (
           <Card className="mb-6 border-2 transition-all">
@@ -380,6 +406,14 @@ export default function PatientsPage() {
                         <Button
                           variant="outline"
                           size="sm"
+                          onClick={() => setHistoryPatient(patient)}
+                        >
+                          <History className="h-4 w-4 mr-1" />
+                          Histórico
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
                           onClick={() => handleEdit(patient)}
                         >
                           Editar
@@ -404,6 +438,14 @@ export default function PatientsPage() {
           </div>
         )}
       </main>
+
+      {historyPatient && (
+        <PatientHistoryDialog
+          patient={historyPatient}
+          open={!!historyPatient}
+          onOpenChange={(open) => !open && setHistoryPatient(null)}
+        />
+      )}
     </div>
   );
 }

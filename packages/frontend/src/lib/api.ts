@@ -357,5 +357,7 @@ export const patientApi = {
     api.patch<Patient>(`/api/patients/${id}`, data),
   
   delete: (id: string) => api.delete(`/api/patients/${id}`),
+  
+  getQueueEntries: (id: string) => api.get<QueueEntry[]>(`/api/patients/${id}/queue-entries`),
 };
 

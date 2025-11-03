@@ -681,6 +681,15 @@ export class QueueRepository {
     return mapPrismaToDomain(entry);
   }
 
+  async findByPatientId(patientId: string): Promise<QueueEntry[]> {
+    const entries = await prisma.queueEntry.findMany({
+      where: { patientId },
+      include: { assignedVet: true, room: true, patient: true },
+      orderBy: { createdAt: "desc" },
+    });
+    return entries.map(mapPrismaToDomain);
+  }
+
   async hasVetActivePatients(vetId: string): Promise<boolean> {
     const activePatient = await prisma.queueEntry.findFirst({
       where: {

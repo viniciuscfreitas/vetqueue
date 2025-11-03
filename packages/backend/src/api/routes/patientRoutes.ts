@@ -1,6 +1,7 @@
 import { Router, Request, Response } from "express";
 import { PatientService } from "../../services/patientService";
 import { PatientRepository } from "../../repositories/patientRepository";
+import { QueueRepository } from "../../repositories/queueRepository";
 import { authMiddleware, requireRole } from "../../middleware/authMiddleware";
 import { z } from "zod";
 import { asyncHandler } from "../../middleware/asyncHandler";
@@ -8,6 +9,7 @@ import { asyncHandler } from "../../middleware/asyncHandler";
 const router = Router();
 const repository = new PatientRepository();
 const patientService = new PatientService(repository);
+const queueRepository = new QueueRepository();
 
 const createPatientSchema = z.object({
   name: z.string().min(1, "Nome do paciente é obrigatório"),
@@ -43,6 +45,11 @@ router.get("/", authMiddleware, asyncHandler(async (req: Request, res: Response)
   }
   const patients = await patientService.listPatients(filters);
   res.json(patients);
+}));
+
+router.get("/:id/queue-entries", authMiddleware, asyncHandler(async (req: Request, res: Response) => {
+  const entries = await queueRepository.findByPatientId(req.params.id);
+  res.json(entries);
 }));
 
 router.get("/:id", authMiddleware, asyncHandler(async (req: Request, res: Response) => {

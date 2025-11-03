@@ -72,6 +72,13 @@ export class QueueService {
       console.log(`[QUEUE] addToQueue - Agendamento atrasado >15min, convertido para walk-in - Paciente: ${data.patientName}`);
     }
 
+    if (processed.hasScheduledAppointment && processed.scheduledAt) {
+      const now = new Date();
+      if (processed.scheduledAt < now) {
+        throw new Error("Não é possível agendar para uma data/hora no passado");
+      }
+    }
+
     console.log(`[QUEUE] addToQueue - Paciente: ${data.patientName}, Tutor: ${data.tutorName}, Serviço: ${data.serviceType}, Prioridade: ${processed.priority}`);
     
     try {
@@ -125,31 +132,21 @@ export class QueueService {
       }
     }
 
-    const next = vetId
-      ? await this.repository.findNextWaiting(vetId)
-      : await this.repository.findNextWaitingGeneral();
+    const result = await this.repository.callNextWithLock(
+      vetId || null,
+      roomId,
+      new Date()
+    );
 
-    if (!next) {
+    if (!result) {
       console.log(`[QUEUE] Nenhuma entrada disponível na fila para vet: ${vetId}`);
       return null;
     }
 
-    let result = await this.repository.updateStatus(
-      next.id,
-      Status.CALLED,
-      new Date(),
-      undefined,
-      roomId
-    );
-
-    if (vetId && !next.assignedVetId) {
-      result = await this.repository.updateAssignedVet(next.id, vetId);
-    }
-
-    const actualVetId = vetId || (next.assignedVetId || undefined);
+    const actualVetId = vetId || (result.assignedVetId || undefined);
     this.updateActivityIfNeeded(actualVetId);
 
-    console.log(`[QUEUE] ✓ Chamando - Paciente: ${next.patientName} (${next.id}), Sala: ${roomId}`);
+    console.log(`[QUEUE] ✓ Chamando - Paciente: ${result.patientName} (${result.id}), Sala: ${roomId}`);
     return result;
   }
 
@@ -181,17 +178,12 @@ export class QueueService {
       }
     }
 
-    let result = await this.repository.updateStatus(
+    const result = await this.repository.callPatientWithLock(
       id,
-      Status.CALLED,
-      new Date(),
-      undefined,
-      roomId
+      vetId,
+      roomId,
+      new Date()
     );
-
-    if (vetId && !entry.assignedVetId) {
-      result = await this.repository.updateAssignedVet(id, vetId);
-    }
 
     this.updateActivityIfNeeded(vetId);
 

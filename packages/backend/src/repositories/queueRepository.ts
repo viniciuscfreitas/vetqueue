@@ -174,6 +174,114 @@ export class QueueRepository {
     return mapPrismaToDomain(entry);
   }
 
+  async callNextWithLock(
+    vetId?: string | null,
+    roomId?: string,
+    calledAt?: Date
+  ): Promise<QueueEntry | null> {
+    return await prisma.$transaction(async (tx) => {
+      const whereClause: any = {
+        status: Status.WAITING,
+      };
+
+      if (vetId) {
+        whereClause.OR = [
+          { assignedVetId: vetId },
+          { assignedVetId: null }
+        ];
+      } else {
+        whereClause.assignedVetId = null;
+      }
+
+      const entry = await tx.queueEntry.findFirst({
+        where: whereClause,
+        include: { assignedVet: true, room: true, patient: true },
+        orderBy: [
+          { priority: "asc" },
+          { createdAt: "asc" },
+        ],
+      });
+
+      if (!entry || entry.status !== Status.WAITING) {
+        return null;
+      }
+
+      const updateData: Prisma.QueueEntryUpdateInput = {
+        status: Status.CALLED,
+        calledAt: calledAt || new Date(),
+      };
+
+      if (roomId) {
+        updateData.room = { connect: { id: roomId } };
+      }
+
+      const updated = await tx.queueEntry.update({
+        where: { id: entry.id },
+        data: updateData,
+        include: { assignedVet: true, room: true, patient: true },
+      });
+
+      if (vetId && !entry.assignedVetId) {
+        const withVet = await tx.queueEntry.update({
+          where: { id: entry.id },
+          data: { assignedVetId: vetId },
+          include: { assignedVet: true, room: true, patient: true },
+        });
+        return mapPrismaToDomain(withVet);
+      }
+
+      return mapPrismaToDomain(updated);
+    });
+  }
+
+  async callPatientWithLock(
+    id: string,
+    vetId?: string,
+    roomId?: string,
+    calledAt?: Date
+  ): Promise<QueueEntry> {
+    return await prisma.$transaction(async (tx) => {
+      const entry = await tx.queueEntry.findUnique({
+        where: { id },
+        include: { assignedVet: true, room: true, patient: true },
+      });
+
+      if (!entry) {
+        throw new Error("Entrada não encontrada");
+      }
+
+      if (entry.status !== Status.WAITING) {
+        throw new Error("Apenas pacientes aguardando podem ser chamados");
+      }
+
+      const updateData: Prisma.QueueEntryUpdateInput = {
+        status: Status.CALLED,
+        calledAt: calledAt || new Date(),
+      };
+
+      if (roomId) {
+        updateData.room = { connect: { id: roomId } };
+      }
+
+      const updated = await tx.queueEntry.update({
+        where: { id },
+        data: updateData,
+        include: { assignedVet: true, room: true, patient: true },
+      });
+
+      if (vetId && !entry.assignedVetId) {
+        const withVet = await tx.queueEntry.update({
+          where: { id },
+          data: { assignedVetId: vetId },
+          include: { assignedVet: true, room: true, patient: true },
+        });
+        return mapPrismaToDomain(withVet);
+      }
+
+      return mapPrismaToDomain(updated);
+    });
+  }
+
   async listActive(): Promise<QueueEntry[]> {
     const entries = await prisma.queueEntry.findMany({
       where: {

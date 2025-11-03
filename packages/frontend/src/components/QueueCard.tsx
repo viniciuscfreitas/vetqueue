@@ -7,6 +7,7 @@ import { calculateWaitTime, calculateServiceTime } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { Clock, User, Stethoscope, CheckCircle2, XCircle, UserCircle, DoorOpen, Pencil } from "lucide-react";
 import { EditQueueDialog } from "./EditQueueDialog";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface QueueCardProps {
   entry: QueueEntry;
@@ -84,6 +85,7 @@ export function QueueCard({
 
   const StatusIcon = status.icon;
   const canEdit = entry.status === Status.WAITING && userRole === Role.RECEPCAO;
+  const queryClient = useQueryClient();
   
   return (
     <>
@@ -251,7 +253,7 @@ export function QueueCard({
       open={editDialogOpen}
       onOpenChange={setEditDialogOpen}
       onSuccess={() => {
-        window.location.reload();
+        queryClient.invalidateQueries({ queryKey: ["queue"] });
       }}
     />
     </>

@@ -361,3 +361,104 @@ export const patientApi = {
   getQueueEntries: (id: string) => api.get<QueueEntry[]>(`/api/patients/${id}/queue-entries`),
 };
 
+export interface Consultation {
+  id: string;
+  patientId: string;
+  patient?: Patient | null;
+  queueEntryId?: string | null;
+  queueEntry?: QueueEntry | null;
+  vetId?: string | null;
+  vet?: User | null;
+  diagnosis?: string | null;
+  treatment?: string | null;
+  prescription?: string | null;
+  weightInKg?: number | null;
+  notes?: string | null;
+  date: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateConsultationData {
+  patientId: string;
+  queueEntryId?: string;
+  vetId?: string;
+  diagnosis?: string;
+  treatment?: string;
+  prescription?: string;
+  weightInKg?: number;
+  notes?: string;
+  date?: string;
+}
+
+export interface UpdateConsultationData {
+  diagnosis?: string;
+  treatment?: string;
+  prescription?: string;
+  weightInKg?: number;
+  notes?: string;
+  date?: string;
+}
+
+export const consultationApi = {
+  list: (filters?: { patientId?: string; queueEntryId?: string; vetId?: string }) =>
+    api.get<Consultation[]>("/api/consultations", { params: filters }),
+
+  getById: (id: string) => api.get<Consultation>(`/api/consultations/${id}`),
+
+  create: (data: CreateConsultationData) => api.post<Consultation>("/api/consultations", data),
+
+  update: (id: string, data: UpdateConsultationData) =>
+    api.patch<Consultation>(`/api/consultations/${id}`, data),
+
+  delete: (id: string) => api.delete(`/api/consultations/${id}`),
+};
+
+export interface Vaccination {
+  id: string;
+  patientId: string;
+  patient?: Patient | null;
+  vaccineName: string;
+  appliedDate: string;
+  batchNumber?: string | null;
+  vetId?: string | null;
+  vet?: User | null;
+  nextDoseDate?: string | null;
+  notes?: string | null;
+  createdAt: string;
+}
+
+export interface CreateVaccinationData {
+  patientId: string;
+  vaccineName: string;
+  appliedDate?: string;
+  batchNumber?: string;
+  vetId?: string;
+  nextDoseDate?: string;
+  notes?: string;
+}
+
+export interface UpdateVaccinationData {
+  vaccineName?: string;
+  appliedDate?: string;
+  batchNumber?: string;
+  nextDoseDate?: string;
+  notes?: string;
+}
+
+export const vaccinationApi = {
+  list: (filters?: { patientId?: string; vetId?: string; upcomingDoses?: boolean }) =>
+    api.get<Vaccination[]>("/api/vaccinations", { params: filters }),
+
+  getById: (id: string) => api.get<Vaccination>(`/api/vaccinations/${id}`),
+
+  create: (data: CreateVaccinationData) => api.post<Vaccination>("/api/vaccinations", data),
+
+  update: (id: string, data: UpdateVaccinationData) =>
+    api.patch<Vaccination>(`/api/vaccinations/${id}`, data),
+
+  delete: (id: string) => api.delete(`/api/vaccinations/${id}`),
+
+  getSuggestions: () => api.get<string[]>("/api/vaccinations/suggestions"),
+};
+

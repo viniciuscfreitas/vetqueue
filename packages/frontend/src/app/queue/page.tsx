@@ -1,6 +1,5 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
 import { queueApi, Status, Role, Priority } from "@/lib/api";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { Header } from "@/components/Header";
@@ -31,13 +30,15 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { QueueTab } from "@/components/QueueTab";
 import { HistoryTab } from "@/components/HistoryTab";
 import { ReportsTab } from "@/components/ReportsTab";
 import { AuditTab } from "@/components/AuditTab";
 import { useQueueMutations } from "@/hooks/useQueueMutations";
 import { Spinner } from "@/components/ui/spinner";
+import { PatientRecordDialog } from "@/components/PatientRecordDialog";
+import { patientApi, Patient } from "@/lib/api";
 
 export default function QueuePage() {
   const router = useRouter();
@@ -52,6 +53,8 @@ export default function QueuePage() {
   const [entryToCall, setEntryToCall] = useState<string | null>(null);
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [entryToCancel, setEntryToCancel] = useState<string | null>(null);
+  const [recordPatientId, setRecordPatientId] = useState<string | null>(null);
+  const [recordQueueEntryId, setRecordQueueEntryId] = useState<string | null>(null);
 
   const previousEntriesRef = useRef<any[]>([]);
 
@@ -159,6 +162,11 @@ export default function QueuePage() {
     completeServiceFnRef.current(id);
   }, []);
 
+  const handleViewRecord = useCallback((patientId: string, queueEntryId: string) => {
+    setRecordPatientId(patientId);
+    setRecordQueueEntryId(queueEntryId);
+  }, []);
+
   const handleCall = useCallback((entryId: string) => {
     if (currentRoom) {
       callPatientFnRef.current({ entryId, roomId: currentRoom.id });
@@ -253,6 +261,7 @@ export default function QueuePage() {
               onComplete={handleComplete}
               onCancel={user?.role === Role.RECEPCAO ? handleCancel : undefined}
               onCall={(user?.role === Role.RECEPCAO || user?.role === Role.VET) ? handleCall : undefined}
+              onViewRecord={handleViewRecord}
               onCallNext={handleCallNext}
               callNextPending={queueMutations.callNextPending}
             />
@@ -331,7 +340,61 @@ export default function QueuePage() {
           />
         </DialogContent>
       </Dialog>
+
+      {recordPatientId && (
+        <PatientRecordDialogWrapper
+          patientId={recordPatientId}
+          queueEntryId={recordQueueEntryId || undefined}
+          open={!!recordPatientId}
+          onOpenChange={(open) => {
+            if (!open) {
+              setRecordPatientId(null);
+              setRecordQueueEntryId(null);
+            }
+          }}
+        />
+      )}
     </div>
+  );
+}
+
+function PatientRecordDialogWrapper({
+  patientId,
+  queueEntryId,
+  open,
+  onOpenChange,
+}: {
+  patientId: string;
+  queueEntryId?: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const { data: patient, isLoading } = useQuery({
+    queryKey: ["patient", patientId],
+    queryFn: () => patientApi.getById(patientId).then((res) => res.data),
+    enabled: open && !!patientId,
+  });
+
+  if (isLoading || !patient) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-4xl">
+          <div className="flex justify-center items-center py-8">
+            <Spinner />
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  return (
+    <PatientRecordDialog
+      patient={patient}
+      open={open}
+      onOpenChange={onOpenChange}
+      initialTab="consultations"
+      prefillQueueEntryId={queueEntryId}
+    />
   );
 }
 

@@ -8,30 +8,32 @@ datasource db {
 }
 
 model User {
-  id               String       @id @default(uuid())
-  username         String       @unique
-  password         String
-  name             String
-  role             String
-  createdAt        DateTime     @default(now())
-  currentRoomId    String?
-  currentRoom      Room?        @relation(fields: [currentRoomId], references: [id])
-  roomCheckedInAt  DateTime?
-  lastActivityAt   DateTime?
-  entries          QueueEntry[]
-  auditLogs        AuditLog[]
+  id              String         @id @default(uuid())
+  username        String         @unique
+  password        String
+  name            String
+  role            String
+  createdAt       DateTime       @default(now())
+  currentRoomId   String?
+  currentRoom     Room?          @relation(fields: [currentRoomId], references: [id])
+  roomCheckedInAt DateTime?
+  lastActivityAt  DateTime?
+  entries         QueueEntry[]
+  auditLogs       AuditLog[]
+  consultations   Consultation[]
+  vaccinations    Vaccination[]
 
-  @@map("users")
   @@index([currentRoomId])
+  @@map("users")
 }
 
 model Room {
-  id               String       @id @default(uuid())
-  name             String       @unique
-  isActive         Boolean      @default(true)
-  createdAt        DateTime     @default(now())
-  entries          QueueEntry[]
-  checkedInUsers   User[]
+  id             String       @id @default(uuid())
+  name           String       @unique
+  isActive       Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  entries        QueueEntry[]
+  checkedInUsers User[]
 
   @@map("rooms")
 }
@@ -46,31 +48,32 @@ model Service {
 }
 
 model QueueEntry {
-  id                    String    @id @default(uuid())
-  patientName           String
-  tutorName             String
-  serviceType           String
-  priority              Int
-  status                String
-  createdAt             DateTime  @default(now())
-  calledAt              DateTime?
-  completedAt           DateTime?
-  assignedVetId         String?
-  assignedVet           User?     @relation(fields: [assignedVetId], references: [id])
-  roomId                String?
-  room                  Room?     @relation(fields: [roomId], references: [id])
-  hasScheduledAppointment Boolean @default(false)
-  scheduledAt           DateTime?
-  patientId             String?
-  patient               Patient?   @relation(fields: [patientId], references: [id])
+  id                      String         @id @default(uuid())
+  patientName             String
+  tutorName               String
+  serviceType             String
+  priority                Int
+  status                  String
+  createdAt               DateTime       @default(now())
+  calledAt                DateTime?
+  completedAt             DateTime?
+  assignedVetId           String?
+  assignedVet             User?          @relation(fields: [assignedVetId], references: [id])
+  roomId                  String?
+  room                    Room?          @relation(fields: [roomId], references: [id])
+  hasScheduledAppointment Boolean        @default(false)
+  scheduledAt             DateTime?
+  patientId               String?
+  patient                 Patient?       @relation(fields: [patientId], references: [id])
+  consultations           Consultation[]
 
-  @@map("queue_entries")
   @@index([status])
   @@index([priority, createdAt])
   @@index([serviceType])
   @@index([assignedVetId])
   @@index([roomId])
   @@index([patientId])
+  @@map("queue_entries")
 }
 
 model AuditLog {
@@ -83,31 +86,75 @@ model AuditLog {
   metadata   Json?
   timestamp  DateTime @default(now())
 
-  @@map("audit_logs")
   @@index([userId])
   @@index([entityType, entityId])
   @@index([timestamp])
+  @@map("audit_logs")
 }
 
 model Patient {
-  id          String       @id @default(uuid())
-  name        String
-  species     String?
-  breed       String?
-  birthDate   DateTime?
-  gender      String?
-  tutorName   String
-  tutorPhone  String?
-  tutorEmail  String?
-  notes       String?
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  queueEntries QueueEntry[]
+  id            String         @id @default(uuid())
+  name          String
+  species       String?
+  breed         String?
+  birthDate     DateTime?
+  gender        String?
+  tutorName     String
+  tutorPhone    String?
+  tutorEmail    String?
+  notes         String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  queueEntries  QueueEntry[]
+  consultations Consultation[]
+  vaccinations  Vaccination[]
 
-  @@map("patients")
   @@index([name])
   @@index([tutorName])
   @@index([tutorPhone])
+  @@map("patients")
 }
 
+model Consultation {
+  id           String      @id @default(uuid())
+  patientId    String
+  patient      Patient     @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  queueEntryId String?
+  queueEntry   QueueEntry? @relation(fields: [queueEntryId], references: [id], onDelete: SetNull)
+  vetId        String?
+  vet          User?       @relation(fields: [vetId], references: [id], onDelete: SetNull)
+  diagnosis    String?
+  treatment    String?
+  prescription String?
+  weightInKg   Float?
+  notes        String?
+  date         DateTime    @default(now())
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
 
+  @@index([patientId])
+  @@index([queueEntryId])
+  @@index([date])
+  @@index([vetId])
+  @@map("consultations")
+}
+
+model Vaccination {
+  id           String    @id @default(uuid())
+  patientId    String
+  patient      Patient   @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  vaccineName  String
+  appliedDate  DateTime  @default(now())
+  batchNumber  String?
+  vetId        String?
+  vet          User?     @relation(fields: [vetId], references: [id], onDelete: SetNull)
+  nextDoseDate DateTime?
+  notes        String?
+  createdAt    DateTime  @default(now())
+
+  @@index([patientId])
+  @@index([appliedDate])
+  @@index([nextDoseDate])
+  @@index([vetId])
+  @@map("vaccinations")
+}

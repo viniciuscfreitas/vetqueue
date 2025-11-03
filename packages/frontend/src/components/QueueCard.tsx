@@ -5,7 +5,7 @@ import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { calculateWaitTime, calculateServiceTime } from "@/lib/utils";
 import { useState, useEffect } from "react";
-import { Clock, User, Stethoscope, CheckCircle2, XCircle, UserCircle, DoorOpen, Pencil } from "lucide-react";
+import { Clock, User, Stethoscope, CheckCircle2, XCircle, UserCircle, DoorOpen, Pencil, FileText } from "lucide-react";
 import { EditQueueDialog } from "./EditQueueDialog";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -17,6 +17,7 @@ interface QueueCardProps {
   onComplete?: (id: string) => void;
   onCancel?: (id: string) => void;
   onCall?: (id: string) => void;
+  onViewRecord?: (patientId: string, queueEntryId: string) => void;
 }
 
 const statusConfig = {
@@ -65,6 +66,7 @@ export function QueueCard({
   onComplete,
   onCancel,
   onCall,
+  onViewRecord,
 }: QueueCardProps) {
   const status = statusConfig[entry.status];
   const canStart = entry.status === Status.CALLED || entry.status === Status.WAITING;
@@ -220,6 +222,17 @@ export function QueueCard({
                 className="flex-1"
               >
                 Iniciar
+              </Button>
+            )}
+            {entry.status === Status.IN_PROGRESS && entry.patientId && onViewRecord && (
+              <Button
+                onClick={() => onViewRecord(entry.patientId!, entry.id)}
+                size="sm"
+                variant="outline"
+                className="flex-1"
+              >
+                <FileText className="h-4 w-4 mr-1" />
+                Ver Prontuário
               </Button>
             )}
             {entry.status === Status.IN_PROGRESS && onComplete && (

@@ -15,7 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Header } from "@/components/Header";
 import { Spinner } from "@/components/ui/spinner";
 import { Search, History } from "lucide-react";
-import { PatientHistoryDialog } from "@/components/PatientHistoryDialog";
+import { PatientRecordDialog } from "@/components/PatientRecordDialog";
 import {
   Select,
   SelectContent,
@@ -421,7 +421,7 @@ export default function PatientsPage() {
                           className="flex-1 sm:flex-none"
                         >
                           <History className="h-4 w-4 mr-1" />
-                          Histórico
+                          Prontuário
                         </Button>
                         <Button
                           variant="outline"
@@ -450,10 +450,11 @@ export default function PatientsPage() {
       </main>
 
       {historyPatient && (
-        <PatientHistoryDialog
+        <PatientRecordDialog
           patient={historyPatient}
           open={!!historyPatient}
           onOpenChange={(open) => !open && setHistoryPatient(null)}
+          initialTab="consultations"
         />
       )}
 

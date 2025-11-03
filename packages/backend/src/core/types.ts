@@ -102,3 +102,35 @@ export interface Patient {
   createdAt: Date;
   updatedAt: Date;
 }
+
+export interface Consultation {
+  id: string;
+  patientId: string;
+  patient?: Patient | null;
+  queueEntryId?: string | null;
+  queueEntry?: QueueEntry | null;
+  vetId?: string | null;
+  vet?: User | null;
+  diagnosis?: string | null;
+  treatment?: string | null;
+  prescription?: string | null;
+  weightInKg?: number | null;
+  notes?: string | null;
+  date: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface Vaccination {
+  id: string;
+  patientId: string;
+  patient?: Patient | null;
+  vaccineName: string;
+  appliedDate: Date;
+  batchNumber?: string | null;
+  vetId?: string | null;
+  vet?: User | null;
+  nextDoseDate?: Date | null;
+  notes?: string | null;
+  createdAt: Date;
+}

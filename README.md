@@ -1,57 +1,138 @@
-# Fisiopet - Sistema de Fila de Atendimento
+# VetQueue
 
-Sistema de fila de atendimento desenvolvido com Node.js/TypeScript no backend e Next.js no frontend.
+Queue management system for veterinary clinics. Simple REST API with Next.js frontend and public display page.
+
+Built for Fisiopet Veterinary Hospital, Santos, São Paulo, Brazil.
+
+## What it does
+
+Recepcionists add patients to queue, veterinarians call next patient and manage appointments. Public display page shows current queue status on TV screens.
 
 ## Stack
 
-- **Backend**: Node.js + TypeScript + Express + PostgreSQL + Prisma
-- **Frontend**: Next.js + TypeScript + Shadcn/ui + TanStack Query
+- Backend: Node.js, TypeScript, Express, PostgreSQL, Prisma
+- Frontend: Next.js, TypeScript, TanStack Query, Tailwind CSS
+- Database: PostgreSQL 16
 
-## Estrutura
+## Structure
 
 ```
 vetqueue/
 ├── packages/
-│   ├── backend/     # API REST
-│   └── frontend/    # Next.js App
+│   ├── backend/     # REST API
+│   └── frontend/    # Next.js app
 ```
 
-## Configuração
+## Setup
+
+### Prerequisites
+
+- Node.js 20+
+- PostgreSQL 16+
+- npm
 
 ### Backend
 
-1. Copie `.env.example` para `.env` e configure a conexão do PostgreSQL
-2. Instale dependências: `npm install`
-3. Execute migrations: `npm run db:migrate`
-4. Inicie o servidor: `npm run dev:backend`
+```bash
+cd packages/backend
+cp .env.example .env
+# Set DATABASE_URL in .env
+npm install
+npm run generate
+npm run migrate
+npm run db:seed
+npm run dev
+```
+
+Runs on port 3001 by default.
 
 ### Frontend
 
-1. Configure a variável `NEXT_PUBLIC_API_URL` (opcional, padrão: http://localhost:3001)
-2. Instale dependências: `npm install`
-3. Inicie o servidor: `npm run dev:frontend`
+```bash
+cd packages/frontend
+npm install
+# Set NEXT_PUBLIC_API_URL if needed (default: http://localhost:3001)
+npm run dev
+```
 
-## Funcionalidades
+Runs on port 3000 by default.
 
-### Fase 1 (MVP)
-- ✅ Adicionar entrada à fila
-- ✅ Chamar próximo da fila
-- ✅ Listar fila atual
-- ✅ Iniciar/Finalizar atendimento
+### Docker
 
-### Fase 2
-- ✅ Histórico de atendimentos
-- ✅ Cancelar entrada
+```bash
+docker-compose up
+```
 
-### Fase 3
-- ✅ Relatórios básicos
+Starts database, backend, frontend and Dozzle (logs viewer on port 8888).
 
-## Decisões Arquiteturais
+## Architecture
 
-Arquitetura em camadas simples (pragmática):
-- `api/` - Controllers e Rotas
-- `services/` - Lógica de negócio
-- `repositories/` - Acesso a dados (Prisma)
+Simple layered architecture:
 
-Seguindo princípios Grug Brain: simplicidade primeiro, evitar over-engineering.
+- `api/` - Controllers and routes
+- `services/` - Business logic
+- `repositories/` - Data access (Prisma)
 
+No over-engineering. Keep it simple.
+
+## API
+
+REST API with JWT authentication. Main endpoints:
+
+- `POST /api/auth/login` - Authentication
+- `GET /api/queue` - List queue entries
+- `POST /api/queue` - Add to queue
+- `POST /api/queue/:id/call` - Call patient
+- `POST /api/queue/:id/start` - Start appointment
+- `POST /api/queue/:id/complete` - Complete appointment
+- `GET /api/queue/history` - Appointment history
+- `GET /api/reports/*` - Reports endpoints
+
+## Database
+
+Prisma ORM with PostgreSQL. Run migrations:
+
+```bash
+cd packages/backend
+npm run migrate
+```
+
+Seed database:
+
+```bash
+npm run db:seed
+```
+
+## Display Page
+
+Public display at `/display` shows current queue status. Auto-refreshes every 3 seconds. Designed for TV screens in waiting room.
+
+## Development
+
+Monorepo using npm workspaces. Run from root:
+
+```bash
+npm run dev:backend
+npm run dev:frontend
+```
+
+Build everything:
+
+```bash
+npm run build
+```
+
+## Testing
+
+CI runs on push to main/master. Tests backend build and frontend build.
+
+## Notes
+
+- No unit test coverage yet. Focus on integration tests when needed.
+- Consultation/vaccination registration exists in codebase but disabled in UI temporarily.
+- Priority queue: older entries get higher priority automatically.
+- Room check-in: veterinarians must check in to a room before calling patients.
+
+## License
+
+Private project.

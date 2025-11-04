@@ -226,12 +226,14 @@ export function QueueCard({
                 Iniciar
               </Button>
             )}
-            {entry.status === Status.IN_PROGRESS && 
+            {/* TODO: Remover o `false &&` abaixo para reativar o botão "Registrar Consulta" */}
+            {false && 
+             entry.status === Status.IN_PROGRESS && 
              (entry.serviceType === ServiceType.CONSULTA || entry.serviceType === "Consulta") && 
              entry.patientId && 
              onRegisterConsultation && (
               <Button
-                onClick={() => onRegisterConsultation(entry.patientId!, entry.id)}
+                onClick={() => onRegisterConsultation?.(entry.patientId!, entry.id)}
                 size="sm"
                 variant="secondary"
                 className="flex-1"

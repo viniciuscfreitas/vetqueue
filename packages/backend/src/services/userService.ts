@@ -91,7 +91,7 @@ export class UserService {
   }
 
   async checkInRoom(vetId: string, roomId: string): Promise<User> {
-    console.log(`[ROOM] checkIn - UserId: ${vetId}, RoomId: ${roomId}`);
+    logger.debug("Room check-in", { vetId, roomId });
     
     try {
       const user = await this.repository.findById(vetId);
@@ -105,7 +105,7 @@ export class UserService {
       }
       
       const result = await this.repository.checkInRoom(vetId, roomId);
-      console.log(`[ROOM] ✓ Check-in - ${result.name} → Sala ${roomId}`);
+      logger.info("Room check-in successful", { vetId, userName: result.name, roomId });
       return result;
     } catch (error) {
       logger.error("Failed to check-in room", { 
@@ -118,12 +118,12 @@ export class UserService {
   }
 
   async checkOutRoom(vetId: string): Promise<User> {
-    console.log(`[ROOM] checkOut - UserId: ${vetId}`);
+    logger.debug("Room check-out", { vetId });
     
     try {
       const user = await this.repository.findById(vetId);
       if (!user || !user.currentRoomId) {
-        console.warn(`[ROOM] ⚠ Usuário tentou checkout sem estar em sala`);
+        logger.warn("User tried checkout without being in room", { vetId });
         throw new Error("Usuário não está em nenhuma sala");
       }
       
@@ -134,7 +134,7 @@ export class UserService {
       }
       
       const result = await this.repository.checkOutRoom(vetId);
-      console.log(`[ROOM] ✓ Check-out - ${result.name} saiu da sala`);
+      logger.info("Room check-out successful", { vetId, userName: result.name });
       return result;
     } catch (error) {
       logger.error("Failed to check-out room", { 
@@ -146,7 +146,7 @@ export class UserService {
   }
 
   async changeRoom(vetId: string, roomId: string): Promise<User> {
-    console.log(`[ROOM] changeRoom - UserId: ${vetId}, NewRoomId: ${roomId}`);
+    logger.debug("Changing room", { vetId, roomId });
     
     try {
       const user = await this.repository.findById(vetId);
@@ -162,7 +162,7 @@ export class UserService {
       }
       
       const result = await this.repository.changeRoom(vetId, roomId);
-      console.log(`[ROOM] ✓ Troca de sala - ${result.name} → Sala ${roomId}`);
+      logger.info("Room changed successfully", { vetId, userName: result.name, roomId });
       return result;
     } catch (error) {
       logger.error("Failed to change room", { 

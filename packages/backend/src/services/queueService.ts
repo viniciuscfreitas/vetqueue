@@ -72,7 +72,7 @@ export class QueueService {
     );
 
     if (data.hasScheduledAppointment && !processed.hasScheduledAppointment) {
-      console.log(`[QUEUE] addToQueue - Agendamento atrasado >15min, convertido para walk-in - Paciente: ${data.patientName}`);
+      logger.info("Scheduled appointment converted to walk-in (late >15min)", { patientName: data.patientName });
     }
 
     if (processed.hasScheduledAppointment && processed.scheduledAt) {
@@ -82,7 +82,12 @@ export class QueueService {
       }
     }
 
-    console.log(`[QUEUE] addToQueue - Paciente: ${data.patientName}, Tutor: ${data.tutorName}, Serviço: ${data.serviceType}, Prioridade: ${processed.priority}`);
+    logger.info("Adding to queue", { 
+      patientName: data.patientName, 
+      tutorName: data.tutorName, 
+      serviceType: data.serviceType, 
+      priority: processed.priority 
+    });
     
     try {
       if (!data.patientName.trim() || !data.tutorName.trim()) {
@@ -112,7 +117,7 @@ export class QueueService {
   }
 
   async callNext(vetId?: string, roomId?: string): Promise<QueueEntry | null> {
-    console.log(`[QUEUE] callNext - vetId: ${vetId || 'none'}, roomId: ${roomId || 'none'}`);
+    logger.debug("Calling next patient", { vetId, roomId });
     
     if (vetId && !roomId) {
       const vet = await this.userRepository.findById(vetId);
@@ -145,14 +150,14 @@ export class QueueService {
     );
 
     if (!result) {
-      console.log(`[QUEUE] Nenhuma entrada disponível na fila para vet: ${vetId}`);
+      logger.info("No entries available in queue", { vetId });
       return null;
     }
 
     const actualVetId = vetId || (result.assignedVetId || undefined);
     this.updateActivityIfNeeded(actualVetId);
 
-    console.log(`[QUEUE] ✓ Chamando - Paciente: ${result.patientName} (${result.id}), Sala: ${roomId}`);
+    logger.info("Patient called", { entryId: result.id, patientName: result.patientName, roomId });
     return result;
   }
 
@@ -197,7 +202,7 @@ export class QueueService {
   }
 
   async startService(id: string, userRole?: string): Promise<QueueEntry> {
-    console.log(`[QUEUE] startService - EntryId: ${id}`);
+    logger.debug("Starting service", { entryId: id, userRole });
     
     if (userRole === "RECEPCAO") {
       throw new Error("Recepção não pode iniciar atendimento");
@@ -221,12 +226,12 @@ export class QueueService {
 
     this.updateActivityIfNeeded(entry.assignedVetId);
 
-    console.log(`[QUEUE] ✓ Iniciado atendimento - Paciente: ${entry.patientName}`);
+    logger.info("Service started", { entryId: id, patientName: entry.patientName });
     return result;
   }
 
   async completeService(id: string, userRole?: string): Promise<QueueEntry> {
-    console.log(`[QUEUE] completeService - EntryId: ${id}`);
+    logger.debug("Completing service", { entryId: id, userRole });
     const entry = await this.repository.findById(id);
 
     if (!entry) {
@@ -246,7 +251,11 @@ export class QueueService {
 
     this.updateActivityIfNeeded(entry.assignedVetId);
 
-    console.log(`[QUEUE] ✓ Completado - Paciente: ${entry.patientName}, Vet: ${entry.assignedVet?.name || 'N/A'}`);
+    logger.info("Service completed", { 
+      entryId: id, 
+      patientName: entry.patientName, 
+      vetName: entry.assignedVet?.name || 'N/A' 
+    });
     return result;
   }
 
@@ -378,10 +387,10 @@ export class QueueService {
     const becomesWalkIn = wasScheduled && !processed.hasScheduledAppointment;
     
     if (becomesWalkIn) {
-      console.log(`[QUEUE] updateEntry - Agendamento atrasado >15min, convertido para walk-in - Paciente: ${entry.patientName}`);
+      logger.info("Scheduled appointment converted to walk-in (late >15min) on update", { entryId: id, patientName: entry.patientName });
     }
 
-    console.log(`[QUEUE] updateEntry - EntryId: ${id}, Dados:`, data);
+    logger.debug("Updating queue entry", { entryId: id, data });
 
     try {
       const updated = await this.repository.update(id, {
@@ -390,7 +399,7 @@ export class QueueService {
         hasScheduledAppointment: processed.hasScheduledAppointment,
         scheduledAt: processed.scheduledAt || undefined,
       });
-      console.log(`[QUEUE] ✓ Atualizado - Paciente: ${updated.patientName}, Prioridade: ${processed.priority}`);
+      logger.info("Queue entry updated", { entryId: id, patientName: updated.patientName, priority: processed.priority });
       return updated;
     } catch (error) {
       logger.error("Failed to update queue entry", { 

@@ -107,6 +107,7 @@ export class QueueService {
         throw new Error("Nome do paciente e tutor são obrigatórios");
       }
 
+      const startTime = Date.now();
       const entry = await this.repository.create({
         patientName: data.patientName.trim(),
         tutorName: data.tutorName.trim(),
@@ -117,8 +118,22 @@ export class QueueService {
         scheduledAt: processed.scheduledAt || undefined,
         patientId: data.patientId,
       });
+      const dbDuration = Date.now() - startTime;
       
-      logger.debug("Queue entry created", { entryId: entry.id, patientName: entry.patientName });
+      logger.debug("Queue entry created", { 
+        entryId: entry.id, 
+        patientName: entry.patientName,
+        dbDuration: `${dbDuration}ms`
+      });
+      
+      if (dbDuration > 500) {
+        logger.warn("Slow database operation", {
+          operation: "create queue entry",
+          duration: `${dbDuration}ms`,
+          entryId: entry.id,
+        });
+      }
+      
       return entry;
     } catch (error) {
       logger.error("Failed to create queue entry", { 

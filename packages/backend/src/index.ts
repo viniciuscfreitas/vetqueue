@@ -13,6 +13,7 @@ import { prisma } from "./lib/prisma";
 import { requestIdMiddleware } from "./middleware/requestId";
 import { requestLoggerMiddleware } from "./middleware/requestLogger";
 import { logger } from "./lib/logger";
+import { sanitizeForLogging } from "./lib/sanitize";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -45,19 +46,32 @@ app.use(requestLoggerMiddleware);
 
 const healthCheck = async (req: Request, res: Response) => {
   const requestId = req.requestId || "unknown";
+  const startTime = Date.now();
+  
   try {
+    const dbStartTime = Date.now();
     await prisma.$queryRaw`SELECT 1`;
+    const dbDuration = Date.now() - dbStartTime;
     
-    logger.debug("Health check passed", { requestId });
+    const totalDuration = Date.now() - startTime;
+    
+    logger.debug("Health check passed", { 
+      requestId,
+      dbDuration: `${dbDuration}ms`,
+      totalDuration: `${totalDuration}ms`
+    });
+    
     res.json({ 
       status: "ok",
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
+      dbLatency: `${dbDuration}ms`,
     });
   } catch (error) {
     logger.error("Health check failed", { 
       requestId,
       error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
     });
     res.status(503).json({ 
       status: "error",
@@ -93,9 +107,9 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
     url: req.url,
     error: err.message,
     stack: err.stack,
-    body: req.body,
-    query: req.query,
-    params: req.params,
+    body: sanitizeForLogging(req.body),
+    query: sanitizeForLogging(req.query),
+    params: sanitizeForLogging(req.params),
     userId,
     errorName: err.name,
     headers: {

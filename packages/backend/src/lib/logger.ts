@@ -27,7 +27,7 @@ const formatLog = (level: LogLevel, message: string, meta?: any): string => {
     timestamp: new Date().toISOString(),
     level,
     message,
-    ...(requestId && { requestId }),
+    requestId: requestId || null,
     ...meta,
   };
   return JSON.stringify(logEntry);

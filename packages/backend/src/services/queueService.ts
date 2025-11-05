@@ -105,16 +105,18 @@ export class QueueService {
       }
     }
 
-    logger.info("Adding to queue", {
+    const addQueueMeta: any = {
       module: "Queue",
       eventType: "AnimalEnqueued",
       patientName: data.patientName,
       tutorName: data.tutorName,
       serviceType: data.serviceType,
       priority: processed.priority,
-      patientId: data.patientId || null,
       hasScheduledAppointment: processed.hasScheduledAppointment,
-    });
+    };
+    if (data.patientId) addQueueMeta.patientId = data.patientId;
+    
+    logger.info("Adding to queue", addQueueMeta);
     
     try {
       if (!data.patientName.trim() || !data.tutorName.trim()) {

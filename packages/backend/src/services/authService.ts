@@ -47,7 +47,6 @@ export class AuthService {
       module: "Auth",
       eventType: "AuthenticationSuccess",
       userId: user.id,
-      username: user.username,
       userRole: user.role,
     });
     

@@ -3,33 +3,41 @@ import { logger } from "../lib/logger";
 
 export const requestLoggerMiddleware = (req: Request, res: Response, next: NextFunction) => {
   const startTime = Date.now();
-  const userId = (req as any).user?.id;
-  const userRole = (req as any).user?.role;
+  const path = req.path;
+  const endpoint = `${req.method} ${path}`;
+  const isHealthCheck = path === "/health" || path === "/api/health" || path === "/metrics";
 
-  logger.info("Request started", {
-    module: "HTTP",
-    method: req.method,
-    path: req.path,
-    endpoint: `${req.method} ${req.path}`,
-    userId: userId || null,
-    userRole: userRole || null,
-    ip: req.ip,
-  });
+  if (!isHealthCheck) {
+    const meta: any = {
+      module: "HTTP",
+      endpoint,
+    };
+
+    const userId = (req as any).user?.id;
+    const userRole = (req as any).user?.role;
+    if (userId) meta.userId = userId;
+    if (userRole) meta.userRole = userRole;
+
+    logger.debug("Request started", meta);
+  }
 
   res.on("finish", () => {
     const duration = Date.now() - startTime;
-    const logLevel = res.statusCode >= 500 ? "error" : res.statusCode >= 400 ? "warn" : "info";
+    const logLevel = res.statusCode >= 500 ? "error" : res.statusCode >= 400 ? "warn" : isHealthCheck ? "debug" : "info";
 
-    logger[logLevel]("Request completed", {
+    const meta: any = {
       module: "HTTP",
-      method: req.method,
-      path: req.path,
-      endpoint: `${req.method} ${req.path}`,
+      endpoint,
       statusCode: res.statusCode,
       duration: `${duration}ms`,
-      userId: userId || null,
-      userRole: userRole || null,
-    });
+    };
+
+    const userId = (req as any).user?.id;
+    const userRole = (req as any).user?.role;
+    if (userId) meta.userId = userId;
+    if (userRole) meta.userRole = userRole;
+
+    logger[logLevel]("Request completed", meta);
   });
 
   next();

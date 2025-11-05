@@ -21,17 +21,38 @@ const shouldLog = (level: LogLevel): boolean => {
   return LOG_LEVELS[level] >= LOG_LEVELS[effectiveLevel];
 };
 
+const removeNulls = (obj: any): any => {
+  if (obj === null || obj === undefined) return undefined;
+  if (typeof obj !== "object" || Array.isArray(obj)) return obj;
+  
+  const cleaned: any = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (value !== null && value !== undefined) {
+      cleaned[key] = typeof value === "object" && !Array.isArray(value) ? removeNulls(value) : value;
+    }
+  }
+  return cleaned;
+};
+
 const formatLog = (level: LogLevel, message: string, meta?: any): string => {
   const requestId = getRequestId();
-  const logEntry = {
+  const logEntry: any = {
     timestamp: new Date().toISOString(),
     level,
     message,
     service_name: "vetqueue-backend",
     environment: process.env.NODE_ENV || "development",
-    requestId: requestId || null,
-    ...meta,
   };
+  
+  if (requestId) {
+    logEntry.requestId = requestId;
+  }
+  
+  if (meta) {
+    const cleanedMeta = removeNulls(meta);
+    Object.assign(logEntry, cleanedMeta);
+  }
+  
   return JSON.stringify(logEntry);
 };
 

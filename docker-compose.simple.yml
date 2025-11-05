@@ -1,0 +1,95 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: vetqueue
+      POSTGRES_PASSWORD: vetqueue
+      POSTGRES_DB: vetqueue
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vetqueue"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - vetqueue_network
+
+  backend:
+    build:
+      context: ./packages/backend
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: postgresql://vetqueue:vetqueue@db:5432/vetqueue?schema=public
+      PORT: 3001
+      NODE_ENV: production
+    ports:
+      - "3002:3001"
+    depends_on:
+      db:
+        condition: service_healthy
+    command: >
+      sh -c "
+        npm run generate &&
+        npm run migrate:resolve-failed || true &&
+        npm run migrate:deploy &&
+        npm run db:seed || true &&
+        npm start
+      "
+    networks:
+      - vetqueue_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    labels:
+      - "com.docker.compose.service=backend"
+
+  frontend:
+    build:
+      context: ./packages/frontend
+      dockerfile: Dockerfile
+    environment:
+      NODE_ENV: production
+    ports:
+      - "3000:3000"
+    depends_on:
+      backend:
+        condition: service_started
+    networks:
+      - vetqueue_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    labels:
+      - "com.docker.compose.service=frontend"
+
+  dozzle:
+    image: amir20/dozzle:latest
+    container_name: dozzle
+    ports:
+      - "8888:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      DOZZLE_LEVEL: info
+      DOZZLE_TAILSIZE: 300
+    networks:
+      - vetqueue_network
+
+volumes:
+  postgres_data:
+
+networks:
+  vetqueue_network:
+    driver: bridge
+

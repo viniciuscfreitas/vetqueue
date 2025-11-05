@@ -86,6 +86,11 @@ services:
     networks:
       - vetqueue_network
 
+  # ============================================
+  # OBSERVABILIDADE AVANÇADA (OPCIONAL)
+  # Para desabilitar, comente ou use docker-compose.simple.yml
+  # ============================================
+
   loki:
     image: grafana/loki:latest
     container_name: loki
@@ -165,6 +170,9 @@ services:
     networks:
       - vetqueue_network
     restart: unless-stopped
+    # ============================================
+    # FIM DOS SERVIÇOS OPCIONAIS
+    # ============================================
 
 volumes:
   postgres_data:

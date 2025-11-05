@@ -126,38 +126,38 @@ npm run build
 
 CI runs on push to main/master. Tests backend build and frontend build.
 
-## Observability
+## Observability (Simples)
 
-### Logging
+### O que você precisa mesmo:
 
-- **Structured JSON logs** with request IDs for correlation
-- **Dynamic log levels** via `LOG_LEVEL` env var (debug, info, warn, error)
-- **Centralized logs** with Loki + Promtail (port 3100)
-- **Log viewer**: Grafana (port 3003, admin/admin) or Dozzle (port 8888)
+1. **Dozzle** (Logs) - http://localhost:8888
+   - Ver erros em tempo real
+   - Filtro por container
+   - Procure por: ERROR, 500, crash
 
-### Error Tracking
+2. **Health Check** - http://localhost:3002/health
+   - Verifica se app está no ar
+   - Configure no Uptime Kuma para alertas
 
-- **Sentry** integration (optional, set `SENTRY_DSN` env var)
-- Captures unhandled rejections, exceptions, and request errors
-- Includes request ID and user context
+3. **Logs estruturados** com Request ID
+   - Todos os logs em JSON
+   - Fácil de rastrear problemas
 
-### Metrics
+### Opcional (avançado):
 
-- **Prometheus** endpoint at `/metrics` (port 9090)
-- Tracks: request duration, total requests, status codes
-- Health check endpoint: `/health`
+- **Grafana/Prometheus/Loki**: Se quiser dashboards (não obrigatório)
+- **Sentry**: Se quiser captura de erros (opcional, set `SENTRY_DSN`)
+- **Alertmanager**: Se quiser alertas avançados (opcional)
 
-### Alerting
+### Versão Simples:
 
-- **Alertmanager** (port 9093) configured for critical alerts
-- Requires external ntfy service (configure in `docker/observability/alertmanager.yml`)
-- Alerts: app down, high memory, high CPU
+Se não quiser usar Grafana/Prometheus, use `docker-compose.simple.yml`:
 
-### Health Checks
+```bash
+docker-compose -f docker-compose.simple.yml up -d
+```
 
-- Backend and frontend have Docker health checks
-- Auto-restart on failure
-- Health endpoint: `GET /health`
+Isso inicia apenas: app, db, dozzle (sem complexidade).
 
 ## Notes
 

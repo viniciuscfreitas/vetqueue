@@ -126,6 +126,39 @@ npm run build
 
 CI runs on push to main/master. Tests backend build and frontend build.
 
+## Observability
+
+### Logging
+
+- **Structured JSON logs** with request IDs for correlation
+- **Dynamic log levels** via `LOG_LEVEL` env var (debug, info, warn, error)
+- **Centralized logs** with Loki + Promtail (port 3100)
+- **Log viewer**: Grafana (port 3003, admin/admin) or Dozzle (port 8888)
+
+### Error Tracking
+
+- **Sentry** integration (optional, set `SENTRY_DSN` env var)
+- Captures unhandled rejections, exceptions, and request errors
+- Includes request ID and user context
+
+### Metrics
+
+- **Prometheus** endpoint at `/metrics` (port 9090)
+- Tracks: request duration, total requests, status codes
+- Health check endpoint: `/health`
+
+### Alerting
+
+- **Alertmanager** (port 9093) configured for critical alerts
+- Requires external ntfy service (configure in `docker/observability/alertmanager.yml`)
+- Alerts: app down, high memory, high CPU
+
+### Health Checks
+
+- Backend and frontend have Docker health checks
+- Auto-restart on failure
+- Health endpoint: `GET /health`
+
 ## Notes
 
 - No unit test coverage yet. Focus on integration tests when needed.

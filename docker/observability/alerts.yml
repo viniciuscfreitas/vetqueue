@@ -1,0 +1,25 @@
+groups:
+  - name: vetqueue_alerts
+    interval: 30s
+    rules:
+      - alert: AppDown
+        expr: up{job="backend"} == 0
+        for: 1m
+        annotations:
+          summary: "Backend está offline"
+          description: "Backend não está respondendo há mais de 1 minuto"
+
+      - alert: HighMemory
+        expr: container_memory_usage_bytes{name="backend"} > 300e6
+        for: 5m
+        annotations:
+          summary: "Alto uso de memória"
+          description: "Backend usando mais de 300MB por mais de 5 minutos"
+
+      - alert: HighCPU
+        expr: rate(container_cpu_usage_seconds_total{name="backend"}[5m]) > 0.8
+        for: 5m
+        annotations:
+          summary: "Alto uso de CPU"
+          description: "Backend usando mais de 80% de CPU por mais de 5 minutos"
+

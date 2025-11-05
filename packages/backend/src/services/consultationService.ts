@@ -1,5 +1,6 @@
 import { ConsultationRepository } from "../repositories/consultationRepository";
 import { Consultation } from "../core/types";
+import { logger } from "../lib/logger";
 
 export class ConsultationService {
   constructor(private repository: ConsultationRepository) {}
@@ -31,7 +32,7 @@ export class ConsultationService {
       throw new Error("ID do paciente é obrigatório");
     }
 
-    console.log(`[CONSULTATION] ✓ Criando consulta - PatientId: ${data.patientId}, VetId: ${data.vetId || 'N/A'}`);
+    logger.debug("Creating consultation", { patientId: data.patientId, vetId: data.vetId });
     return this.repository.create(data);
   }
 

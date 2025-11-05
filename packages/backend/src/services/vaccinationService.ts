@@ -1,5 +1,6 @@
 import { VaccinationRepository } from "../repositories/vaccinationRepository";
 import { Vaccination } from "../core/types";
+import { logger } from "../lib/logger";
 
 export class VaccinationService {
   constructor(private repository: VaccinationRepository) {}
@@ -33,7 +34,7 @@ export class VaccinationService {
       throw new Error("Nome da vacina é obrigatório");
     }
 
-    console.log(`[VACCINATION] ✓ Criando vacina - PatientId: ${data.patientId}, Vacina: ${data.vaccineName}`);
+    logger.debug("Creating vaccination", { patientId: data.patientId, vaccineName: data.vaccineName });
     return this.repository.create(data);
   }
 

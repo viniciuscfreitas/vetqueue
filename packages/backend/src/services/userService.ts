@@ -2,6 +2,7 @@ import bcrypt from "bcrypt";
 import { UserRepository } from "../repositories/userRepository";
 import { QueueRepository } from "../repositories/queueRepository";
 import { User, Role } from "../core/types";
+import { logger } from "../lib/logger";
 
 export class UserService {
   private queueRepository: QueueRepository;
@@ -95,19 +96,23 @@ export class UserService {
     try {
       const user = await this.repository.findById(vetId);
       if (!user) {
-        console.error(`[ROOM] ✗ Usuário ${vetId} não encontrado`);
+        logger.error("User not found for room check-in", { vetId });
         throw new Error("Usuário não encontrado");
       }
       
       if (user.currentRoomId) {
-        console.warn(`[ROOM] ⚠ Usuário ${user.name} já estava em sala ${user.currentRoomId}, fazendo checkout automático`);
+        logger.warn("User already in room, auto-checkout", { vetId, currentRoomId: user.currentRoomId, newRoomId: roomId });
       }
       
       const result = await this.repository.checkInRoom(vetId, roomId);
       console.log(`[ROOM] ✓ Check-in - ${result.name} → Sala ${roomId}`);
       return result;
     } catch (error) {
-      console.error(`[ROOM] ✗ Erro no check-in:`, error);
+      logger.error("Failed to check-in room", { 
+        vetId, 
+        roomId, 
+        error: error instanceof Error ? error.message : String(error) 
+      });
       throw error;
     }
   }
@@ -124,7 +129,7 @@ export class UserService {
       
       const hasActivePatients = await this.queueRepository.hasVetActivePatients(vetId);
       if (hasActivePatients) {
-        console.error(`[ROOM] ✗ Vet ${vetId} tentou checkout com pacientes ativos`);
+        logger.warn("Vet tried checkout with active patients", { vetId });
         throw new Error("Não é possível sair da sala com pacientes em atendimento");
       }
       
@@ -132,7 +137,10 @@ export class UserService {
       console.log(`[ROOM] ✓ Check-out - ${result.name} saiu da sala`);
       return result;
     } catch (error) {
-      console.error(`[ROOM] ✗ Erro no check-out:`, error);
+      logger.error("Failed to check-out room", { 
+        vetId, 
+        error: error instanceof Error ? error.message : String(error) 
+      });
       throw error;
     }
   }
@@ -143,13 +151,13 @@ export class UserService {
     try {
       const user = await this.repository.findById(vetId);
       if (!user) {
-        console.error(`[ROOM] ✗ Usuário ${vetId} não encontrado`);
+        logger.error("User not found for room change", { vetId });
         throw new Error("Usuário não encontrado");
       }
       
       const hasActivePatients = await this.queueRepository.hasVetActivePatients(vetId);
       if (hasActivePatients) {
-        console.error(`[ROOM] ✗ Vet ${vetId} tentou trocar de sala com pacientes ativos`);
+        logger.warn("Vet tried to change room with active patients", { vetId, roomId });
         throw new Error("Não é possível trocar de sala com pacientes em atendimento");
       }
       
@@ -157,7 +165,11 @@ export class UserService {
       console.log(`[ROOM] ✓ Troca de sala - ${result.name} → Sala ${roomId}`);
       return result;
     } catch (error) {
-      console.error(`[ROOM] ✗ Erro na troca de sala:`, error);
+      logger.error("Failed to change room", { 
+        vetId, 
+        roomId, 
+        error: error instanceof Error ? error.message : String(error) 
+      });
       throw error;
     }
   }

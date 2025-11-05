@@ -1,5 +1,6 @@
 import { UserService } from "../services/userService";
 import { UserRepository } from "../repositories/userRepository";
+import { logger } from "../lib/logger";
 
 const userRepository = new UserRepository();
 const userService = new UserService(userRepository);
@@ -8,10 +9,12 @@ export async function checkAndCleanupInactiveRooms() {
   try {
     const cleanedUsers = await userService.cleanupInactiveRoomCheckins(60);
     if (cleanedUsers.length > 0) {
-      console.log(`[JOB] ${cleanedUsers.length} check-ins removidos`);
+      logger.info("Inactive room check-ins cleaned", { count: cleanedUsers.length });
     }
   } catch (error) {
-    console.error(`[JOB] Erro ao limpar check-ins inativos:`, error);
+    logger.error("Failed to cleanup inactive room check-ins", { 
+      error: error instanceof Error ? error.message : String(error) 
+    });
   }
 }
 

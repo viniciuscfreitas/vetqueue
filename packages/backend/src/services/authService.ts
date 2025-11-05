@@ -64,6 +64,11 @@ export class AuthService {
     try {
       return jwt.verify(token, JWT_SECRET);
     } catch (error) {
+      logger.warn("Token verification failed", {
+        error: error instanceof Error ? error.message : String(error),
+        tokenLength: token?.length,
+        tokenPrefix: token?.substring(0, 20),
+      });
       throw new Error("Token inválido");
     }
   }

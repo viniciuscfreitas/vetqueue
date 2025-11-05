@@ -65,6 +65,17 @@ export class QueueService {
     scheduledAt?: Date;
     patientId?: string;
   }): Promise<QueueEntry> {
+    logger.debug("addToQueue called", {
+      patientName: data.patientName,
+      tutorName: data.tutorName,
+      serviceType: data.serviceType,
+      priority: data.priority,
+      assignedVetId: data.assignedVetId,
+      hasScheduledAppointment: data.hasScheduledAppointment,
+      scheduledAt: data.scheduledAt,
+      patientId: data.patientId,
+    });
+    
     const processed = this.processPriorityAndSchedule(
       data.priority || Priority.NORMAL,
       data.hasScheduledAppointment,
@@ -112,7 +123,15 @@ export class QueueService {
     } catch (error) {
       logger.error("Failed to create queue entry", { 
         error: error instanceof Error ? error.message : String(error),
-        patientName: data.patientName 
+        stack: error instanceof Error ? error.stack : undefined,
+        inputData: {
+          patientName: data.patientName,
+          tutorName: data.tutorName,
+          serviceType: data.serviceType,
+          priority: processed.priority,
+          assignedVetId: data.assignedVetId,
+          hasScheduledAppointment: processed.hasScheduledAppointment,
+        }
       });
       throw error;
     }
@@ -407,7 +426,9 @@ export class QueueService {
     } catch (error) {
       logger.error("Failed to update queue entry", { 
         entryId: id,
-        error: error instanceof Error ? error.message : String(error) 
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        inputData: data
       });
       throw error;
     }

@@ -90,11 +90,18 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
     requestId,
     method: req.method,
     path: req.path,
+    url: req.url,
     error: err.message,
-    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
+    stack: err.stack,
     body: req.body,
+    query: req.query,
+    params: req.params,
     userId,
     errorName: err.name,
+    headers: {
+      contentType: req.headers['content-type'],
+      userAgent: req.headers['user-agent'],
+    },
   });
   
   if (err.name === 'ZodError') {
@@ -104,7 +111,7 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   
   res.status(500).json({ 
     error: process.env.NODE_ENV === 'production' 
-      ? 'Erro interno do servidor' 
+      ? 'Erro interno do servidor'
       : err.message 
   });
 });

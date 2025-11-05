@@ -114,7 +114,8 @@ export class UserService {
       logger.error("Failed to check-in room", { 
         vetId, 
         roomId, 
-        error: error instanceof Error ? error.message : String(error) 
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
       });
       throw error;
     }
@@ -142,7 +143,8 @@ export class UserService {
     } catch (error) {
       logger.error("Failed to check-out room", { 
         vetId, 
-        error: error instanceof Error ? error.message : String(error) 
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
       });
       throw error;
     }
@@ -171,7 +173,8 @@ export class UserService {
       logger.error("Failed to change room", { 
         vetId, 
         roomId, 
-        error: error instanceof Error ? error.message : String(error) 
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
       });
       throw error;
     }

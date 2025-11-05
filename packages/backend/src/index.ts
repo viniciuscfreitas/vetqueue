@@ -67,9 +67,7 @@ app.get("/health", async (req, res) => {
 });
 
 app.get("/metrics", (req, res) => {
-  res.status(410).json({ 
-    message: "Metrics endpoint removed. Use /health for health checks." 
-  });
+  res.status(200).send("");
 });
 
 app.use("/api/auth", authRoutes);

@@ -2,6 +2,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { User, Role } from "../core/types";
 import { prisma } from "../lib/prisma";
+import { logger } from "../lib/logger";
 
 const JWT_SECRET = process.env.JWT_SECRET || "vetqueue-secret-key-change-in-production";
 const JWT_EXPIRES_IN = "24h";
@@ -13,21 +14,21 @@ export interface LoginResult {
 
 export class AuthService {
   async login(username: string, password: string): Promise<LoginResult> {
-    console.log(`[AUTH] Tentativa de login - Username: ${username}`);
+    logger.info("Login attempt", { username });
     
     const user = await prisma.user.findUnique({
       where: { username },
     });
 
     if (!user) {
-      console.warn(`[AUTH] ✗ Login falhou - Usuário não encontrado: ${username}`);
+      logger.warn("Login failed - user not found", { username });
       throw new Error("Credenciais inválidas");
     }
 
     const passwordMatch = await bcrypt.compare(password, user.password);
 
     if (!passwordMatch) {
-      console.warn(`[AUTH] ✗ Login falhou - Senha incorreta para: ${username}`);
+      logger.warn("Login failed - invalid password", { username });
       throw new Error("Credenciais inválidas");
     }
 
@@ -42,7 +43,7 @@ export class AuthService {
       { expiresIn: JWT_EXPIRES_IN }
     );
 
-    console.log(`[AUTH] ✓ Login bem-sucedido - ${user.name} (${user.role})`);
+    logger.info("Login successful", { userId: user.id, username: user.username, role: user.role });
     
     return {
       user: {

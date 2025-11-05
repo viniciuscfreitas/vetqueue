@@ -1,6 +1,7 @@
 import { QueueRepository } from "../repositories/queueRepository";
 import { UserRepository } from "../repositories/userRepository";
 import { QueueEntry, Priority, Status } from "../core/types";
+import { logger } from "../lib/logger";
 
 export class QueueService {
   private userRepository: UserRepository;
@@ -11,7 +12,9 @@ export class QueueService {
 
   private updateActivityIfNeeded(vetId?: string | null): void {
     if (vetId) {
-      this.userRepository.updateLastActivity(vetId).catch(console.error);
+      this.userRepository.updateLastActivity(vetId).catch((error) => {
+        logger.error("Failed to update user activity", { vetId, error: error instanceof Error ? error.message : String(error) });
+      });
     }
   }
 
@@ -97,10 +100,13 @@ export class QueueService {
         patientId: data.patientId,
       });
       
-      console.log(`[QUEUE] ✓ Criado - ID: ${entry.id}, Posição na fila calculada`);
+      logger.debug("Queue entry created", { entryId: entry.id, patientName: entry.patientName });
       return entry;
     } catch (error) {
-      console.error(`[QUEUE] ✗ Erro ao criar entrada:`, error);
+      logger.error("Failed to create queue entry", { 
+        error: error instanceof Error ? error.message : String(error),
+        patientName: data.patientName 
+      });
       throw error;
     }
   }
@@ -111,7 +117,7 @@ export class QueueService {
     if (vetId && !roomId) {
       const vet = await this.userRepository.findById(vetId);
       if (!vet?.currentRoomId) {
-        console.error(`[QUEUE] ✗ Vet ${vetId} tentou chamar sem check-in em sala`);
+        logger.warn("Vet tried to call without room check-in", { vetId });
         throw new Error("Você deve fazer check-in em uma sala primeiro");
       }
       roomId = vet.currentRoomId;
@@ -120,7 +126,7 @@ export class QueueService {
     if (vetId && roomId) {
       const roomOccupied = await this.repository.getVetInRoom(roomId);
       if (roomOccupied && roomOccupied.vetId !== vetId) {
-        console.error(`[QUEUE] ✗ Sala ${roomId} ocupada por outro veterinário`);
+        logger.warn("Room occupied by another vet", { roomId, vetId });
         throw new Error(`Sala já está ocupada por veterinário ${roomOccupied.vetName}`);
       }
     }
@@ -200,12 +206,12 @@ export class QueueService {
     const entry = await this.repository.findById(id);
 
     if (!entry) {
-      console.error(`[QUEUE] ✗ Entrada ${id} não encontrada`);
+      logger.error("Queue entry not found", { entryId: id });
       throw new Error("Entrada não encontrada");
     }
 
     if (entry.status !== Status.CALLED && entry.status !== Status.WAITING) {
-      console.error(`[QUEUE] ✗ Status inválido para iniciar - EntryId: ${id}, Status atual: ${entry.status}`);
+      logger.warn("Invalid status to start service", { entryId: id, currentStatus: entry.status });
       throw new Error("Apenas entradas chamadas ou aguardando podem iniciar atendimento");
     }
 
@@ -224,7 +230,7 @@ export class QueueService {
     const entry = await this.repository.findById(id);
 
     if (!entry) {
-      console.error(`[QUEUE] ✗ Entrada ${id} não encontrada para completar`);
+      logger.error("Queue entry not found to complete", { entryId: id });
       throw new Error("Entrada não encontrada");
     }
 
@@ -387,7 +393,10 @@ export class QueueService {
       console.log(`[QUEUE] ✓ Atualizado - Paciente: ${updated.patientName}, Prioridade: ${processed.priority}`);
       return updated;
     } catch (error) {
-      console.error(`[QUEUE] ✗ Erro ao atualizar entrada:`, error);
+      logger.error("Failed to update queue entry", { 
+        entryId: id,
+        error: error instanceof Error ? error.message : String(error) 
+      });
       throw error;
     }
   }

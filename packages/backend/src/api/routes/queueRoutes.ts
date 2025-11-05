@@ -8,6 +8,7 @@ import { authMiddleware, AuthenticatedRequest, requireRole } from "../../middlew
 import { z } from "zod";
 import { parseDateRange } from "../../utils/dateParsing";
 import { asyncHandler } from "../../middleware/asyncHandler";
+import { logger } from "../../lib/logger";
 
 const router = Router();
 const repository = new QueueRepository();
@@ -62,7 +63,11 @@ router.post("/", authMiddleware, async (req: AuthenticatedRequest, res: Response
         entityType: "QueueEntry",
         entityId: entry.id,
         metadata: { patientName: entry.patientName, tutorName: entry.tutorName, serviceType: entry.serviceType },
-      }).catch(console.error);
+      }).catch((error) => {
+        logger.error("Failed to log audit", { 
+          error: error instanceof Error ? error.message : String(error) 
+        });
+      });
     }
     res.status(201).json(entry);
   } catch (error) {
@@ -102,7 +107,11 @@ router.post("/call-next", authMiddleware, async (req: AuthenticatedRequest, res:
           serviceType: next.serviceType,
           roomId: data.roomId,
         },
-      }).catch(console.error);
+      }).catch((error) => {
+        logger.error("Failed to log audit", { 
+          error: error instanceof Error ? error.message : String(error) 
+        });
+      });
     }
     res.json(next);
   } catch (error) {
@@ -131,7 +140,11 @@ router.post("/:id/call", authMiddleware, async (req: AuthenticatedRequest, res: 
           serviceType: entry.serviceType,
           roomId: data.roomId,
         },
-      }).catch(console.error);
+      }).catch((error) => {
+        logger.error("Failed to log audit", { 
+          error: error instanceof Error ? error.message : String(error) 
+        });
+      });
     }
     res.json(entry);
   } catch (error) {
@@ -163,7 +176,11 @@ router.patch("/:id/start", authMiddleware, async (req: AuthenticatedRequest, res
           tutorName: entry.tutorName,
           serviceType: entry.serviceType,
         },
-      }).catch(console.error);
+      }).catch((error) => {
+        logger.error("Failed to log audit", { 
+          error: error instanceof Error ? error.message : String(error) 
+        });
+      });
     }
     res.json(entry);
   } catch (error) {
@@ -186,7 +203,11 @@ router.patch("/:id/complete", authMiddleware, async (req: AuthenticatedRequest, 
           tutorName: entry.tutorName,
           serviceType: entry.serviceType,
         },
-      }).catch(console.error);
+      }).catch((error) => {
+        logger.error("Failed to log audit", { 
+          error: error instanceof Error ? error.message : String(error) 
+        });
+      });
     }
     res.json(entry);
   } catch (error) {
@@ -208,7 +229,11 @@ router.patch("/:id/cancel", authMiddleware, requireRole(["RECEPCAO"]), async (re
           tutorName: entry.tutorName,
           serviceType: entry.serviceType,
         },
-      }).catch(console.error);
+      }).catch((error) => {
+        logger.error("Failed to log audit", { 
+          error: error instanceof Error ? error.message : String(error) 
+        });
+      });
     }
     res.json(entry);
   } catch (error) {
@@ -377,7 +402,11 @@ router.patch("/:id", authMiddleware, requireRole(["RECEPCAO"]), async (req: Auth
         entityType: "QueueEntry",
         entityId: updatedEntry.id,
         metadata: { patientName: updatedEntry.patientName, tutorName: updatedEntry.tutorName, serviceType: updatedEntry.serviceType },
-      }).catch(console.error);
+      }).catch((error) => {
+        logger.error("Failed to log audit", { 
+          error: error instanceof Error ? error.message : String(error) 
+        });
+      });
     }
     
     res.json(updatedEntry);

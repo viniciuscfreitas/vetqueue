@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import { useQuery } from "@tanstack/react-query";
-import { queueApi, Status, Priority, roomApi } from "@/lib/api";
+import { queueApi, Status, Priority, roomApi, QueueEntry } from "@/lib/api";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertTriangle, Volume2 } from "lucide-react";
 import { calculateServiceTime } from "@/lib/utils";
@@ -64,6 +64,32 @@ export default function DisplayPage() {
     }
   }, [playBeep]);
 
+  const speakAnnouncement = useCallback((entry: QueueEntry, roomName: string | null) => {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+      playBeepSequence();
+      return;
+    }
+
+    try {
+      window.speechSynthesis.cancel();
+      
+      const message = roomName 
+        ? `Paciente ${entry.patientName}, sala ${roomName}`
+        : `Paciente ${entry.patientName}`;
+      
+      const utterance = new SpeechSynthesisUtterance(message);
+      utterance.lang = 'pt-BR';
+      utterance.rate = 1.0;
+      utterance.pitch = 1.0;
+      utterance.volume = 0.9;
+      
+      window.speechSynthesis.speak(utterance);
+    } catch (e) {
+      console.error("TTS failed:", e);
+      playBeepSequence();
+    }
+  }, [playBeepSequence]);
+
   const enableSound = useCallback(() => {
     getAudioContext();
     playBeepSequence();
@@ -112,16 +138,20 @@ export default function DisplayPage() {
     if (isLoading) return;
 
     const currentCalledIds = new Set(called.map((e) => e.id));
-    const hasNewCalled = Array.from(currentCalledIds).some(
-      (id) => !previousCalledIdsRef.current.has(id)
+    const newCalledEntries = called.filter(
+      (e) => !previousCalledIdsRef.current.has(e.id)
     );
 
-    if (hasNewCalled && previousCalledIdsRef.current.size > 0 && soundEnabled) {
-      playBeepSequence();
+    if (newCalledEntries.length > 0 && previousCalledIdsRef.current.size > 0 && soundEnabled) {
+      const latestEntry = newCalledEntries[newCalledEntries.length - 1];
+      const roomName = latestEntry.roomId 
+        ? rooms.find((r) => r.id === latestEntry.roomId)?.name || null
+        : null;
+      speakAnnouncement(latestEntry, roomName);
     }
 
     previousCalledIdsRef.current = currentCalledIds;
-  }, [called, isLoading, soundEnabled]);
+  }, [called, isLoading, soundEnabled, speakAnnouncement, rooms]);
 
   return (
     <div className="min-h-screen bg-gray-50" role="application" aria-label="Tela de exibição da fila de atendimento">

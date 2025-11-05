@@ -16,6 +16,7 @@ const PORT = process.env.PORT || 3001;
 const HOST = process.env.HOST || "0.0.0.0";
 
 const allowedOrigins = [
+  "https://fisiopet.petshopcisnebranco.com.br",
   "https://vetqueue.vinicius.xyz",
   "http://161.35.115.145:3000",
   "http://localhost:3000",

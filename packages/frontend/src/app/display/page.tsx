@@ -25,6 +25,8 @@ export default function DisplayPage() {
   const [soundEnabled, setSoundEnabled] = useState(false);
   const previousCalledIdsRef = useRef<Set<string>>(new Set());
   const audioContextRef = useRef<AudioContext | null>(null);
+  const ttsTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isSpeakingRef = useRef<boolean>(false);
 
   const getAudioContext = useCallback(() => {
     if (!audioContextRef.current) {
@@ -65,6 +67,11 @@ export default function DisplayPage() {
   }, [playBeep]);
 
   const speakAnnouncement = useCallback((entry: QueueEntry, roomName: string | null) => {
+    if (ttsTimeoutRef.current) {
+      clearTimeout(ttsTimeoutRef.current);
+      ttsTimeoutRef.current = null;
+    }
+
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
       playBeepSequence();
       return;
@@ -72,20 +79,63 @@ export default function DisplayPage() {
 
     try {
       window.speechSynthesis.cancel();
+      isSpeakingRef.current = false;
       
       const message = roomName 
         ? `Paciente ${entry.patientName}, sala ${roomName}`
         : `Paciente ${entry.patientName}`;
       
+      const voices = window.speechSynthesis.getVoices();
+      const ptVoice = voices.find(v => v.lang.startsWith('pt'));
+      
       const utterance = new SpeechSynthesisUtterance(message);
-      utterance.lang = 'pt-BR';
-      utterance.rate = 1.0;
+      utterance.lang = ptVoice ? ptVoice.lang : 'pt-BR';
+      if (ptVoice) {
+        utterance.voice = ptVoice;
+      }
+      utterance.rate = 0.95;
       utterance.pitch = 1.0;
-      utterance.volume = 0.9;
+      utterance.volume = 1.0;
+      
+      utterance.onerror = () => {
+        isSpeakingRef.current = false;
+        if (ttsTimeoutRef.current) {
+          clearTimeout(ttsTimeoutRef.current);
+          ttsTimeoutRef.current = null;
+        }
+        playBeepSequence();
+      };
+      
+      utterance.onend = () => {
+        isSpeakingRef.current = false;
+        if (ttsTimeoutRef.current) {
+          clearTimeout(ttsTimeoutRef.current);
+          ttsTimeoutRef.current = null;
+        }
+      };
+      
+      utterance.onstart = () => {
+        isSpeakingRef.current = true;
+        if (ttsTimeoutRef.current) {
+          clearTimeout(ttsTimeoutRef.current);
+          ttsTimeoutRef.current = null;
+        }
+      };
       
       window.speechSynthesis.speak(utterance);
+      
+      ttsTimeoutRef.current = setTimeout(() => {
+        if (!isSpeakingRef.current) {
+          ttsTimeoutRef.current = null;
+          playBeepSequence();
+        }
+      }, 500);
     } catch (e) {
-      console.error("TTS failed:", e);
+      isSpeakingRef.current = false;
+      if (ttsTimeoutRef.current) {
+        clearTimeout(ttsTimeoutRef.current);
+        ttsTimeoutRef.current = null;
+      }
       playBeepSequence();
     }
   }, [playBeepSequence]);

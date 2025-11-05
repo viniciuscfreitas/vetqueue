@@ -66,6 +66,7 @@ export class QueueService {
     patientId?: string;
   }): Promise<QueueEntry> {
     logger.debug("addToQueue called", {
+      module: "Queue",
       patientName: data.patientName,
       tutorName: data.tutorName,
       serviceType: data.serviceType,
@@ -83,22 +84,36 @@ export class QueueService {
     );
 
     if (data.hasScheduledAppointment && !processed.hasScheduledAppointment) {
-      logger.info("Scheduled appointment converted to walk-in (late >15min)", { patientName: data.patientName });
+      logger.info("Scheduled appointment converted to walk-in (late >15min)", {
+        module: "Queue",
+        eventType: "AppointmentConversion",
+        patientName: data.patientName,
+        patientId: data.patientId || null,
+      });
     }
 
     if (processed.hasScheduledAppointment && processed.scheduledAt) {
       const now = new Date();
       if (processed.scheduledAt < now) {
-        logger.warn("Cannot schedule appointment in the past", { scheduledAt: processed.scheduledAt, now });
+        logger.warn("Cannot schedule appointment in the past", {
+          module: "Queue",
+          scheduledAt: processed.scheduledAt,
+          now,
+          patientId: data.patientId || null,
+        });
         throw new Error("Não é possível agendar para uma data/hora no passado");
       }
     }
 
-    logger.info("Adding to queue", { 
-      patientName: data.patientName, 
-      tutorName: data.tutorName, 
-      serviceType: data.serviceType, 
-      priority: processed.priority 
+    logger.info("Adding to queue", {
+      module: "Queue",
+      eventType: "AnimalEnqueued",
+      patientName: data.patientName,
+      tutorName: data.tutorName,
+      serviceType: data.serviceType,
+      priority: processed.priority,
+      patientId: data.patientId || null,
+      hasScheduledAppointment: processed.hasScheduledAppointment,
     });
     
     try {
@@ -120,14 +135,17 @@ export class QueueService {
       });
       const dbDuration = Date.now() - startTime;
       
-      logger.debug("Queue entry created", { 
-        entryId: entry.id, 
+      logger.debug("Queue entry created", {
+        module: "Queue",
+        entryId: entry.id,
+        patientId: entry.patientId || null,
         patientName: entry.patientName,
-        dbDuration: `${dbDuration}ms`
+        dbDuration: `${dbDuration}ms`,
       });
       
       if (dbDuration > 500) {
         logger.warn("Slow database operation", {
+          module: "Queue",
           operation: "create queue entry",
           duration: `${dbDuration}ms`,
           entryId: entry.id,
@@ -136,29 +154,29 @@ export class QueueService {
       
       return entry;
     } catch (error) {
-      logger.error("Failed to create queue entry", { 
+      logger.error("Failed to create queue entry", {
+        module: "Queue",
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
-        inputData: {
-          patientName: data.patientName,
-          tutorName: data.tutorName,
-          serviceType: data.serviceType,
-          priority: processed.priority,
-          assignedVetId: data.assignedVetId,
-          hasScheduledAppointment: processed.hasScheduledAppointment,
-        }
+        patientId: data.patientId || null,
+        patientName: data.patientName,
+        tutorName: data.tutorName,
+        serviceType: data.serviceType,
+        priority: processed.priority,
+        assignedVetId: data.assignedVetId || null,
+        hasScheduledAppointment: processed.hasScheduledAppointment,
       });
       throw error;
     }
   }
 
   async callNext(vetId?: string, roomId?: string): Promise<QueueEntry | null> {
-    logger.debug("Calling next patient", { vetId, roomId });
+    logger.debug("Calling next patient", { module: "Queue", vetId, roomId });
     
     if (vetId && !roomId) {
       const vet = await this.userRepository.findById(vetId);
       if (!vet?.currentRoomId) {
-        logger.warn("Vet tried to call without room check-in", { vetId });
+        logger.warn("Vet tried to call without room check-in", { module: "Queue", vetId });
         throw new Error("Você deve fazer check-in em uma sala primeiro");
       }
       roomId = vet.currentRoomId;
@@ -167,7 +185,7 @@ export class QueueService {
     if (vetId && roomId) {
       const roomOccupied = await this.repository.getVetInRoom(roomId);
       if (roomOccupied && roomOccupied.vetId !== vetId) {
-        logger.warn("Room occupied by another vet", { roomId, vetId });
+        logger.warn("Room occupied by another vet", { module: "Queue", roomId, vetId });
         throw new Error(`Sala já está ocupada por veterinário ${roomOccupied.vetName}`);
       }
     }
@@ -175,7 +193,7 @@ export class QueueService {
     if (!vetId && roomId) {
       const hasVet = await this.repository.hasVetInRoom(roomId);
       if (!hasVet) {
-        logger.warn("Room has no active vet", { roomId });
+        logger.warn("Room has no active vet", { module: "Queue", roomId });
         throw new Error("A sala selecionada não possui veterinário ativo");
       }
     }
@@ -187,25 +205,43 @@ export class QueueService {
     );
 
     if (!result) {
-      logger.info("No entries available in queue", { vetId });
+      logger.info("No entries available in queue", { module: "Queue", vetId: vetId || null, roomId: roomId || null });
       return null;
     }
 
     const actualVetId = vetId || (result.assignedVetId || undefined);
     this.updateActivityIfNeeded(actualVetId);
 
-    logger.info("Patient called", { entryId: result.id, patientName: result.patientName, roomId });
+    logger.info("Patient called", {
+      module: "Queue",
+      eventType: "StatusTransition",
+      entryId: result.id,
+      patientId: result.patientId || null,
+      patientName: result.patientName,
+      oldStatus: Status.WAITING,
+      newStatus: Status.CALLED,
+      roomId: roomId || null,
+      assignedVetId: actualVetId || null,
+    });
     return result;
   }
 
   async callPatient(id: string, vetId?: string, roomId?: string): Promise<QueueEntry> {
+    logger.debug("Calling specific patient", { module: "Queue", entryId: id, vetId, roomId });
     const entry = await this.repository.findById(id);
 
     if (!entry) {
+      logger.error("Queue entry not found for call", { module: "Queue", entryId: id });
       throw new Error("Entrada não encontrada");
     }
 
     if (entry.status !== Status.WAITING) {
+      logger.warn("Cannot call patient - invalid status", {
+        module: "Queue",
+        entryId: id,
+        currentStatus: entry.status,
+        patientId: entry.patientId || null,
+      });
       throw new Error("Apenas pacientes aguardando podem ser chamados");
     }
 
@@ -226,6 +262,7 @@ export class QueueService {
       }
     }
 
+    const oldStatus = entry.status;
     const result = await this.repository.callPatientWithLock(
       id,
       vetId,
@@ -235,11 +272,23 @@ export class QueueService {
 
     this.updateActivityIfNeeded(vetId);
 
+    logger.info("Patient called (direct)", {
+      module: "Queue",
+      eventType: "StatusTransition",
+      entryId: result.id,
+      patientId: result.patientId || null,
+      patientName: result.patientName,
+      oldStatus,
+      newStatus: Status.CALLED,
+      roomId: roomId || null,
+      assignedVetId: vetId || result.assignedVetId || null,
+    });
+
     return result;
   }
 
   async startService(id: string, userRole?: string): Promise<QueueEntry> {
-    logger.debug("Starting service", { entryId: id, userRole });
+    logger.debug("Starting service", { module: "Queue", entryId: id, userRole });
     
     if (userRole === "RECEPCAO") {
       throw new Error("Recepção não pode iniciar atendimento");
@@ -248,31 +297,42 @@ export class QueueService {
     const entry = await this.repository.findById(id);
 
     if (!entry) {
-      logger.error("Queue entry not found", { entryId: id });
+      logger.error("Queue entry not found", { module: "Queue", entryId: id });
       throw new Error("Entrada não encontrada");
     }
 
     if (entry.status !== Status.CALLED && entry.status !== Status.WAITING) {
-      logger.warn("Invalid status to start service", { entryId: id, currentStatus: entry.status });
+      logger.warn("Invalid status to start service", { module: "Queue", entryId: id, currentStatus: entry.status });
       throw new Error("Apenas entradas chamadas ou aguardando podem iniciar atendimento");
     }
 
+    const oldStatus = entry.status;
     const result = entry.status === Status.WAITING && !entry.calledAt
       ? await this.repository.updateStatus(id, Status.IN_PROGRESS, new Date())
       : await this.repository.updateStatus(id, Status.IN_PROGRESS);
 
     this.updateActivityIfNeeded(entry.assignedVetId);
 
-    logger.info("Service started", { entryId: id, patientName: entry.patientName });
+    logger.info("Service started", {
+      module: "Queue",
+      eventType: "StatusTransition",
+      entryId: id,
+      patientId: entry.patientId || null,
+      patientName: entry.patientName,
+      oldStatus,
+      newStatus: Status.IN_PROGRESS,
+      assignedVetId: entry.assignedVetId || null,
+      userRole: userRole || null,
+    });
     return result;
   }
 
   async completeService(id: string, userRole?: string): Promise<QueueEntry> {
-    logger.debug("Completing service", { entryId: id, userRole });
+    logger.debug("Completing service", { module: "Queue", entryId: id, userRole });
     const entry = await this.repository.findById(id);
 
     if (!entry) {
-      logger.error("Queue entry not found to complete", { entryId: id });
+      logger.error("Queue entry not found to complete", { module: "Queue", entryId: id });
       throw new Error("Entrada não encontrada");
     }
 
@@ -284,14 +344,22 @@ export class QueueService {
       throw new Error("Não é possível finalizar atendimento sem veterinário atribuído");
     }
 
+    const oldStatus = entry.status;
     const result = await this.repository.updateStatus(id, Status.COMPLETED, undefined, new Date());
 
     this.updateActivityIfNeeded(entry.assignedVetId);
 
-    logger.info("Service completed", { 
-      entryId: id, 
-      patientName: entry.patientName, 
-      vetName: entry.assignedVet?.name || 'N/A' 
+    logger.info("Service completed", {
+      module: "Queue",
+      eventType: "StatusTransition",
+      entryId: id,
+      patientId: entry.patientId || null,
+      patientName: entry.patientName,
+      oldStatus,
+      newStatus: Status.COMPLETED,
+      assignedVetId: entry.assignedVetId || null,
+      vetName: entry.assignedVet?.name || null,
+      userRole: userRole || null,
     });
     return result;
   }

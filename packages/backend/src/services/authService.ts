@@ -14,21 +14,21 @@ export interface LoginResult {
 
 export class AuthService {
   async login(username: string, password: string): Promise<LoginResult> {
-    logger.info("Login attempt", { username });
+    logger.info("Login attempt", { module: "Auth", username });
     
     const user = await prisma.user.findUnique({
       where: { username },
     });
 
     if (!user) {
-      logger.warn("Login failed - user not found", { username });
+      logger.warn("Login failed - user not found", { module: "Auth", username });
       throw new Error("Credenciais inválidas");
     }
 
     const passwordMatch = await bcrypt.compare(password, user.password);
 
     if (!passwordMatch) {
-      logger.warn("Login failed - invalid password", { username });
+      logger.warn("Login failed - invalid password", { module: "Auth", username, userId: user.id });
       throw new Error("Credenciais inválidas");
     }
 
@@ -43,7 +43,13 @@ export class AuthService {
       { expiresIn: JWT_EXPIRES_IN }
     );
 
-    logger.info("Login successful", { userId: user.id, username: user.username, role: user.role });
+    logger.info("Login successful", {
+      module: "Auth",
+      eventType: "AuthenticationSuccess",
+      userId: user.id,
+      username: user.username,
+      userRole: user.role,
+    });
     
     return {
       user: {
@@ -65,6 +71,8 @@ export class AuthService {
       return jwt.verify(token, JWT_SECRET);
     } catch (error) {
       logger.warn("Token verification failed", {
+        module: "Auth",
+        eventType: "AuthenticationFailure",
         error: error instanceof Error ? error.message : String(error),
         tokenLength: token?.length,
         tokenPrefix: token?.substring(0, 20),

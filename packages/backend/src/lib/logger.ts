@@ -27,6 +27,8 @@ const formatLog = (level: LogLevel, message: string, meta?: any): string => {
     timestamp: new Date().toISOString(),
     level,
     message,
+    service_name: "vetqueue-backend",
+    environment: process.env.NODE_ENV || "development",
     requestId: requestId || null,
     ...meta,
   };

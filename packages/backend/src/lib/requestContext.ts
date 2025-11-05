@@ -20,3 +20,7 @@ export const getUserLogLevel = (): "debug" | "info" | "warn" | "error" | undefin
   return getRequestContext()?.userLogLevel;
 };
 
+export const getUserId = (): string | undefined => {
+  return getRequestContext()?.userId;
+};
+

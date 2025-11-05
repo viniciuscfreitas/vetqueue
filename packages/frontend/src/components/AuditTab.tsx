@@ -23,6 +23,12 @@ interface AuditTabProps {
   authLoading: boolean;
 }
 
+const DEFAULT_FILTERS = {
+  userId: "__ALL__",
+  action: "__ALL__",
+  entityType: "__ALL__",
+};
+
 const actionConfig = {
   CREATE: {
     label: "Criado",
@@ -70,7 +76,6 @@ const actionConfig = {
 
 const entityTypeConfig: Record<string, string> = {
   QueueEntry: "Fila",
-  QUEUE_ENTRY: "Fila",
 };
 
 function normalizeEntityType(entityType: string): string {
@@ -91,11 +96,7 @@ function formatDateTime(timestamp: string): string {
 
 export function AuditTab({ authLoading }: AuditTabProps) {
   const { startDate, endDate, setStartDate, setEndDate } = useDateRange();
-  const [filters, setFilters] = useState({
-    userId: "__ALL__",
-    action: "__ALL__",
-    entityType: "__ALL__",
-  });
+  const [filters, setFilters] = useState(DEFAULT_FILTERS);
   const [page, setPage] = useState(1);
 
   const { data: auditData, isLoading: isLoadingAudit } = useQuery({
@@ -122,7 +123,6 @@ export function AuditTab({ authLoading }: AuditTabProps) {
   });
 
   const auditEntries = auditData?.entries || [];
-  const auditPaginated = auditData;
 
   useEffect(() => {
     setPage(1);
@@ -246,9 +246,7 @@ export function AuditTab({ authLoading }: AuditTabProps) {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() =>
-                    setFilters({ userId: "__ALL__", action: "__ALL__", entityType: "__ALL__" })
-                  }
+                  onClick={() => setFilters(DEFAULT_FILTERS)}
                   className="h-10"
                 >
                   Limpar
@@ -276,9 +274,9 @@ export function AuditTab({ authLoading }: AuditTabProps) {
       ) : (
         <>
           <div className="space-y-4">
-            {auditEntries.length > 0 && auditPaginated && (
+            {auditEntries.length > 0 && auditData && (
               <p className="text-sm text-muted-foreground">
-                {auditPaginated.total} ações encontradas
+                {auditData.total} ações encontradas
               </p>
             )}
             {auditEntries.length === 0 ? (
@@ -325,11 +323,11 @@ export function AuditTab({ authLoading }: AuditTabProps) {
               </div>
             )}
           </div>
-          {auditPaginated && auditPaginated.totalPages > 1 && (
+          {auditData && auditData.totalPages > 1 && (
             <Pagination
-              currentPage={auditPaginated.page}
-              totalPages={auditPaginated.totalPages}
-              total={auditPaginated.total}
+              currentPage={auditData.page}
+              totalPages={auditData.totalPages}
+              total={auditData.total}
               onPageChange={setPage}
             />
           )}

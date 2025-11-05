@@ -12,6 +12,7 @@ export class VaccinationService {
   async getVaccinationById(id: string): Promise<Vaccination> {
     const vaccination = await this.repository.findById(id);
     if (!vaccination) {
+      logger.warn("Vaccination not found", { vaccinationId: id });
       throw new Error("Vacina não encontrada");
     }
     return vaccination;
@@ -27,10 +28,12 @@ export class VaccinationService {
     notes?: string | null;
   }): Promise<Vaccination> {
     if (!data.patientId.trim()) {
+      logger.warn("Patient ID is empty for vaccination", { patientId: data.patientId });
       throw new Error("ID do paciente é obrigatório");
     }
 
     if (!data.vaccineName.trim()) {
+      logger.warn("Vaccine name is empty");
       throw new Error("Nome da vacina é obrigatório");
     }
 
@@ -47,10 +50,12 @@ export class VaccinationService {
   }): Promise<Vaccination> {
     const vaccination = await this.repository.findById(id);
     if (!vaccination) {
+      logger.warn("Vaccination not found for update", { vaccinationId: id });
       throw new Error("Vacina não encontrada");
     }
 
     if (data.vaccineName && !data.vaccineName.trim()) {
+      logger.warn("Vaccine name is empty on update", { vaccinationId: id });
       throw new Error("Nome da vacina não pode ser vazio");
     }
 
@@ -60,6 +65,7 @@ export class VaccinationService {
   async deleteVaccination(id: string): Promise<void> {
     const vaccination = await this.repository.findById(id);
     if (!vaccination) {
+      logger.warn("Vaccination not found for delete", { vaccinationId: id });
       throw new Error("Vacina não encontrada");
     }
 

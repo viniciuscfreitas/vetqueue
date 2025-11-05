@@ -78,6 +78,7 @@ export class QueueService {
     if (processed.hasScheduledAppointment && processed.scheduledAt) {
       const now = new Date();
       if (processed.scheduledAt < now) {
+        logger.warn("Cannot schedule appointment in the past", { scheduledAt: processed.scheduledAt, now });
         throw new Error("Não é possível agendar para uma data/hora no passado");
       }
     }
@@ -91,6 +92,7 @@ export class QueueService {
     
     try {
       if (!data.patientName.trim() || !data.tutorName.trim()) {
+        logger.warn("Missing required fields", { hasPatientName: !!data.patientName.trim(), hasTutorName: !!data.tutorName.trim() });
         throw new Error("Nome do paciente e tutor são obrigatórios");
       }
 
@@ -139,6 +141,7 @@ export class QueueService {
     if (!vetId && roomId) {
       const hasVet = await this.repository.hasVetInRoom(roomId);
       if (!hasVet) {
+        logger.warn("Room has no active vet", { roomId });
         throw new Error("A sala selecionada não possui veterinário ativo");
       }
     }

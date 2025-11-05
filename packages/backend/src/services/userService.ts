@@ -30,15 +30,18 @@ export class UserService {
     role: Role;
   }): Promise<User> {
     if (!data.username.trim() || !data.password.trim() || !data.name.trim()) {
+      logger.warn("Missing required user fields", { hasUsername: !!data.username.trim(), hasPassword: !!data.password.trim(), hasName: !!data.name.trim() });
       throw new Error("Username, senha e nome são obrigatórios");
     }
 
     if (data.password.length < 6) {
+      logger.warn("Password too short", { passwordLength: data.password.length });
       throw new Error("Senha deve ter no mínimo 6 caracteres");
     }
 
     const existingUser = await this.repository.findByUsername(data.username);
     if (existingUser) {
+      logger.warn("Username already exists", { username: data.username });
       throw new Error("Já existe um usuário com este username");
     }
 

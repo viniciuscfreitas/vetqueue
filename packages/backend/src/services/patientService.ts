@@ -1,5 +1,6 @@
 import { PatientRepository } from "../repositories/patientRepository";
 import { Patient } from "../core/types";
+import { logger } from "../lib/logger";
 
 export class PatientService {
   constructor(private repository: PatientRepository) {}
@@ -11,6 +12,7 @@ export class PatientService {
   async getPatientById(id: string): Promise<Patient> {
     const patient = await this.repository.findById(id);
     if (!patient) {
+      logger.warn("Patient not found", { patientId: id });
       throw new Error("Paciente não encontrado");
     }
     return patient;
@@ -63,6 +65,7 @@ export class PatientService {
   }): Promise<Patient> {
     const patient = await this.repository.findById(id);
     if (!patient) {
+      logger.warn("Patient not found for update", { patientId: id });
       throw new Error("Paciente não encontrado");
     }
 
@@ -72,11 +75,13 @@ export class PatientService {
   async deletePatient(id: string): Promise<void> {
     const patient = await this.repository.findById(id);
     if (!patient) {
+      logger.warn("Patient not found for delete", { patientId: id });
       throw new Error("Paciente não encontrado");
     }
 
     const hasEntries = await this.repository.hasQueueEntries(id);
     if (hasEntries) {
+      logger.warn("Cannot delete patient with queue entries", { patientId: id });
       throw new Error("Não é possível deletar paciente com histórico de atendimentos. Use exclusão lógica ou remova os registros de atendimento primeiro.");
     }
 

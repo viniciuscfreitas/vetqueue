@@ -12,6 +12,7 @@ export class ConsultationService {
   async getConsultationById(id: string): Promise<Consultation> {
     const consultation = await this.repository.findById(id);
     if (!consultation) {
+      logger.warn("Consultation not found", { consultationId: id });
       throw new Error("Consulta não encontrada");
     }
     return consultation;
@@ -29,6 +30,7 @@ export class ConsultationService {
     date?: Date;
   }): Promise<Consultation> {
     if (!data.patientId.trim()) {
+      logger.warn("Patient ID is empty", { patientId: data.patientId });
       throw new Error("ID do paciente é obrigatório");
     }
 
@@ -46,6 +48,7 @@ export class ConsultationService {
   }): Promise<Consultation> {
     const consultation = await this.repository.findById(id);
     if (!consultation) {
+      logger.warn("Consultation not found for update", { consultationId: id });
       throw new Error("Consulta não encontrada");
     }
 
@@ -55,6 +58,7 @@ export class ConsultationService {
   async deleteConsultation(id: string): Promise<void> {
     const consultation = await this.repository.findById(id);
     if (!consultation) {
+      logger.warn("Consultation not found for delete", { consultationId: id });
       throw new Error("Consulta não encontrada");
     }
 

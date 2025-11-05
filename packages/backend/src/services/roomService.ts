@@ -1,5 +1,6 @@
 import { RoomRepository } from "../repositories/roomRepository";
 import { Room } from "../core/types";
+import { logger } from "../lib/logger";
 
 export class RoomService {
   constructor(private repository: RoomRepository) {}
@@ -15,6 +16,7 @@ export class RoomService {
   async getRoomById(id: string): Promise<Room> {
     const room = await this.repository.findById(id);
     if (!room) {
+      logger.warn("Room not found", { roomId: id });
       throw new Error("Sala não encontrada");
     }
     return room;
@@ -22,6 +24,7 @@ export class RoomService {
 
   async createRoom(data: { name: string }): Promise<Room> {
     if (!data.name.trim()) {
+      logger.warn("Room name is empty");
       throw new Error("Nome da sala é obrigatório");
     }
 
@@ -31,6 +34,7 @@ export class RoomService {
     );
 
     if (roomExists) {
+      logger.warn("Room name already exists", { name: data.name });
       throw new Error("Já existe uma sala com este nome");
     }
 
@@ -40,10 +44,12 @@ export class RoomService {
   async updateRoom(id: string, data: { name?: string; isActive?: boolean }): Promise<Room> {
     const room = await this.repository.findById(id);
     if (!room) {
+      logger.warn("Room not found for update", { roomId: id });
       throw new Error("Sala não encontrada");
     }
 
     if (data.name && !data.name.trim()) {
+      logger.warn("Room name is empty on update", { roomId: id });
       throw new Error("Nome da sala é obrigatório");
     }
 
@@ -53,6 +59,7 @@ export class RoomService {
   async deleteRoom(id: string): Promise<void> {
     const room = await this.repository.findById(id);
     if (!room) {
+      logger.warn("Room not found for delete", { roomId: id });
       throw new Error("Sala não encontrada");
     }
 

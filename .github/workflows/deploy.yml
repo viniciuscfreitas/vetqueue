@@ -42,9 +42,6 @@ jobs:
             # 3. Suba TUDO com Docker Compose
             docker compose up -d --build
             
-            # 4. Conecte ao Nginx Proxy Manager
-            docker network connect vetqueue_network nginx-proxy-manager-app-1 || true
-            
-            # 5. Limpe imagens antigas
+            # 4. Limpe imagens antigas
             docker image prune -f || true
 

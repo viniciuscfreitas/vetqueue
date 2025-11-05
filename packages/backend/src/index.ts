@@ -1,4 +1,3 @@
-import * as Sentry from "@sentry/node";
 import express, { Request, Response, NextFunction } from "express";
 import cors from "cors";
 import queueRoutes from "./api/routes/queueRoutes";
@@ -14,18 +13,6 @@ import { prisma } from "./lib/prisma";
 import { requestIdMiddleware } from "./middleware/requestId";
 import { requestLoggerMiddleware } from "./middleware/requestLogger";
 import { logger } from "./lib/logger";
-
-if (process.env.SENTRY_DSN) {
-  Sentry.init({
-    dsn: process.env.SENTRY_DSN,
-    environment: process.env.NODE_ENV || "development",
-    integrations: [
-      new Sentry.Integrations.Http({ tracing: true }),
-      new Sentry.Integrations.Express({ app: undefined }),
-    ],
-    tracesSampleRate: process.env.NODE_ENV === "production" ? 0.1 : 1.0,
-  });
-}
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -51,29 +38,10 @@ app.use(
     credentials: true,
   })
 );
-if (process.env.SENTRY_DSN) {
-  app.use(Sentry.Handlers.requestHandler());
-  app.use(Sentry.Handlers.tracingHandler());
-}
-
 app.use(express.json());
 
 app.use(requestIdMiddleware);
 app.use(requestLoggerMiddleware);
-
-if (process.env.SENTRY_DSN) {
-  app.use((req: Request, res: Response, next: NextFunction) => {
-    const requestId = req.requestId;
-    if (requestId) {
-      Sentry.setTag("request_id", requestId);
-    }
-    const userId = (req as any).user?.id;
-    if (userId) {
-      Sentry.setUser({ id: userId });
-    }
-    next();
-  });
-}
 
 app.get("/health", async (req, res) => {
   const requestId = req.requestId || "unknown";
@@ -107,10 +75,6 @@ app.use("/api/patients", patientRoutes);
 app.use("/api/consultations", consultationRoutes);
 app.use("/api/vaccinations", vaccinationRoutes);
 
-if (process.env.SENTRY_DSN) {
-  app.use(Sentry.Handlers.errorHandler());
-}
-
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   const requestId = req.requestId || "unknown";
   const userId = (req as any).user?.id;
@@ -125,10 +89,6 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
     userId,
     errorName: err.name,
   });
-
-  if (process.env.SENTRY_DSN && err.statusCode !== 400) {
-    Sentry.captureException(err);
-  }
   
   if (err.name === 'ZodError') {
     res.status(400).json({ error: err.errors });
@@ -157,10 +117,6 @@ process.on("unhandledRejection", (reason, promise) => {
     reason: reason instanceof Error ? reason.message : String(reason),
     stack: reason instanceof Error ? reason.stack : undefined,
   });
-  
-  if (process.env.SENTRY_DSN) {
-    Sentry.captureException(reason instanceof Error ? reason : new Error(String(reason)));
-  }
 });
 
 process.on("uncaughtException", (error) => {
@@ -168,10 +124,6 @@ process.on("uncaughtException", (error) => {
     error: error.message,
     stack: error.stack,
   });
-  
-  if (process.env.SENTRY_DSN) {
-    Sentry.captureException(error);
-  }
   
   process.exit(1);
 });

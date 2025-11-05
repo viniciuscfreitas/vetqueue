@@ -306,13 +306,23 @@ export function AuditTab({ authLoading }: AuditTabProps) {
                             {formatDateTime(entry.timestamp)}
                           </span>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <span className="text-sm font-medium">
                             {entry.user?.name || "Usuário desconhecido"}
                           </span>
-                          {entry.metadata && (
+                          {entry.metadata?.patientName && (
                             <span className="text-sm text-muted-foreground">
-                              • {entry.metadata.patientName || ""}
+                              • {entry.metadata.patientName}
+                            </span>
+                          )}
+                          {entry.metadata?.tutorName && (
+                            <span className="text-sm text-muted-foreground">
+                              • {entry.metadata.tutorName}
+                            </span>
+                          )}
+                          {entry.metadata?.serviceType && (
+                            <span className="text-sm text-muted-foreground">
+                              • {entry.metadata.serviceType}
                             </span>
                           )}
                         </div>

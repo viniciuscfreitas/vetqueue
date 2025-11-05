@@ -96,7 +96,12 @@ router.post("/call-next", authMiddleware, async (req: AuthenticatedRequest, res:
         action: "CALL",
         entityType: "QueueEntry",
         entityId: next.id,
-        metadata: { roomId: data.roomId },
+        metadata: {
+          patientName: next.patientName,
+          tutorName: next.tutorName,
+          serviceType: next.serviceType,
+          roomId: data.roomId,
+        },
       }).catch(console.error);
     }
     res.json(next);
@@ -120,7 +125,12 @@ router.post("/:id/call", authMiddleware, async (req: AuthenticatedRequest, res: 
         action: "CALL_DIRECT",
         entityType: "QueueEntry",
         entityId: entry.id,
-        metadata: { roomId: data.roomId },
+        metadata: {
+          patientName: entry.patientName,
+          tutorName: entry.tutorName,
+          serviceType: entry.serviceType,
+          roomId: data.roomId,
+        },
       }).catch(console.error);
     }
     res.json(entry);
@@ -148,6 +158,11 @@ router.patch("/:id/start", authMiddleware, async (req: AuthenticatedRequest, res
         action: "START",
         entityType: "QueueEntry",
         entityId: entry.id,
+        metadata: {
+          patientName: entry.patientName,
+          tutorName: entry.tutorName,
+          serviceType: entry.serviceType,
+        },
       }).catch(console.error);
     }
     res.json(entry);
@@ -166,6 +181,11 @@ router.patch("/:id/complete", authMiddleware, async (req: AuthenticatedRequest, 
         action: "COMPLETE",
         entityType: "QueueEntry",
         entityId: entry.id,
+        metadata: {
+          patientName: entry.patientName,
+          tutorName: entry.tutorName,
+          serviceType: entry.serviceType,
+        },
       }).catch(console.error);
     }
     res.json(entry);
@@ -183,6 +203,11 @@ router.patch("/:id/cancel", authMiddleware, requireRole(["RECEPCAO"]), async (re
         action: "CANCEL",
         entityType: "QueueEntry",
         entityId: entry.id,
+        metadata: {
+          patientName: entry.patientName,
+          tutorName: entry.tutorName,
+          serviceType: entry.serviceType,
+        },
       }).catch(console.error);
     }
     res.json(entry);

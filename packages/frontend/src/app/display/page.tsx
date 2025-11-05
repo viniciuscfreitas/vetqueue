@@ -73,6 +73,7 @@ export default function DisplayPage() {
     }
 
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+      console.warn("SpeechSynthesis não disponível, usando beeps");
       playBeepSequence();
       return;
     }
@@ -85,19 +86,61 @@ export default function DisplayPage() {
         ? `Paciente ${entry.patientName}, sala ${roomName}`
         : `Paciente ${entry.patientName}`;
       
+      console.log("🔊 Tentando falar:", message);
+      
       const voices = window.speechSynthesis.getVoices();
+      console.log("📢 Vozes disponíveis:", voices.length);
       const ptVoice = voices.find(v => v.lang.startsWith('pt'));
+      
+      if (voices.length === 0) {
+        console.warn("⚠️ Nenhuma voz disponível, aguardando carregamento...");
+        setTimeout(() => {
+          const voicesAfter = window.speechSynthesis.getVoices();
+          if (voicesAfter.length > 0) {
+            console.log("✅ Vozes carregadas, tentando novamente");
+            const retryMessage = roomName 
+              ? `Paciente ${entry.patientName}, sala ${roomName}`
+              : `Paciente ${entry.patientName}`;
+            const retryUtterance = new SpeechSynthesisUtterance(retryMessage);
+            const retryPtVoice = voicesAfter.find(v => v.lang.startsWith('pt'));
+            retryUtterance.lang = retryPtVoice ? retryPtVoice.lang : 'pt-BR';
+            if (retryPtVoice) {
+              retryUtterance.voice = retryPtVoice;
+            }
+            retryUtterance.rate = 0.95;
+            retryUtterance.pitch = 1.0;
+            retryUtterance.volume = 1.0;
+            retryUtterance.onstart = () => {
+              isSpeakingRef.current = true;
+              console.log("✅ TTS iniciou (retry)");
+            };
+            retryUtterance.onerror = () => {
+              console.error("❌ Erro TTS (retry)");
+              playBeepSequence();
+            };
+            window.speechSynthesis.speak(retryUtterance);
+          } else {
+            console.error("❌ Ainda sem vozes, usando beeps");
+            playBeepSequence();
+          }
+        }, 500);
+        return;
+      }
       
       const utterance = new SpeechSynthesisUtterance(message);
       utterance.lang = ptVoice ? ptVoice.lang : 'pt-BR';
       if (ptVoice) {
         utterance.voice = ptVoice;
+        console.log("✅ Usando voz PT:", ptVoice.name);
+      } else {
+        console.warn("⚠️ Voz PT não encontrada, usando padrão");
       }
       utterance.rate = 0.95;
       utterance.pitch = 1.0;
       utterance.volume = 1.0;
       
-      utterance.onerror = () => {
+      utterance.onerror = (e) => {
+        console.error("❌ Erro TTS:", e);
         isSpeakingRef.current = false;
         if (ttsTimeoutRef.current) {
           clearTimeout(ttsTimeoutRef.current);
@@ -107,6 +150,7 @@ export default function DisplayPage() {
       };
       
       utterance.onend = () => {
+        console.log("✅ TTS completou");
         isSpeakingRef.current = false;
         if (ttsTimeoutRef.current) {
           clearTimeout(ttsTimeoutRef.current);
@@ -115,6 +159,7 @@ export default function DisplayPage() {
       };
       
       utterance.onstart = () => {
+        console.log("✅ TTS iniciou");
         isSpeakingRef.current = true;
         if (ttsTimeoutRef.current) {
           clearTimeout(ttsTimeoutRef.current);
@@ -123,14 +168,18 @@ export default function DisplayPage() {
       };
       
       window.speechSynthesis.speak(utterance);
+      console.log("📞 speak() chamado, aguardando início...");
       
       ttsTimeoutRef.current = setTimeout(() => {
         if (!isSpeakingRef.current) {
+          console.warn("⏱️ Timeout: TTS não iniciou em 2s, usando beeps");
           ttsTimeoutRef.current = null;
+          window.speechSynthesis.cancel();
           playBeepSequence();
         }
-      }, 500);
+      }, 2000);
     } catch (e) {
+      console.error("❌ Exceção TTS:", e);
       isSpeakingRef.current = false;
       if (ttsTimeoutRef.current) {
         clearTimeout(ttsTimeoutRef.current);
@@ -146,6 +195,34 @@ export default function DisplayPage() {
     setSoundEnabled(true);
     if (typeof window !== 'undefined') {
       localStorage.setItem('vetqueue_audio_enabled', 'true');
+      
+      if ('speechSynthesis' in window) {
+        const voices = window.speechSynthesis.getVoices();
+        console.log("🔊 Som ativado. Vozes disponíveis:", voices.length);
+        
+        if (voices.length === 0) {
+          const loadVoices = () => {
+            const loadedVoices = window.speechSynthesis.getVoices();
+            console.log("✅ Vozes carregadas após evento:", loadedVoices.length);
+            const ptVoice = loadedVoices.find(v => v.lang.startsWith('pt'));
+            if (ptVoice) {
+              console.log("✅ Voz PT encontrada:", ptVoice.name);
+            }
+          };
+          
+          if (window.speechSynthesis.onvoiceschanged !== undefined) {
+            window.speechSynthesis.onvoiceschanged = loadVoices;
+          }
+          
+          setTimeout(() => {
+            const delayedVoices = window.speechSynthesis.getVoices();
+            console.log("⏱️ Vozes após delay:", delayedVoices.length);
+            if (delayedVoices.length === 0) {
+              console.warn("⚠️ Nenhuma voz carregada. Pode ser bloqueio do navegador.");
+            }
+          }, 1000);
+        }
+      }
     }
   }, [getAudioContext, playBeepSequence]);
 

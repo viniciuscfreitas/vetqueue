@@ -14,7 +14,6 @@ import { prisma } from "./lib/prisma";
 import { requestIdMiddleware } from "./middleware/requestId";
 import { requestLoggerMiddleware } from "./middleware/requestLogger";
 import { logger } from "./lib/logger";
-import { httpRequestDuration, httpRequestTotal, getMetrics } from "./lib/metrics";
 
 if (process.env.SENTRY_DSN) {
   Sentry.init({
@@ -60,27 +59,6 @@ if (process.env.SENTRY_DSN) {
 app.use(express.json());
 
 app.use(requestIdMiddleware);
-
-app.use((req: Request, res: Response, next: NextFunction) => {
-  const start = Date.now();
-  const route = req.route?.path || req.path;
-
-  res.on("finish", () => {
-    const duration = (Date.now() - start) / 1000;
-    httpRequestDuration.observe(
-      { method: req.method, route, status_code: res.statusCode },
-      duration
-    );
-    httpRequestTotal.inc({
-      method: req.method,
-      route,
-      status_code: res.statusCode,
-    });
-  });
-
-  next();
-});
-
 app.use(requestLoggerMiddleware);
 
 if (process.env.SENTRY_DSN) {
@@ -117,19 +95,6 @@ app.get("/health", async (req, res) => {
       status: "error",
       message: "Database connection failed",
     });
-  }
-});
-
-app.get("/metrics", async (req, res) => {
-  try {
-    const metrics = await getMetrics();
-    res.set("Content-Type", "text/plain");
-    res.send(metrics);
-  } catch (error) {
-    logger.error("Metrics endpoint error", {
-      error: error instanceof Error ? error.message : String(error),
-    });
-    res.status(500).json({ error: "Failed to generate metrics" });
   }
 });
 

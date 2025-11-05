@@ -43,7 +43,7 @@ app.use(express.json());
 app.use(requestIdMiddleware);
 app.use(requestLoggerMiddleware);
 
-app.get("/health", async (req, res) => {
+const healthCheck = async (req: Request, res: Response) => {
   const requestId = req.requestId || "unknown";
   try {
     await prisma.$queryRaw`SELECT 1`;
@@ -64,7 +64,10 @@ app.get("/health", async (req, res) => {
       message: "Database connection failed",
     });
   }
-});
+};
+
+app.get("/health", healthCheck);
+app.get("/api/health", healthCheck);
 
 app.get("/metrics", (req, res) => {
   res.status(200).send("");

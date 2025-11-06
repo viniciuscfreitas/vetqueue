@@ -20,6 +20,12 @@ function getWaitMinutes(createdAt: string): number {
   return Math.floor((Date.now() - new Date(createdAt).getTime()) / 60000);
 }
 
+const TTS_TIMEOUT_MS = 2000;
+const TTS_RETRY_DELAY_MS = 500;
+const TTS_RATE = 0.95;
+const TTS_PITCH = 1.0;
+const TTS_VOLUME = 1.0;
+
 export default function DisplayPage() {
   const [currentTime, setCurrentTime] = useState<Date | null>(null);
   const [soundEnabled, setSoundEnabled] = useState(false);
@@ -27,6 +33,27 @@ export default function DisplayPage() {
   const audioContextRef = useRef<AudioContext | null>(null);
   const ttsTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isSpeakingRef = useRef<boolean>(false);
+
+  const cleanupTTS = useCallback(() => {
+    if (ttsTimeoutRef.current) {
+      clearTimeout(ttsTimeoutRef.current);
+      ttsTimeoutRef.current = null;
+    }
+    isSpeakingRef.current = false;
+  }, []);
+
+  const createUtterance = useCallback((message: string, voices: SpeechSynthesisVoice[]) => {
+    const ptVoice = voices.find(v => v.lang.startsWith('pt'));
+    const utterance = new SpeechSynthesisUtterance(message);
+    utterance.lang = ptVoice ? ptVoice.lang : 'pt-BR';
+    if (ptVoice) {
+      utterance.voice = ptVoice;
+    }
+    utterance.rate = TTS_RATE;
+    utterance.pitch = TTS_PITCH;
+    utterance.volume = TTS_VOLUME;
+    return utterance;
+  }, []);
 
   const getAudioContext = useCallback(() => {
     if (!audioContextRef.current) {
@@ -67,127 +94,72 @@ export default function DisplayPage() {
   }, [playBeep]);
 
   const speakAnnouncement = useCallback((entry: QueueEntry, roomName: string | null) => {
-    if (ttsTimeoutRef.current) {
-      clearTimeout(ttsTimeoutRef.current);
-      ttsTimeoutRef.current = null;
-    }
+    cleanupTTS();
 
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
-      console.warn("SpeechSynthesis não disponível, usando beeps");
       playBeepSequence();
       return;
     }
 
     try {
       window.speechSynthesis.cancel();
-      isSpeakingRef.current = false;
       
       const message = roomName 
         ? `Paciente ${entry.patientName}, sala ${roomName}`
         : `Paciente ${entry.patientName}`;
       
-      console.log("🔊 Tentando falar:", message);
-      
       const voices = window.speechSynthesis.getVoices();
-      console.log("📢 Vozes disponíveis:", voices.length);
-      const ptVoice = voices.find(v => v.lang.startsWith('pt'));
       
       if (voices.length === 0) {
-        console.warn("⚠️ Nenhuma voz disponível, aguardando carregamento...");
         setTimeout(() => {
           const voicesAfter = window.speechSynthesis.getVoices();
           if (voicesAfter.length > 0) {
-            console.log("✅ Vozes carregadas, tentando novamente");
-            const retryMessage = roomName 
-              ? `Paciente ${entry.patientName}, sala ${roomName}`
-              : `Paciente ${entry.patientName}`;
-            const retryUtterance = new SpeechSynthesisUtterance(retryMessage);
-            const retryPtVoice = voicesAfter.find(v => v.lang.startsWith('pt'));
-            retryUtterance.lang = retryPtVoice ? retryPtVoice.lang : 'pt-BR';
-            if (retryPtVoice) {
-              retryUtterance.voice = retryPtVoice;
-            }
-            retryUtterance.rate = 0.95;
-            retryUtterance.pitch = 1.0;
-            retryUtterance.volume = 1.0;
+            const retryUtterance = createUtterance(message, voicesAfter);
             retryUtterance.onstart = () => {
               isSpeakingRef.current = true;
-              console.log("✅ TTS iniciou (retry)");
             };
             retryUtterance.onerror = () => {
-              console.error("❌ Erro TTS (retry)");
+              cleanupTTS();
               playBeepSequence();
             };
             window.speechSynthesis.speak(retryUtterance);
           } else {
-            console.error("❌ Ainda sem vozes, usando beeps");
             playBeepSequence();
           }
-        }, 500);
+        }, TTS_RETRY_DELAY_MS);
         return;
       }
       
-      const utterance = new SpeechSynthesisUtterance(message);
-      utterance.lang = ptVoice ? ptVoice.lang : 'pt-BR';
-      if (ptVoice) {
-        utterance.voice = ptVoice;
-        console.log("✅ Usando voz PT:", ptVoice.name);
-      } else {
-        console.warn("⚠️ Voz PT não encontrada, usando padrão");
-      }
-      utterance.rate = 0.95;
-      utterance.pitch = 1.0;
-      utterance.volume = 1.0;
+      const utterance = createUtterance(message, voices);
       
-      utterance.onerror = (e) => {
-        console.error("❌ Erro TTS:", e);
-        isSpeakingRef.current = false;
-        if (ttsTimeoutRef.current) {
-          clearTimeout(ttsTimeoutRef.current);
-          ttsTimeoutRef.current = null;
-        }
+      utterance.onerror = () => {
+        cleanupTTS();
         playBeepSequence();
       };
       
       utterance.onend = () => {
-        console.log("✅ TTS completou");
-        isSpeakingRef.current = false;
-        if (ttsTimeoutRef.current) {
-          clearTimeout(ttsTimeoutRef.current);
-          ttsTimeoutRef.current = null;
-        }
+        cleanupTTS();
       };
       
       utterance.onstart = () => {
-        console.log("✅ TTS iniciou");
         isSpeakingRef.current = true;
-        if (ttsTimeoutRef.current) {
-          clearTimeout(ttsTimeoutRef.current);
-          ttsTimeoutRef.current = null;
-        }
+        cleanupTTS();
       };
       
       window.speechSynthesis.speak(utterance);
-      console.log("📞 speak() chamado, aguardando início...");
       
       ttsTimeoutRef.current = setTimeout(() => {
         if (!isSpeakingRef.current) {
-          console.warn("⏱️ Timeout: TTS não iniciou em 2s, usando beeps");
-          ttsTimeoutRef.current = null;
+          cleanupTTS();
           window.speechSynthesis.cancel();
           playBeepSequence();
         }
-      }, 2000);
+      }, TTS_TIMEOUT_MS);
     } catch (e) {
-      console.error("❌ Exceção TTS:", e);
-      isSpeakingRef.current = false;
-      if (ttsTimeoutRef.current) {
-        clearTimeout(ttsTimeoutRef.current);
-        ttsTimeoutRef.current = null;
-      }
+      cleanupTTS();
       playBeepSequence();
     }
-  }, [playBeepSequence]);
+  }, [playBeepSequence, cleanupTTS, createUtterance]);
 
   const enableSound = useCallback(() => {
     getAudioContext();
@@ -195,34 +167,6 @@ export default function DisplayPage() {
     setSoundEnabled(true);
     if (typeof window !== 'undefined') {
       localStorage.setItem('vetqueue_audio_enabled', 'true');
-      
-      if ('speechSynthesis' in window) {
-        const voices = window.speechSynthesis.getVoices();
-        console.log("🔊 Som ativado. Vozes disponíveis:", voices.length);
-        
-        if (voices.length === 0) {
-          const loadVoices = () => {
-            const loadedVoices = window.speechSynthesis.getVoices();
-            console.log("✅ Vozes carregadas após evento:", loadedVoices.length);
-            const ptVoice = loadedVoices.find(v => v.lang.startsWith('pt'));
-            if (ptVoice) {
-              console.log("✅ Voz PT encontrada:", ptVoice.name);
-            }
-          };
-          
-          if (window.speechSynthesis.onvoiceschanged !== undefined) {
-            window.speechSynthesis.onvoiceschanged = loadVoices;
-          }
-          
-          setTimeout(() => {
-            const delayedVoices = window.speechSynthesis.getVoices();
-            console.log("⏱️ Vozes após delay:", delayedVoices.length);
-            if (delayedVoices.length === 0) {
-              console.warn("⚠️ Nenhuma voz carregada. Pode ser bloqueio do navegador.");
-            }
-          }, 1000);
-        }
-      }
     }
   }, [getAudioContext, playBeepSequence]);
 

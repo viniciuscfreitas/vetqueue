@@ -88,6 +88,17 @@ export interface ActiveVet {
   roomName: string;
 }
 
+export interface Tutor {
+  id: string;
+  name: string;
+  phone?: string | null;
+  email?: string | null;
+  cpfCnpj?: string | null;
+  address?: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export interface Patient {
   id: string;
   name: string;
@@ -103,6 +114,8 @@ export interface Patient {
   temperament?: string | null;
   neutered?: boolean | null;
   photoUrl?: string | null;
+  tutorId?: string | null;
+  tutor?: Tutor | null;
   tutorName: string;
   tutorPhone?: string | null;
   tutorEmail?: string | null;

@@ -354,6 +354,17 @@ export const auditApi = {
     api.get<AuditLog[]>(`/api/queue/entry/${entryId}/audit`),
 };
 
+export interface Tutor {
+  id: string;
+  name: string;
+  phone?: string | null;
+  email?: string | null;
+  cpfCnpj?: string | null;
+  address?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Patient {
   id: string;
   name: string;
@@ -369,6 +380,8 @@ export interface Patient {
   temperament?: string | null;
   neutered?: boolean | null;
   photoUrl?: string | null;
+  tutorId?: string | null;
+  tutor?: Tutor | null;
   tutorName: string;
   tutorPhone?: string | null;
   tutorEmail?: string | null;
@@ -377,6 +390,22 @@ export interface Patient {
   notes?: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface CreateTutorData {
+  name: string;
+  phone?: string;
+  email?: string;
+  cpfCnpj?: string;
+  address?: string;
+}
+
+export interface UpdateTutorData {
+  name?: string;
+  phone?: string;
+  email?: string;
+  cpfCnpj?: string;
+  address?: string;
 }
 
 export interface CreatePatientData {
@@ -393,7 +422,8 @@ export interface CreatePatientData {
   temperament?: string;
   neutered?: boolean;
   photoUrl?: string;
-  tutorName: string;
+  tutorId?: string;
+  tutorName?: string;
   tutorPhone?: string;
   tutorEmail?: string;
   tutorCpfCnpj?: string;
@@ -415,6 +445,7 @@ export interface UpdatePatientData {
   temperament?: string;
   neutered?: boolean;
   photoUrl?: string;
+  tutorId?: string;
   tutorName?: string;
   tutorPhone?: string;
   tutorEmail?: string;
@@ -423,8 +454,24 @@ export interface UpdatePatientData {
   notes?: string;
 }
 
+export const tutorApi = {
+  list: (filters?: { name?: string; phone?: string; cpfCnpj?: string }) =>
+    api.get<Tutor[]>("/api/tutors", { params: filters }),
+  
+  getById: (id: string) => api.get<Tutor>(`/api/tutors/${id}`),
+  
+  create: (data: CreateTutorData) => api.post<Tutor>("/api/tutors", data),
+  
+  update: (id: string, data: UpdateTutorData) =>
+    api.patch<Tutor>(`/api/tutors/${id}`, data),
+  
+  delete: (id: string) => api.delete(`/api/tutors/${id}`),
+  
+  getPatients: (id: string) => api.get<Patient[]>(`/api/tutors/${id}/patients`),
+};
+
 export const patientApi = {
-  list: (filters?: { name?: string; tutorName?: string }) => 
+  list: (filters?: { name?: string; tutorName?: string; tutorId?: string }) => 
     api.get<Patient[]>("/api/patients", { params: filters }),
   
   getById: (id: string) => api.get<Patient>(`/api/patients/${id}`),

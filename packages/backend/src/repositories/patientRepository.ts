@@ -1,8 +1,8 @@
 import { Patient as PrismaPatient } from "@prisma/client";
-import { Patient } from "../core/types";
+import { Patient, Tutor } from "../core/types";
 import { prisma } from "../lib/prisma";
 
-function mapPrismaToDomain(patient: PrismaPatient): Patient {
+function mapPrismaToDomain(patient: PrismaPatient & { tutor?: { id: string; name: string; phone: string | null; email: string | null; cpfCnpj: string | null; address: string | null; createdAt: Date; updatedAt: Date } | null }): Patient {
   return {
     id: patient.id,
     name: patient.name,
@@ -18,6 +18,17 @@ function mapPrismaToDomain(patient: PrismaPatient): Patient {
     temperament: patient.temperament,
     neutered: patient.neutered,
     photoUrl: patient.photoUrl,
+    tutorId: patient.tutorId,
+    tutor: patient.tutor ? {
+      id: patient.tutor.id,
+      name: patient.tutor.name,
+      phone: patient.tutor.phone,
+      email: patient.tutor.email,
+      cpfCnpj: patient.tutor.cpfCnpj,
+      address: patient.tutor.address,
+      createdAt: patient.tutor.createdAt,
+      updatedAt: patient.tutor.updatedAt,
+    } : null,
     tutorName: patient.tutorName,
     tutorPhone: patient.tutorPhone,
     tutorEmail: patient.tutorEmail,
@@ -30,7 +41,7 @@ function mapPrismaToDomain(patient: PrismaPatient): Patient {
 }
 
 export class PatientRepository {
-  async findAll(filters?: { name?: string; tutorName?: string }): Promise<Patient[]> {
+  async findAll(filters?: { name?: string; tutorName?: string; tutorId?: string }): Promise<Patient[]> {
     const where: any = {};
     
     if (filters?.name) {
@@ -40,7 +51,9 @@ export class PatientRepository {
       };
     }
     
-    if (filters?.tutorName) {
+    if (filters?.tutorId) {
+      where.tutorId = filters.tutorId;
+    } else if (filters?.tutorName) {
       where.tutorName = {
         contains: filters.tutorName,
         mode: "insensitive",
@@ -57,6 +70,7 @@ export class PatientRepository {
   async findById(id: string): Promise<Patient | null> {
     const patient = await prisma.patient.findUnique({
       where: { id },
+      include: { tutor: true },
     });
     return patient ? mapPrismaToDomain(patient) : null;
   }
@@ -75,6 +89,7 @@ export class PatientRepository {
     temperament?: string | null;
     neutered?: boolean | null;
     photoUrl?: string | null;
+    tutorId?: string | null;
     tutorName: string;
     tutorPhone?: string | null;
     tutorEmail?: string | null;
@@ -102,6 +117,7 @@ export class PatientRepository {
     temperament?: string | null;
     neutered?: boolean | null;
     photoUrl?: string | null;
+    tutorId?: string | null;
     tutorName?: string;
     tutorPhone?: string | null;
     tutorEmail?: string | null;

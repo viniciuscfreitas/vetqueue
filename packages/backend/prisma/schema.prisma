@@ -92,6 +92,23 @@ model AuditLog {
   @@map("audit_logs")
 }
 
+model Tutor {
+  id        String    @id @default(uuid())
+  name      String
+  phone     String?
+  email     String?
+  cpfCnpj   String?
+  address   String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  patients  Patient[]
+
+  @@index([name])
+  @@index([phone])
+  @@index([cpfCnpj])
+  @@map("tutors")
+}
+
 model Patient {
   id               String         @id @default(uuid())
   name             String
@@ -107,6 +124,8 @@ model Patient {
   temperament      String?
   neutered         Boolean?       @default(false)
   photoUrl         String?
+  tutorId          String?
+  tutor            Tutor?         @relation(fields: [tutorId], references: [id], onDelete: SetNull)
   tutorName        String
   tutorPhone       String?
   tutorEmail       String?
@@ -120,6 +139,7 @@ model Patient {
   vaccinations     Vaccination[]
 
   @@index([name])
+  @@index([tutorId])
   @@index([tutorName])
   @@index([tutorPhone])
   @@index([microchip])

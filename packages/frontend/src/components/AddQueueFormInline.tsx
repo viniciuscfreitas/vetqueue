@@ -33,6 +33,7 @@ export function AddQueueFormInline({ onSuccess, onClose, inline = true }: AddQue
   const [formData, setFormData] = useState({
     patientName: "",
     tutorName: "",
+    tutorId: undefined as string | undefined,
     serviceType: "",
     priority: Priority.NORMAL as Priority,
     assignedVetId: "NONE",
@@ -79,6 +80,7 @@ export function AddQueueFormInline({ onSuccess, onClose, inline = true }: AddQue
       setFormData({
         patientName: "",
         tutorName: "",
+        tutorId: undefined,
         serviceType: "",
         priority: Priority.NORMAL as Priority,
         assignedVetId: "NONE",
@@ -105,10 +107,11 @@ export function AddQueueFormInline({ onSuccess, onClose, inline = true }: AddQue
         <div className="space-y-2">
           <TutorAutocomplete
             value={formData.tutorName}
-            onChange={(tutorName) => {
+            onChange={(tutorName, tutorId) => {
               setFormData({
                 ...formData,
                 tutorName,
+                tutorId,
                 patientName: "",
                 patientId: undefined,
               });

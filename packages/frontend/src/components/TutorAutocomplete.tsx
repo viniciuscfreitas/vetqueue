@@ -2,13 +2,13 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { patientApi } from "@/lib/api";
+import { tutorApi, Tutor } from "@/lib/api";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 
 interface TutorAutocompleteProps {
   value?: string;
-  onChange: (tutorName: string) => void;
+  onChange: (tutorName: string, tutorId?: string) => void;
   label?: string;
   placeholder?: string;
   required?: boolean;
@@ -25,7 +25,7 @@ export function TutorAutocomplete({
 }: TutorAutocompleteProps) {
   const [searchTerm, setSearchTerm] = useState(value || "");
   const [showDropdown, setShowDropdown] = useState(false);
-  const [selectedTutor, setSelectedTutor] = useState<string | null>(null);
+  const [selectedTutor, setSelectedTutor] = useState<{ id: string; name: string } | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -45,20 +45,18 @@ export function TutorAutocomplete({
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  const { data: patients = [], isLoading } = useQuery({
-    queryKey: ["patients", "tutors", debouncedSearch],
-    queryFn: () => {
-      if (!debouncedSearch.trim()) {
-        return Promise.resolve([]);
-      }
-      return patientApi.list({ tutorName: debouncedSearch }).then((res) => res.data);
-    },
-    enabled: debouncedSearch.trim().length > 0,
+  const { data: allTutors = [], isLoading } = useQuery({
+    queryKey: ["tutors"],
+    queryFn: () => tutorApi.list().then((res) => res.data),
   });
 
-  const uniqueTutors = Array.from(
-    new Set(patients.map(p => p.tutorName).filter(Boolean))
-  ).slice(0, 8);
+  const filteredTutors = debouncedSearch.trim()
+    ? allTutors.filter(tutor =>
+        tutor.name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+        tutor.phone?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+        tutor.cpfCnpj?.toLowerCase().includes(debouncedSearch.toLowerCase())
+      ).slice(0, 8)
+    : [];
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -76,11 +74,11 @@ export function TutorAutocomplete({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleSelect = (tutorName: string) => {
-    setSelectedTutor(tutorName);
-    setSearchTerm(tutorName);
+  const handleSelect = (tutor: Tutor) => {
+    setSelectedTutor({ id: tutor.id, name: tutor.name });
+    setSearchTerm(tutor.name);
     setShowDropdown(false);
-    onChange(tutorName);
+    onChange(tutor.name, tutor.id);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -88,7 +86,7 @@ export function TutorAutocomplete({
     setSearchTerm(newValue);
     setShowDropdown(newValue.length > 0);
     setSelectedTutor(null);
-    onChange(newValue);
+    onChange(newValue, undefined);
   };
 
   return (
@@ -104,7 +102,7 @@ export function TutorAutocomplete({
         type="text"
         value={searchTerm}
         onChange={handleInputChange}
-        onFocus={() => setShowDropdown(searchTerm.length > 0 && uniqueTutors.length > 0)}
+        onFocus={() => setShowDropdown(searchTerm.length > 0 && filteredTutors.length > 0)}
         placeholder={placeholder}
         required={required}
         className="w-full"
@@ -116,19 +114,24 @@ export function TutorAutocomplete({
         >
           {isLoading ? (
             <div className="p-2 text-sm text-muted-foreground">Buscando...</div>
-          ) : uniqueTutors.length === 0 ? (
+          ) : filteredTutors.length === 0 ? (
             <div className="p-2 text-sm text-muted-foreground">
               Nenhum tutor encontrado
             </div>
           ) : (
-            uniqueTutors.map((tutorName, index) => (
+            filteredTutors.map((tutor) => (
               <button
-                key={`${tutorName}-${index}`}
+                key={tutor.id}
                 type="button"
-                onClick={() => handleSelect(tutorName)}
+                onClick={() => handleSelect(tutor)}
                 className="w-full text-left px-4 py-2 hover:bg-accent hover:text-accent-foreground text-sm"
               >
-                {tutorName}
+                {tutor.name}
+                {tutor.phone && (
+                  <span className="text-xs text-muted-foreground ml-2">
+                    {tutor.phone}
+                  </span>
+                )}
               </button>
             ))
           )}

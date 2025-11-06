@@ -27,6 +27,7 @@ export function AddQueueForm() {
   const [formData, setFormData] = useState({
     patientName: "",
     tutorName: "",
+    tutorId: undefined as string | undefined,
     serviceType: "" as ServiceType | "",
     priority: Priority.NORMAL as Priority,
     hasScheduledAppointment: false,
@@ -67,10 +68,11 @@ export function AddQueueForm() {
     <form onSubmit={handleSubmit} className="space-y-4 max-w-md">
       <TutorAutocomplete
         value={formData.tutorName}
-        onChange={(tutorName) => {
+        onChange={(tutorName, tutorId) => {
           setFormData({
             ...formData,
             tutorName,
+            tutorId,
             patientName: "",
             patientId: undefined,
           });

@@ -7,7 +7,7 @@ import { Header } from "@/components/Header";
 import { Spinner } from "@/components/ui/spinner";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
-import { Clock, UserCircle2 } from "lucide-react";
+import { Clock, UserCircle2, Users } from "lucide-react";
 
 export default function Home() {
   const router = useRouter();
@@ -39,6 +39,12 @@ export default function Home() {
       ariaLabel: "Cadastrar e gerenciar pacientes e prontuários",
       href: "/patients",
       icon: UserCircle2,
+    },
+    {
+      title: "Tutores",
+      ariaLabel: "Cadastrar e gerenciar tutores",
+      href: "/tutors",
+      icon: Users,
     },
   ];
 

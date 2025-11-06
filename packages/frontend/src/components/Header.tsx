@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { RoomSelector } from "./RoomSelector";
-import { User, Settings, Monitor, LogOut, ChevronDown } from "lucide-react";
+import { User, Settings, Monitor, LogOut, ChevronDown, Users } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -71,6 +71,13 @@ export function Header() {
                     <Link href="/admin/services" className="flex items-center cursor-pointer">
                       <Settings className="mr-2 h-4 w-4" />
                       Serviços
+                </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href="/tutors" className="flex items-center cursor-pointer">
+                      <Users className="mr-2 h-4 w-4" />
+                      Tutores
                 </Link>
                   </DropdownMenuItem>
                 </DropdownMenuContent>

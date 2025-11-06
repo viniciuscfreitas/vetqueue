@@ -22,6 +22,7 @@ function getWaitMinutes(createdAt: string): number {
 
 const TTS_TIMEOUT_MS = 2000;
 const TTS_RETRY_DELAY_MS = 500;
+const TTS_REPEAT_INTERVAL_MS = 15000;
 const TTS_RATE = 0.95;
 const TTS_PITCH = 1.0;
 const TTS_VOLUME = 1.0;
@@ -33,6 +34,8 @@ export default function DisplayPage() {
   const audioContextRef = useRef<AudioContext | null>(null);
   const ttsTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isSpeakingRef = useRef<boolean>(false);
+  const repeatIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const currentAnnouncementIndexRef = useRef<number>(0);
 
   const cleanupTTS = useCallback(() => {
     if (ttsTimeoutRef.current) {
@@ -161,6 +164,19 @@ export default function DisplayPage() {
     }
   }, [playBeepSequence, cleanupTTS, createUtterance]);
 
+  const announceNextCalledPatient = useCallback((calledEntries: QueueEntry[], roomsList: typeof rooms) => {
+    if (calledEntries.length === 0) return;
+
+    const currentIndex = currentAnnouncementIndexRef.current;
+    const entry = calledEntries[currentIndex % calledEntries.length];
+    const roomName = entry.roomId 
+      ? roomsList.find((r) => r.id === entry.roomId)?.name || null
+      : null;
+    
+    speakAnnouncement(entry, roomName);
+    currentAnnouncementIndexRef.current = (currentIndex + 1) % calledEntries.length;
+  }, [speakAnnouncement]);
+
   const enableSound = useCallback(() => {
     getAudioContext();
     playBeepSequence();
@@ -223,6 +239,32 @@ export default function DisplayPage() {
 
     previousCalledIdsRef.current = currentCalledIds;
   }, [called, isLoading, soundEnabled, speakAnnouncement, rooms]);
+
+  useEffect(() => {
+    if (isLoading) return;
+
+    if (repeatIntervalRef.current) {
+      clearInterval(repeatIntervalRef.current);
+      repeatIntervalRef.current = null;
+    }
+
+    if (called.length === 0) {
+      currentAnnouncementIndexRef.current = 0;
+    }
+
+    if (called.length > 0 && soundEnabled) {
+      repeatIntervalRef.current = setInterval(() => {
+        announceNextCalledPatient(called, rooms);
+      }, TTS_REPEAT_INTERVAL_MS);
+    }
+
+    return () => {
+      if (repeatIntervalRef.current) {
+        clearInterval(repeatIntervalRef.current);
+        repeatIntervalRef.current = null;
+      }
+    };
+  }, [called, rooms, soundEnabled, isLoading, announceNextCalledPatient]);
 
   return (
     <div className="min-h-screen bg-gray-50" role="application" aria-label="Tela de exibição da fila de atendimento">

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "./ui/dialog";
 import { Button } from "./ui/button";
 import { Label } from "./ui/label";
 import {
@@ -40,6 +40,8 @@ export function PaymentEditModal({
       setPaymentMethod(entry.paymentMethod || null);
     }
   }, [open, entry]);
+  
+  const selectValue = paymentMethod || "__NONE__";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,6 +68,9 @@ export function PaymentEditModal({
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Editar Forma de Pagamento</DialogTitle>
+          <DialogDescription>
+            Selecione a forma de pagamento para este atendimento
+          </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-5">
@@ -74,14 +79,14 @@ export function PaymentEditModal({
               Forma de Pagamento
             </Label>
             <Select
-              value={paymentMethod || ""}
-              onValueChange={(value) => setPaymentMethod(value || null)}
+              value={selectValue}
+              onValueChange={(value) => setPaymentMethod(value === "__NONE__" ? null : value)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Selecione a forma de pagamento" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Não informado</SelectItem>
+                <SelectItem value="__NONE__">Não informado</SelectItem>
                 <SelectItem value="CREDIT">Crédito</SelectItem>
                 <SelectItem value="DEBIT">Débito</SelectItem>
                 <SelectItem value="CASH">Dinheiro</SelectItem>

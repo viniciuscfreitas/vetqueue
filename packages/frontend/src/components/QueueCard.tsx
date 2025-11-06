@@ -5,9 +5,8 @@ import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { calculateWaitTime, calculateServiceTime } from "@/lib/utils";
 import { useState, useEffect } from "react";
-import { Clock, User, Stethoscope, CheckCircle2, XCircle, UserCircle, DoorOpen, Pencil, FileText, CreditCard } from "lucide-react";
+import { Clock, User, Stethoscope, CheckCircle2, XCircle, UserCircle, DoorOpen, Pencil, FileText } from "lucide-react";
 import { EditQueueDialog } from "./EditQueueDialog";
-import { PaymentEditModal } from "./PaymentEditModal";
 import { useQueryClient } from "@tanstack/react-query";
 
 interface QueueCardProps {
@@ -77,7 +76,6 @@ export function QueueCard({
   
   const [, setCurrentTime] = useState(Date.now());
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
   
   useEffect(() => {
     if (entry.status === Status.WAITING || entry.status === Status.IN_PROGRESS) {
@@ -91,7 +89,6 @@ export function QueueCard({
 
   const StatusIcon = status.icon;
   const canEdit = entry.status === Status.WAITING && userRole === Role.RECEPCAO;
-  const canEditPayment = userRole === Role.RECEPCAO;
   const queryClient = useQueryClient();
   
   return (
@@ -137,29 +134,16 @@ export function QueueCard({
                 </Badge>
               </div>
             </div>
-            <div className="flex gap-1">
-              {canEdit && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setEditDialogOpen(true)}
-                  className="flex-shrink-0"
-                >
-                  <Pencil className="h-4 w-4" />
-                </Button>
-              )}
-              {canEditPayment && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setPaymentDialogOpen(true)}
-                  className="flex-shrink-0"
-                  title="Editar pagamento"
-                >
-                  <CreditCard className="h-4 w-4" />
-                </Button>
-              )}
-            </div>
+            {canEdit && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setEditDialogOpen(true)}
+                className="flex-shrink-0"
+              >
+                <Pencil className="h-4 w-4" />
+              </Button>
+            )}
           </div>
         </CardHeader>
       <CardContent className="space-y-3">
@@ -310,15 +294,6 @@ export function QueueCard({
       onOpenChange={setEditDialogOpen}
       onSuccess={() => {
         queryClient.invalidateQueries({ queryKey: ["queue"] });
-      }}
-    />
-    <PaymentEditModal
-      entry={entry}
-      open={paymentDialogOpen}
-      onOpenChange={setPaymentDialogOpen}
-      onSuccess={() => {
-        queryClient.invalidateQueries({ queryKey: ["queue"] });
-        queryClient.invalidateQueries({ queryKey: ["financial"] });
       }}
     />
     </>

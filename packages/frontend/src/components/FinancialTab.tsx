@@ -1,8 +1,7 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
-import { queueApi, FinancialSummary } from "@/lib/api";
-import { QueueList } from "@/components/QueueList";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { queueApi, FinancialSummary, QueueEntry } from "@/lib/api";
 import { Pagination } from "@/components/Pagination";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -19,6 +18,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useDateRange } from "@/hooks/useDateRange";
 import { useState, useEffect } from "react";
 import { DollarSign, CreditCard, Wallet, Banknote } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
+import { createErrorHandler } from "@/lib/errors";
 
 interface FinancialTabProps {
   authLoading: boolean;
@@ -32,6 +33,10 @@ export function FinancialTab({ authLoading }: FinancialTabProps) {
     paymentMethod: "__ALL__",
   });
   const [page, setPage] = useState(1);
+  const { toast } = useToast();
+  const handleError = createErrorHandler(toast);
+  const queryClient = useQueryClient();
+  const [editingPayment, setEditingPayment] = useState<Record<string, string | null>>({});
 
   const { data: financialData, isLoading: isLoadingFinancial } = useQuery({
     queryKey: ["financial", startDate, endDate, filters, page],
@@ -77,6 +82,44 @@ export function FinancialTab({ authLoading }: FinancialTabProps) {
     CASH: "Dinheiro",
     PIX: "PIX",
     NÃO_INFORMADO: "Não Informado",
+  };
+
+  const updatePaymentMutation = useMutation({
+    mutationFn: ({ id, paymentMethod }: { id: string; paymentMethod: string | null }) =>
+      queueApi.updatePayment(id, paymentMethod),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["financial"] });
+      queryClient.invalidateQueries({ queryKey: ["queue"] });
+      toast({
+        title: "Sucesso",
+        description: "Forma de pagamento atualizada",
+      });
+    },
+    onError: handleError,
+  });
+
+  const handlePaymentChange = (entryId: string, value: string) => {
+    setEditingPayment({ ...editingPayment, [entryId]: value });
+  };
+
+  const handlePaymentSave = (entryId: string) => {
+    const paymentMethod = editingPayment[entryId] === "__NONE__" ? null : editingPayment[entryId];
+    updatePaymentMutation.mutate({ id: entryId, paymentMethod: paymentMethod || null });
+    const newEditing = { ...editingPayment };
+    delete newEditing[entryId];
+    setEditingPayment(newEditing);
+  };
+
+  const formatDateTime = (dateString?: string | null) => {
+    if (!dateString) return "-";
+    const date = new Date(dateString);
+    return date.toLocaleString("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   };
 
   return (
@@ -231,18 +274,10 @@ export function FinancialTab({ authLoading }: FinancialTabProps) {
       )}
 
       {isLoadingFinancial ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[1, 2, 3].map((i) => (
-            <Card key={i}>
-              <CardHeader>
-                <Skeleton className="h-6 w-32" />
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-3/4" />
-              </CardContent>
-            </Card>
-          ))}
+        <div className="space-y-2">
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
         </div>
       ) : (
         <>
@@ -252,15 +287,97 @@ export function FinancialTab({ authLoading }: FinancialTabProps) {
                 {financialPaginated ? `${financialPaginated.total} atendimentos encontrados` : `${financialEntries.length} atendimentos encontrados`}
               </p>
             )}
-            <QueueList
-              entries={financialEntries}
-              mode="history"
-              emptyMessage={
-                hasActiveFilters
-                  ? "Nenhum atendimento encontrado com os filtros aplicados"
-                  : "Nenhum atendimento concluído no período selecionado"
-              }
-            />
+            {financialEntries.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">
+                  {hasActiveFilters
+                    ? "Nenhum atendimento encontrado com os filtros aplicados"
+                    : "Nenhum atendimento concluído no período selecionado"}
+                </p>
+              </div>
+            ) : (
+              <div className="border rounded-lg overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-muted">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-sm font-semibold">Nome do Animal</th>
+                        <th className="px-4 py-3 text-left text-sm font-semibold">Nome do Tutor</th>
+                        <th className="px-4 py-3 text-left text-sm font-semibold">Forma de Pagamento</th>
+                        <th className="px-4 py-3 text-left text-sm font-semibold">Horário de Entrada</th>
+                        <th className="px-4 py-3 text-left text-sm font-semibold">Horário de Saída</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {financialEntries.map((entry) => {
+                        const isEditing = editingPayment[entry.id] !== undefined;
+                        const currentPayment = isEditing ? editingPayment[entry.id] : (entry.paymentMethod || "__NONE__");
+                        return (
+                          <tr key={entry.id} className="border-b hover:bg-muted/50">
+                            <td className="px-4 py-3 text-sm">{entry.patientName}</td>
+                            <td className="px-4 py-3 text-sm">{entry.tutorName}</td>
+                            <td className="px-4 py-3">
+                              {isEditing ? (
+                                <div className="flex items-center gap-2">
+                                  <Select
+                                    value={currentPayment || "__NONE__"}
+                                    onValueChange={(value) => handlePaymentChange(entry.id, value)}
+                                  >
+                                    <SelectTrigger className="w-[140px]">
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="__NONE__">Não informado</SelectItem>
+                                      <SelectItem value="CREDIT">Crédito</SelectItem>
+                                      <SelectItem value="DEBIT">Débito</SelectItem>
+                                      <SelectItem value="CASH">Dinheiro</SelectItem>
+                                      <SelectItem value="PIX">PIX</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                  <Button
+                                    size="sm"
+                                    onClick={() => handlePaymentSave(entry.id)}
+                                    disabled={updatePaymentMutation.isPending}
+                                  >
+                                    Salvar
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => {
+                                      const newEditing = { ...editingPayment };
+                                      delete newEditing[entry.id];
+                                      setEditingPayment(newEditing);
+                                    }}
+                                  >
+                                    Cancelar
+                                  </Button>
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm">
+                                    {paymentMethodLabels[entry.paymentMethod || "NÃO_INFORMADO"] || "Não informado"}
+                                  </span>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => setEditingPayment({ ...editingPayment, [entry.id]: entry.paymentMethod || "__NONE__" })}
+                                  >
+                                    Editar
+                                  </Button>
+                                </div>
+                              )}
+                            </td>
+                            <td className="px-4 py-3 text-sm">{formatDateTime(entry.createdAt)}</td>
+                            <td className="px-4 py-3 text-sm">{formatDateTime(entry.completedAt)}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
           </div>
           {financialPaginated && (
             <Pagination

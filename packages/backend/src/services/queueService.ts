@@ -13,7 +13,7 @@ export class QueueService {
   private updateActivityIfNeeded(vetId?: string | null): void {
     if (vetId) {
       this.userRepository.updateLastActivity(vetId).catch((error) => {
-        logger.error("Failed to update user activity", { vetId, error: error instanceof Error ? error.message : String(error) });
+        logger.error("Failed to update user activity", { module: "Queue", vetId, error: error instanceof Error ? error.message : String(error) });
       });
     }
   }
@@ -120,7 +120,7 @@ export class QueueService {
     
     try {
       if (!data.patientName.trim() || !data.tutorName.trim()) {
-        logger.warn("Missing required fields", { hasPatientName: !!data.patientName.trim(), hasTutorName: !!data.tutorName.trim() });
+        logger.warn("Missing required fields", { module: "Queue", hasPatientName: !!data.patientName.trim(), hasTutorName: !!data.tutorName.trim() });
         throw new Error("Nome do paciente e tutor são obrigatórios");
       }
 
@@ -494,22 +494,47 @@ export class QueueService {
     const becomesWalkIn = wasScheduled && !processed.hasScheduledAppointment;
     
     if (becomesWalkIn) {
-      logger.info("Scheduled appointment converted to walk-in (late >15min) on update", { entryId: id, patientName: entry.patientName });
+      logger.info("Scheduled appointment converted to walk-in (late >15min) on update", {
+        module: "Queue",
+        eventType: "AppointmentConversion",
+        entryId: id,
+        patientId: entry.patientId || null,
+        patientName: entry.patientName,
+      });
     }
 
-    logger.debug("Updating queue entry", { entryId: id, data });
+    logger.debug("Updating queue entry", { module: "Queue", entryId: id, data });
 
     try {
+      const oldStatus = entry.status;
       const updated = await this.repository.update(id, {
         ...data,
         priority: processed.priority,
         hasScheduledAppointment: processed.hasScheduledAppointment,
         scheduledAt: processed.scheduledAt || undefined,
       });
-      logger.info("Queue entry updated", { entryId: id, patientName: updated.patientName, priority: processed.priority });
+      
+      const updateMeta: any = {
+        module: "Queue",
+        eventType: "QueueEntryUpdated",
+        entryId: id,
+        patientId: updated.patientId || null,
+        patientName: updated.patientName,
+        priority: processed.priority,
+      };
+      
+      if (updated.status !== oldStatus) {
+        updateMeta.eventType = "StatusTransition";
+        updateMeta.oldStatus = oldStatus;
+        updateMeta.newStatus = updated.status;
+      }
+      
+      logger.info("Queue entry updated", updateMeta);
       return updated;
     } catch (error) {
       logger.error("Failed to update queue entry", { 
+        module: "Queue",
+        eventType: "QueueEntryUpdateFailed",
         entryId: id,
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,

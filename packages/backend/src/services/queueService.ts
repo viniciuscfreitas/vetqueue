@@ -64,6 +64,8 @@ export class QueueService {
     hasScheduledAppointment?: boolean;
     scheduledAt?: Date;
     patientId?: string;
+    simplesVetId?: string;
+    paymentMethod?: string;
   }): Promise<QueueEntry> {
     logger.debug("addToQueue called", {
       module: "Queue",
@@ -456,6 +458,22 @@ export class QueueService {
     return this.repository.getRoomUtilizationStats(startDate, endDate);
   }
 
+  async getFinancialEntries(filters?: {
+    startDate?: Date;
+    endDate?: Date;
+    tutorName?: string;
+    patientName?: string;
+    paymentMethod?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<{ entries: QueueEntry[]; total: number; page: number; totalPages: number }> {
+    return this.repository.listFinancialPaginated(filters);
+  }
+
+  async getFinancialSummary(startDate: Date, endDate: Date) {
+    return this.repository.getFinancialSummary(startDate, endDate);
+  }
+
   async updateEntry(
     id: string,
     data: {
@@ -467,6 +485,8 @@ export class QueueService {
       hasScheduledAppointment?: boolean;
       scheduledAt?: Date;
       patientId?: string | null;
+      simplesVetId?: string | null;
+      paymentMethod?: string | null;
     },
     userRole?: string
   ): Promise<QueueEntry> {

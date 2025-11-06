@@ -40,7 +40,9 @@ export function AddQueueFormInline({ onSuccess, onClose, inline = true }: AddQue
     hasScheduledAppointment: false,
     scheduledAt: "",
     patientId: undefined as string | undefined,
+    simplesVetId: "",
   });
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   const isRecepcao = user?.role === Role.RECEPCAO;
 
@@ -76,6 +78,7 @@ export function AddQueueFormInline({ onSuccess, onClose, inline = true }: AddQue
         hasScheduledAppointment: formData.hasScheduledAppointment,
         scheduledAt: scheduledDateTime?.toISOString(),
         patientId: formData.patientId,
+        simplesVetId: formData.simplesVetId || undefined,
       });
       setFormData({
         patientName: "",
@@ -87,6 +90,7 @@ export function AddQueueFormInline({ onSuccess, onClose, inline = true }: AddQue
         hasScheduledAppointment: false,
         scheduledAt: "",
         patientId: undefined,
+        simplesVetId: "",
       });
       toast({
         title: "Sucesso",
@@ -149,6 +153,22 @@ export function AddQueueFormInline({ onSuccess, onClose, inline = true }: AddQue
         </div>
       </div>
 
+      <div className="space-y-2">
+        <Label htmlFor="simplesVetId" className="text-sm font-medium">
+          Número da Ficha (SimplesVet)
+        </Label>
+        <Input
+          id="simplesVetId"
+          type="text"
+          value={formData.simplesVetId}
+          onChange={(e) =>
+            setFormData({ ...formData, simplesVetId: e.target.value })
+          }
+          placeholder="Opcional"
+          className="w-full"
+        />
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="space-y-2">
           <Label htmlFor="serviceType" className="text-sm font-medium">
@@ -197,72 +217,89 @@ export function AddQueueFormInline({ onSuccess, onClose, inline = true }: AddQue
           </Select>
         </div>
 
-        {isRecepcao && (
-          <div className="space-y-2">
-            <Label htmlFor="assignedVetId" className="text-sm font-medium">
-              Veterinário
-            </Label>
-            <Select
-              value={formData.assignedVetId}
-              onValueChange={(value) =>
-                setFormData({ ...formData, assignedVetId: value })
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Fila geral" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="NONE">Fila geral</SelectItem>
-                {vets.map((vet) => (
-                  <SelectItem key={vet.vetId} value={vet.vetId}>
-                    {vet.vetName} - {vet.roomName}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+      </div>
+
+      <div className="border-t pt-4">
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={() => setShowAdvanced(!showAdvanced)}
+          className="w-full justify-between"
+        >
+          <span className="text-sm font-medium">Avançado</span>
+          <span>{showAdvanced ? "▲" : "▼"}</span>
+        </Button>
+
+        {showAdvanced && (
+          <div className="mt-4 space-y-4">
+            {isRecepcao && (
+              <div className="space-y-2">
+                <Label htmlFor="assignedVetId" className="text-sm font-medium">
+                  Veterinário
+                </Label>
+                <Select
+                  value={formData.assignedVetId}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, assignedVetId: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Fila geral" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="NONE">Fila geral</SelectItem>
+                    {vets.map((vet) => (
+                      <SelectItem key={vet.vetId} value={vet.vetId}>
+                        {vet.vetName} - {vet.roomName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="hasScheduledAppointment"
+                checked={formData.hasScheduledAppointment}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    hasScheduledAppointment: e.target.checked,
+                    scheduledAt: e.target.checked ? formData.scheduledAt : "",
+                  })
+                }
+                className="h-4 w-4 rounded border-gray-300"
+              />
+              <Label htmlFor="hasScheduledAppointment" className="text-sm font-normal cursor-pointer">
+                Tem hora marcada
+              </Label>
+            </div>
+
+            {formData.hasScheduledAppointment && (
+              <div className="space-y-2">
+                <Label htmlFor="scheduledAt" className="text-sm font-medium">
+                  Hora Agendada (hoje)
+                </Label>
+                <Input
+                  id="scheduledAt"
+                  type="time"
+                  value={formData.scheduledAt}
+                  onChange={(e) =>
+                    setFormData({ ...formData, scheduledAt: e.target.value })
+                  }
+                  required={formData.hasScheduledAppointment}
+                  className="w-full"
+                />
+                <p className="text-xs text-muted-foreground">
+                  A prioridade será aumentada automaticamente se o horário passou há mais de 15 minutos.
+                </p>
+              </div>
+            )}
           </div>
         )}
       </div>
-
-      <div className="flex items-center space-x-2">
-        <input
-          type="checkbox"
-          id="hasScheduledAppointment"
-          checked={formData.hasScheduledAppointment}
-          onChange={(e) =>
-            setFormData({
-              ...formData,
-              hasScheduledAppointment: e.target.checked,
-              scheduledAt: e.target.checked ? formData.scheduledAt : "",
-            })
-          }
-          className="h-4 w-4 rounded border-gray-300"
-        />
-        <Label htmlFor="hasScheduledAppointment" className="text-sm font-normal cursor-pointer">
-          Tem hora marcada
-        </Label>
-      </div>
-
-      {formData.hasScheduledAppointment && (
-        <div className="space-y-2">
-          <Label htmlFor="scheduledAt" className="text-sm font-medium">
-            Hora Agendada (hoje)
-          </Label>
-          <Input
-            id="scheduledAt"
-            type="time"
-            value={formData.scheduledAt}
-            onChange={(e) =>
-              setFormData({ ...formData, scheduledAt: e.target.value })
-            }
-            required={formData.hasScheduledAppointment}
-            className="w-full"
-          />
-          <p className="text-xs text-muted-foreground">
-            A prioridade será aumentada automaticamente se o horário passou há mais de 15 minutos.
-          </p>
-        </div>
-      )}
 
       <div className="flex justify-end">
         <Button 

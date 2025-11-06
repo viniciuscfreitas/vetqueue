@@ -108,6 +108,13 @@ export interface QueueEntry {
   scheduledAt?: string | null;
   patientId?: string | null;
   patient?: Patient | null;
+  simplesVetId?: string | null;
+  paymentMethod?: string | null;
+}
+
+export interface FinancialSummary {
+  total: number;
+  byPaymentMethod: Record<string, number>;
 }
 
 export interface User {
@@ -208,6 +215,8 @@ export const queueApi = {
     hasScheduledAppointment?: boolean;
     scheduledAt?: string;
     patientId?: string;
+    simplesVetId?: string;
+    paymentMethod?: string;
   }) => api.post<QueueEntry>("/api/queue", data),
 
   listActive: (vetId?: string | null) => 
@@ -240,7 +249,27 @@ export const queueApi = {
     hasScheduledAppointment?: boolean;
     scheduledAt?: string;
     patientId?: string | null;
+    simplesVetId?: string | null;
+    paymentMethod?: string | null;
   }) => api.patch<QueueEntry>(`/api/queue/${id}`, data),
+
+  getFinancial: (filters?: {
+    startDate?: string;
+    endDate?: string;
+    tutorName?: string;
+    patientName?: string;
+    paymentMethod?: string;
+    page?: number;
+    limit?: number;
+  }) => api.get<PaginatedResult<QueueEntry>>("/api/queue/financial", { params: filters }),
+
+  updatePayment: (id: string, paymentMethod: string | null) =>
+    api.patch<QueueEntry>(`/api/queue/${id}/payment`, { paymentMethod }),
+
+  getFinancialSummary: (filters?: {
+    startDate?: string;
+    endDate?: string;
+  }) => api.get<FinancialSummary>("/api/queue/financial/summary", { params: filters }),
 
   getHistory: (filters?: {
     startDate?: string;

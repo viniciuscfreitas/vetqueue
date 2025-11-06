@@ -16,6 +16,8 @@ const queueService = new QueueService(repository);
 const auditRepository = new AuditRepository();
 const auditService = new AuditService(auditRepository);
 
+const paymentMethodEnum = z.enum(["CREDIT", "DEBIT", "CASH", "PIX"]);
+
 const addQueueSchema = z.object({
   patientName: z.string().min(1, "Nome do paciente é obrigatório"),
   tutorName: z.string().min(1, "Nome do tutor é obrigatório"),
@@ -25,6 +27,8 @@ const addQueueSchema = z.object({
   hasScheduledAppointment: z.boolean().optional(),
   scheduledAt: z.string().datetime().optional(),
   patientId: z.string().optional(),
+  simplesVetId: z.string().optional(),
+  paymentMethod: paymentMethodEnum.optional(),
 });
 
 const updateQueueSchema = z.object({
@@ -36,6 +40,8 @@ const updateQueueSchema = z.object({
   hasScheduledAppointment: z.boolean().optional(),
   scheduledAt: z.string().datetime().optional(),
   patientId: z.string().nullable().optional(),
+  simplesVetId: z.string().nullable().optional(),
+  paymentMethod: paymentMethodEnum.nullable().optional(),
 });
 
 const callNextSchema = z.object({
@@ -418,6 +424,103 @@ router.patch("/:id", authMiddleware, requireRole(["RECEPCAO"]), async (req: Auth
     res.status(400).json({ error: (error as Error).message });
   }
 });
+
+router.get("/financial", authMiddleware, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  if (req.user?.role !== "RECEPCAO") {
+    res.status(403).json({ error: "Apenas recepção pode acessar dados financeiros" });
+    return;
+  }
+
+  const dateRange = parseDateRange(req.query);
+  const filters: any = {};
+
+  if (dateRange.start) {
+    filters.startDate = dateRange.start;
+  }
+  if (dateRange.end) {
+    filters.endDate = dateRange.end;
+  }
+
+  if (req.query.tutorName) {
+    filters.tutorName = req.query.tutorName as string;
+  }
+
+  if (req.query.patientName) {
+    filters.patientName = req.query.patientName as string;
+  }
+
+  if (req.query.paymentMethod) {
+    filters.paymentMethod = req.query.paymentMethod as string;
+  }
+
+  const page = req.query.page ? parseInt(req.query.page as string) : undefined;
+  const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
+
+  const result = await queueService.getFinancialEntries({
+    ...filters,
+    page: page || 1,
+    limit: limit || 20,
+  });
+  res.json(result);
+}));
+
+router.patch("/:id/payment", authMiddleware, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  if (req.user?.role !== "RECEPCAO") {
+    res.status(403).json({ error: "Apenas recepção pode editar pagamento" });
+    return;
+  }
+
+  try {
+    const paymentSchema = z.object({
+      paymentMethod: paymentMethodEnum.nullable(),
+    });
+
+    const validated = paymentSchema.parse(req.body);
+    const userRole = req.user?.role;
+
+    const updatedEntry = await queueService.updateEntry(
+      req.params.id,
+      { paymentMethod: validated.paymentMethod },
+      userRole
+    );
+    
+    if (req.user) {
+      auditService.log({
+        userId: req.user.id,
+        action: "UPDATE_PAYMENT",
+        entityType: "QueueEntry",
+        entityId: updatedEntry.id,
+        metadata: { paymentMethod: validated.paymentMethod },
+      }).catch((error) => {
+        logger.error("Failed to log audit", { 
+          error: error instanceof Error ? error.message : String(error) 
+        });
+      });
+    }
+    
+    res.json(updatedEntry);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      res.status(400).json({ error: error.errors });
+      return;
+    }
+    res.status(400).json({ error: (error as Error).message });
+  }
+}));
+
+router.get("/financial/summary", authMiddleware, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  if (req.user?.role !== "RECEPCAO") {
+    res.status(403).json({ error: "Apenas recepção pode acessar resumo financeiro" });
+    return;
+  }
+
+  const dateRange = parseDateRange(req.query);
+  const startDate = dateRange.start || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  const endDate = dateRange.end || new Date();
+
+  const summary = await queueService.getFinancialSummary(startDate, endDate);
+  res.json(summary);
+}));
 
 export default router;
 

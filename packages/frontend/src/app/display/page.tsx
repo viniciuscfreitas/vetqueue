@@ -295,9 +295,18 @@ export default function DisplayPage() {
                 {currentTime ? formatTime(currentTime) : '--:--:--'}
               </div>
             </div>
-            <h1 className="text-5xl md:text-6xl font-bold tracking-tight text-center mt-6 text-gray-800">
-              Fila de Atendimento
-            </h1>
+            <div className="flex items-center justify-center gap-4 mt-6">
+              <h1 className="text-5xl md:text-6xl font-bold tracking-tight text-center text-gray-800">
+                Fila de Atendimento
+              </h1>
+              <a
+                href="/display/help"
+                className="text-sm text-blue-600 hover:text-blue-800 underline"
+                title="Como conectar na TV Smart"
+              >
+                Como conectar na TV?
+              </a>
+            </div>
           </div>
 
           {!isLoading && inProgress.length > 0 && (
@@ -323,6 +332,11 @@ export default function DisplayPage() {
                       <h3 className="text-4xl md:text-5xl font-bold mb-3 tracking-tight text-gray-900 flex items-center gap-3">
                         {isEmergency && <AlertTriangle className="h-10 w-10 text-red-600" />}
                         {entry.patientName}
+                        {entry.simplesVetId && (
+                          <span className="text-2xl md:text-3xl font-normal text-gray-500 ml-2">
+                            (#{entry.simplesVetId})
+                          </span>
+                        )}
                       </h3>
                       <div className="text-2xl md:text-3xl mb-2 font-medium text-gray-700">
                         Tutor: {entry.tutorName}
@@ -406,6 +420,11 @@ export default function DisplayPage() {
                           <h3 className="text-4xl md:text-5xl font-bold mb-3 tracking-tight text-gray-900 flex items-center gap-3">
                             {isEmergency && <AlertTriangle className="h-10 w-10 text-red-600" />}
                             {entry.patientName}
+                            {entry.simplesVetId && (
+                              <span className="text-2xl md:text-3xl font-normal text-gray-500 ml-2">
+                                (#{entry.simplesVetId})
+                              </span>
+                            )}
                           </h3>
                           <div className="text-2xl md:text-3xl mb-2 font-medium text-gray-700">
                             Tutor: {entry.tutorName}
@@ -469,6 +488,11 @@ export default function DisplayPage() {
                                 <h3 className="text-4xl md:text-5xl font-bold mb-3 tracking-tight text-gray-900 flex items-center gap-3">
                                   {isEmergency && <AlertTriangle className="h-10 w-10 text-red-600" />}
                                   {entry.patientName}
+                                  {entry.simplesVetId && (
+                                    <span className="text-2xl md:text-3xl font-normal text-gray-500 ml-2">
+                                      (#{entry.simplesVetId})
+                                    </span>
+                                  )}
                                 </h3>
                                 <div className="text-2xl md:text-3xl mb-2 font-medium text-gray-700">
                                   Tutor: {entry.tutorName}

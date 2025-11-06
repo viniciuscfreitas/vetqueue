@@ -65,6 +65,8 @@ model QueueEntry {
   scheduledAt             DateTime?
   patientId               String?
   patient                 Patient?       @relation(fields: [patientId], references: [id])
+  simplesVetId            String?
+  paymentMethod           String?
   consultations           Consultation[]
 
   @@index([status])

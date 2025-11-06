@@ -31,6 +31,8 @@ function mapPrismaToDomain(entry: PrismaQueueEntry & { assignedVet?: { id: strin
     hasScheduledAppointment: entry.hasScheduledAppointment,
     scheduledAt: entry.scheduledAt,
     patientId: entry.patientId,
+    simplesVetId: entry.simplesVetId || null,
+    paymentMethod: entry.paymentMethod || null,
     patient: entry.patient ? {
       id: entry.patient.id,
       name: entry.patient.name,
@@ -58,6 +60,8 @@ export class QueueRepository {
     hasScheduledAppointment?: boolean;
     scheduledAt?: Date;
     patientId?: string;
+    simplesVetId?: string;
+    paymentMethod?: string;
   }): Promise<QueueEntry> {
     let patientName = data.patientName;
     let tutorName = data.tutorName;
@@ -83,6 +87,8 @@ export class QueueRepository {
         hasScheduledAppointment: data.hasScheduledAppointment ?? false,
         scheduledAt: data.scheduledAt,
         patientId: data.patientId,
+        simplesVetId: data.simplesVetId,
+        paymentMethod: data.paymentMethod,
       },
       include: { assignedVet: true, room: true, patient: true },
     });
@@ -448,6 +454,100 @@ export class QueueRepository {
     };
   }
 
+  async listFinancialPaginated(filters?: {
+    startDate?: Date;
+    endDate?: Date;
+    tutorName?: string;
+    patientName?: string;
+    paymentMethod?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<{ entries: QueueEntry[]; total: number; page: number; totalPages: number }> {
+    const page = filters?.page || 1;
+    const limit = filters?.limit || 20;
+    const skip = (page - 1) * limit;
+
+    const where: Prisma.QueueEntryWhereInput = {
+      status: Status.COMPLETED,
+    };
+
+    if (filters?.startDate || filters?.endDate) {
+      where.completedAt = {};
+      if (filters.startDate) {
+        where.completedAt.gte = filters.startDate;
+      }
+      if (filters.endDate) {
+        where.completedAt.lte = filters.endDate;
+      }
+    }
+
+    if (filters?.tutorName) {
+      where.tutorName = {
+        contains: filters.tutorName,
+        mode: "insensitive",
+      };
+    }
+
+    if (filters?.patientName) {
+      where.patientName = {
+        contains: filters.patientName,
+        mode: "insensitive",
+      };
+    }
+
+    if (filters?.paymentMethod) {
+      where.paymentMethod = filters.paymentMethod;
+    }
+
+    const [entries, total] = await Promise.all([
+      prisma.queueEntry.findMany({
+        where,
+        include: { assignedVet: true, room: true, patient: true },
+        orderBy: { completedAt: "desc" },
+        skip,
+        take: limit,
+      }),
+      prisma.queueEntry.count({ where }),
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      entries: entries.map(mapPrismaToDomain),
+      total,
+      page,
+      totalPages,
+    };
+  }
+
+  async getFinancialSummary(startDate: Date, endDate: Date) {
+    const entries = await prisma.queueEntry.findMany({
+      where: {
+        status: Status.COMPLETED,
+        completedAt: {
+          gte: startDate,
+          lte: endDate,
+        },
+      },
+      select: {
+        paymentMethod: true,
+      },
+    });
+
+    const total = entries.length;
+    const byPaymentMethod: Record<string, number> = {};
+
+    entries.forEach((entry) => {
+      const method = entry.paymentMethod || "NÃO_INFORMADO";
+      byPaymentMethod[method] = (byPaymentMethod[method] || 0) + 1;
+    });
+
+    return {
+      total,
+      byPaymentMethod,
+    };
+  }
+
   async getStats(startDate: Date, endDate: Date) {
     const [completed, cancelled, allCreated] = await Promise.all([
       prisma.queueEntry.findMany({
@@ -768,6 +868,8 @@ export class QueueRepository {
     hasScheduledAppointment?: boolean;
     scheduledAt?: Date | null;
     patientId?: string | null;
+    simplesVetId?: string | null;
+    paymentMethod?: string | null;
   }): Promise<QueueEntry> {
     const updateData: any = { ...data };
 

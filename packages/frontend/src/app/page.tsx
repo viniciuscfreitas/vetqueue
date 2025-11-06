@@ -7,7 +7,8 @@ import { Header } from "@/components/Header";
 import { Spinner } from "@/components/ui/spinner";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
-import { Clock, UserCircle2, Users } from "lucide-react";
+import { Clock, UserCircle2, Users, DollarSign } from "lucide-react";
+import { Role } from "@/lib/api";
 
 export default function Home() {
   const router = useRouter();
@@ -46,6 +47,12 @@ export default function Home() {
       href: "/tutors",
       icon: Users,
     },
+    ...(user?.role === Role.RECEPCAO ? [{
+      title: "Financeiro",
+      ariaLabel: "Controle financeiro e pagamentos",
+      href: "/financial",
+      icon: DollarSign,
+    }] : []),
   ];
 
   return (

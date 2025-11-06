@@ -50,6 +50,8 @@ export interface QueueEntry {
   scheduledAt?: Date | null;
   patientId?: string | null;
   patient?: Patient | null;
+  simplesVetId?: string | null;
+  paymentMethod?: string | null;
 }
 
 export interface User {

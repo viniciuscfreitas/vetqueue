@@ -1,0 +1,695 @@
+\documentclass[12pt, a4paper]{article}
+
+% --- Pacotes Mínimos ---
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[portuguese]{babel}
+\usepackage[margin=1in]{geometry}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{enumitem}
+
+% --- Cores e Comandos Simplificados (WCAG Contraste Refinado) ---
+\definecolor{fisiopetBlue}{HTML}{0070C0}
+\definecolor{fisiopetRed}{HTML}{C00000}
+\definecolor{noteBG}{HTML}{FFFFFF}
+\definecolor{noteBorder}{HTML}{C00000}
+\definecolor{successGreen}{HTML}{22C55E}
+\definecolor{warningOrange}{HTML}{F59E0B}
+
+\newcommand{\NoteBox}[1]{%
+    \vspace{4pt}
+    \noindent\fcolorbox{noteBorder}{noteBG}{\parbox{\dimexpr\linewidth-2\fboxsep-2\fboxrule\relax}{\textbf{\textcolor{fisiopetRed}{ATENÇÃO:}} #1}}%
+    \vspace{4pt}
+}
+
+\newcommand{\SuccessBox}[1]{%
+    \vspace{4pt}
+    \noindent\fcolorbox{successGreen}{noteBG}{\parbox{\dimexpr\linewidth-2\fboxsep-2\fboxrule\relax}{\textbf{\textcolor{successGreen}{✓ DICA:}} #1}}%
+    \vspace{4pt}
+}
+
+\setlength{\parskip}{0.5em}
+\setlength{\parindent}{0pt}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=fisiopetBlue,
+    urlcolor=fisiopetBlue,
+    citecolor=fisiopetBlue
+}
+
+\begin{document}
+
+% --- LOGO E TÍTULO ---
+\begin{center}
+    \includegraphics[width=0.45\linewidth]{logo.png}
+    \vspace{8pt}
+    \\
+    \textbf{\textcolor{fisiopetBlue}{\Large DOCUMENTAÇÃO OPERACIONAL}}
+    \vspace{4pt}
+    \\
+    \textcolor{fisiopetBlue}{\textit{Sistema de Fila de Atendimento Veterinário}}
+\end{center}
+\vspace{15pt}
+
+O sistema digital de fila de atendimento foi desenvolvido para o Hospital Veterinário \textbf{\textcolor{fisiopetBlue}{Fisiopet}}. Ele permite que recepcionistas adicionem pacientes, veterinários realizem o atendimento e exibe a fila em tempo real na sala de espera.
+
+% --- SEÇÃO 1: O que o Sistema Faz ---
+\section*{\Large\textbf{\textcolor{fisiopetBlue}{1. O Que o Sistema Faz}}}
+
+O sistema VetQueue é uma solução completa para gestão de filas e atendimentos veterinários, oferecendo funcionalidades específicas para cada tipo de usuário.
+
+\subsection*{\textbf{Para Recepcionistas}}
+
+Recepcionistas têm acesso completo ao sistema e podem:
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Adicionar pacientes à fila} - Incluir novos atendimentos rapidamente
+    \item \textbf{Chamar o próximo paciente} - Gerenciar o fluxo da fila
+    \item \textbf{Cancelar entradas} - Remover pacientes da fila quando necessário
+    \item \textbf{Visualizar histórico completo} - Consultar todos os atendimentos realizados
+    \item \textbf{Acessar relatórios detalhados} - Estatísticas e métricas de atendimento
+    \item \textbf{Gerenciar pacientes} - Cadastrar e editar informações de pacientes e tutores
+    \item \textbf{Administrar o sistema} - Gerenciar usuários, salas e serviços
+    \item \textbf{Visualizar auditoria} - Acompanhar todas as ações realizadas no sistema
+\end{itemize}
+
+\subsection*{\textbf{Para Veterinários}}
+
+Veterinários têm acesso às funcionalidades de atendimento:
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Fazer check-in em uma sala} - Selecionar o consultório de trabalho
+    \item \textbf{Chamar pacientes} - Chamar o próximo da fila ou pacientes específicos
+    \item \textbf{Iniciar e finalizar atendimentos} - Controlar o status do atendimento
+    \item \textbf{Registrar consultas e vacinações} - Criar prontuário eletrônico completo
+    \item \textbf{Visualizar prontuário do paciente} - Acessar histórico médico completo
+    \item \textbf{Acompanhar fila em tempo real} - Ver pacientes aguardando e em atendimento
+\end{itemize}
+
+\subsection*{\textbf{Para o Display na TV}}
+
+O sistema oferece uma página especial para exibição pública:
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Exibe a fila atual em tempo real} - Mostra pacientes aguardando
+    \item \textbf{Apresenta paciente em atendimento} - Indica qual animal está sendo atendido
+    \item \textbf{Atualização automática} - A página atualiza sozinha sem necessidade de recarregar
+    \item \textbf{Interface otimizada para TV} - Design pensado para visualização à distância
+    \item \textbf{Indicadores visuais claros} - Cores e ícones para fácil identificação
+\end{itemize}
+
+% --- SEÇÃO 2: Acesso ---
+\section*{\Large\textbf{\textcolor{fisiopetBlue}{2. Como Acessar o Sistema}}}
+
+\subsection*{\textbf{Acesso de Usuários (Recepção e Consultórios)}}
+
+Para acessar o sistema, siga os seguintes passos:
+
+\begin{enumerate}[leftmargin=*]
+    \item Abra o navegador web (Chrome, Edge ou Firefox são recomendados)
+    \item Digite o endereço: \textbf{\url{https://fisiopet.petshopcisnebranco.com.br}}
+    \item Aguarde o carregamento da página de login
+    \item Digite suas credenciais (usuário e senha)
+    \item Clique em "Entrar" ou pressione Enter
+\end{enumerate}
+
+\SuccessBox{O sistema é compatível com dispositivos móveis (tablets e smartphones), permitindo acesso flexível em qualquer lugar da clínica.}
+
+\subsection*{\textbf{Credenciais de Acesso}}
+
+\textbf{IMPORTANTE:} As credenciais abaixo são para uso inicial. Após o primeiro acesso, você deve alterar sua senha.
+
+\begin{center}
+\begin{tabular}{|p{0.3\linewidth}|p{0.25\linewidth}|p{0.35\linewidth}|}
+    \toprule
+    \textbf{Função} & \textbf{Usuário} & \textbf{Senha} \\
+    \midrule
+    Recepcionista & \texttt{recepcao} & \texttt{senha123} \\
+    Veterinário & \texttt{drjoao} & \texttt{senha123} \\
+    \bottomrule
+\end{tabular}
+\end{center}
+
+\NoteBox{Após o primeiro acesso, altere sua senha nas configurações do sistema. A senha padrão é temporária e deve ser trocada por segurança.}
+
+\subsection*{\textbf{Troubleshooting de Login}}
+
+Se você encontrar problemas ao fazer login:
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Verifique a conexão com a internet} - Certifique-se de que está conectado
+    \item \textbf{Confirme usuário e senha} - Verifique se não há espaços antes ou depois
+    \item \textbf{Limpe o cache do navegador} - Às vezes cache antigo pode causar problemas
+    \item \textbf{Tente outro navegador} - Chrome, Edge ou Firefox são recomendados
+    \item \textbf{Verifique se o sistema está online} - Entre em contato com o administrador se o problema persistir
+\end{itemize}
+
+% --- SEÇÃO 3: Display na TV ---
+\section*{\Large\textcolor{fisiopetBlue}{3. Como Configurar o Display na TV}}
+
+O sistema utiliza uma página especial para a televisão da sala de espera, permitindo que os tutores acompanhem o status de atendimento em tempo real.
+
+\subsection*{\textbf{Configuração Inicial}}
+
+\begin{enumerate}[leftmargin=*]
+    \item \textbf{Conecte a TV ao computador} - Via cabo HDMI ou rede (se a TV for smart)
+    \item \textbf{Ligue o computador e a TV}
+    \item \textbf{Acesse a página de display}: Digite no navegador: \textbf{\url{https://fisiopet.petshopcisnebranco.com.br/display}}
+    \item \textbf{Ative o modo tela cheia}: Pressione \textbf{F11} no teclado para entrar em modo tela cheia
+    \item \textbf{Configure o navegador} - Desative proteção de tela e suspensão automática
+\end{enumerate}
+
+\subsection*{\textbf{Configurações Recomendadas}}
+
+Para garantir o melhor funcionamento do display:
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Modo tela cheia permanente} - Use F11 para ativar
+    \item \textbf{Desativar proteção de tela} - Configure o sistema operacional para não ativar proteção de tela
+    \item \textbf{Abrir automaticamente ao iniciar} - Configure o navegador para abrir a página ao iniciar o Windows
+    \item \textbf{Atualização automática} - A página atualiza automaticamente a cada 3 segundos
+    \item \textbf{Som opcional} - O sistema pode emitir alertas sonoros quando um paciente é chamado
+\end{itemize}
+
+\SuccessBox{Se o display não estiver atualizando, pressione F5 para recarregar a página manualmente. O sistema funciona melhor quando o computador está sempre ligado e conectado à internet.}
+
+% --- SEÇÃO 4: Guia de Uso Rápido ---
+\section*{\Large\textcolor{fisiopetBlue}{4. Guia de Uso Rápido}}
+
+\subsection*{\textbf{Para Recepcionistas}}
+
+\subsubsection*{\textbf{Adicionar Paciente à Fila}}
+
+\begin{enumerate}[leftmargin=*]
+    \item Na página principal, clique no botão \textbf{"Adicionar"} (canto superior direito)
+    \item Preencha os dados do paciente:
+    \begin{itemize}
+        \item \textbf{Tutor} - Nome do responsável (pode buscar em pacientes existentes)
+        \item \textbf{Pet} - Nome do animal (pode buscar ou digitar novo)
+        \item \textbf{Tipo de Serviço} - Selecione: Consulta, Vacinação, Cirurgia, Exame ou Banho e Tosa
+        \item \textbf{Prioridade} - Normal, Alta ou Emergência
+        \item \textbf{Horário Agendado} (opcional) - Se o paciente tem horário marcado
+    \end{itemize}
+    \item Clique em \textbf{"Adicionar à Fila"}
+    \item O paciente aparecerá imediatamente na fila e no display da TV
+\end{enumerate}
+
+\SuccessBox{\textbf{Atalho de Teclado:} Pressione \textbf{Ctrl+N} para abrir rapidamente o formulário de adicionar paciente (apenas para recepcionistas).}
+
+\subsubsection*{\textbf{Chamar Próximo Paciente}}
+
+\begin{enumerate}[leftmargin=*]
+    \item Clique no botão \textbf{"Chamar Próximo"} (canto superior da página)
+    \item Se houver veterinário com check-in, selecione a sala
+    \item O sistema chamará automaticamente o próximo paciente da fila
+    \item O nome aparecerá no display da TV
+    \item O paciente será movido para status "Chamado"
+\end{enumerate}
+
+\SuccessBox{\textbf{Atalho de Teclado:} Pressione \textbf{Enter} para chamar o próximo paciente quando houver pacientes aguardando (sem estar digitando em um campo).}
+
+\subsubsection*{\textbf{Visualizar Histórico}}
+
+\begin{enumerate}[leftmargin=*]
+    \item Na página da fila, clique na aba \textbf{"Histórico"}
+    \item Selecione o período desejado (data inicial e final)
+    \item Use os filtros para buscar por:
+    \begin{itemize}
+        \item Nome do tutor
+        \item Nome do pet
+        \item Tipo de serviço
+    \end{itemize}
+    \item Visualize todos os atendimentos concluídos no período
+\end{enumerate}
+
+\subsubsection*{\textbf{Ver Relatórios}}
+
+\begin{enumerate}[leftmargin=*]
+    \item Na página da fila, clique na aba \textbf{"Relatórios"}
+    \item Selecione o período desejado
+    \item Visualize:
+    \begin{itemize}
+        \item Total de atendimentos
+        \item Tempo médio de espera
+        \item Tempo médio de atendimento
+        \item Taxa de cancelamento
+        \item Distribuição por tipo de serviço
+        \item Distribuição por prioridade
+        \item Top veterinários
+        \item Horários de pico
+        \item Utilização das salas
+    \end{itemize}
+\end{enumerate}
+
+\subsubsection*{\textbf{Cancelar Entrada da Fila}}
+
+\begin{enumerate}[leftmargin=*]
+    \item Localize o paciente na fila
+    \item Clique no botão \textbf{"Cancelar"} (ícone de X)
+    \item Confirme a ação na caixa de diálogo
+    \item O paciente será removido da fila e marcado como cancelado
+\end{enumerate}
+
+\subsection*{\textbf{Para Veterinários}}
+
+\subsubsection*{\textbf{Check-in na Sala}}
+
+\begin{enumerate}[leftmargin=*]
+    \item Ao fazer login, o sistema pode solicitar que você selecione uma sala
+    \item Selecione o consultório onde você vai trabalhar
+    \item Clique em \textbf{"Confirmar"}
+    \item Você pode trocar de sala a qualquer momento clicando no seletor de sala no topo da página
+\end{enumerate}
+
+\NoteBox{\textbf{IMPORTANTE:} Você precisa estar com check-in em uma sala para poder chamar pacientes. O sistema só permite chamar pacientes para salas que têm veterinário com check-in.}
+
+\subsubsection*{\textbf{Chamar Próximo Paciente}}
+
+\begin{enumerate}[leftmargin=*]
+    \item Certifique-se de estar com check-in em uma sala
+    \item Clique no botão \textbf{"Chamar Próximo"} (canto superior da página)
+    \item O sistema chamará automaticamente o próximo paciente da fila para sua sala
+    \item O paciente aparecerá no display da TV
+    \item O status mudará para "Chamado"
+\end{enumerate}
+
+\SuccessBox{\textbf{Atalho:} Pressione \textbf{Enter} para chamar o próximo paciente (quando não estiver digitando em um campo).}
+
+\subsubsection*{\textbf{Chamar Paciente Específico}}
+
+\begin{enumerate}[leftmargin=*]
+    \item Localize o paciente desejado na fila
+    \item Clique no botão \textbf{"Chamar"} (ícone de telefone) no card do paciente
+    \item O paciente será chamado para sua sala
+    \item O status mudará para "Chamado"
+\end{enumerate}
+
+\subsubsection*{\textbf{Iniciar Atendimento}}
+
+\begin{enumerate}[leftmargin=*]
+    \item Após chamar o paciente, localize-o na lista (status "Chamado")
+    \item Clique no botão \textbf{"Iniciar Atendimento"}
+    \item O status mudará para "Em Atendimento"
+    \item O tempo de atendimento começará a ser contabilizado
+\end{enumerate}
+
+\subsubsection*{\textbf{Registrar Consulta ou Vacinação}}
+
+\begin{enumerate}[leftmargin=*]
+    \item Durante o atendimento, localize o paciente na fila (status "Em Atendimento")
+    \item Clique no botão \textbf{"Ver Prontuário"} (ícone de pasta/arquivo)
+    \item Na janela que abrir, selecione a aba \textbf{"Consultas"} ou \textbf{"Vacinas"}
+    \item Clique em \textbf{"Nova Consulta"} ou \textbf{"Nova Vacina"}
+    \item Preencha o formulário:
+    \begin{itemize}
+        \item \textbf{Consulta:} Data, Diagnóstico, Tratamento, Prescrição, Peso (kg), Observações
+        \item \textbf{Vacina:} Nome da vacina, Data de aplicação, Lote, Próxima dose, Observações
+    \end{itemize}
+    \item Clique em \textbf{"Salvar"}
+    \item O registro será salvo no prontuário eletrônico do paciente
+\end{enumerate}
+
+\SuccessBox{Se o paciente já tem um prontuário cadastrado, o sistema carregará automaticamente as informações. Caso contrário, você pode criar um novo paciente durante o registro.}
+
+\subsubsection*{\textbf{Finalizar Atendimento}}
+
+\begin{enumerate}[leftmargin=*]
+    \item Localize o paciente em atendimento (status "Em Atendimento")
+    \item Certifique-se de ter registrado consulta/vacinação se necessário
+    \item Clique no botão \textbf{"Finalizar Atendimento"}
+    \item O status mudará para "Finalizado"
+    \item O atendimento será movido para o histórico
+    \item O tempo total de atendimento será registrado
+\end{enumerate}
+
+% --- SEÇÃO 5: Funcionalidades Disponíveis ---
+\section*{\Large\textcolor{fisiopetBlue}{5. Funcionalidades Disponíveis e Status}}
+
+O sistema possui as seguintes funcionalidades implementadas e ativas:
+
+\begin{itemize}[leftmargin=*]
+    \item $\checkmark$ \textbf{Adicionar paciente à fila} - Com ou sem cadastro prévio
+    \item $\checkmark$ \textbf{Chamar próximo da fila} - Com exibição automática na TV
+    \item $\checkmark$ \textbf{Chamar paciente específico} - Para atendimento prioritário
+    \item $\checkmark$ \textbf{Iniciar e finalizar atendimento} - Controle completo do fluxo
+    \item $\checkmark$ \textbf{Registrar consultas} - Prontuário eletrônico completo
+    \item $\checkmark$ \textbf{Registrar vacinações} - Com controle de próximas doses
+    \item $\checkmark$ \textbf{Visualizar histórico de atendimentos} - Com filtros avançados
+    \item $\checkmark$ \textbf{Cancelar entrada da fila} - Com registro de motivo
+    \item $\checkmark$ \textbf{Relatórios detalhados} - Estatísticas e métricas completas
+    \item $\checkmark$ \textbf{Gestão de pacientes} - Cadastro completo de pacientes e tutores
+    \item $\checkmark$ \textbf{Prontuário eletrônico} - Histórico médico completo
+    \item $\checkmark$ \textbf{Check-in em salas} - Gerenciamento de consultórios
+    \item $\checkmark$ \textbf{Atribuição de veterinário} - Recepção pode atribuir pacientes a veterinários específicos
+    \item $\checkmark$ \textbf{Agendamentos} - Suporte a horários agendados com prioridade
+    \item $\checkmark$ \textbf{Auditoria} - Log completo de todas as ações (apenas recepcionistas)
+    \item $\checkmark$ \textbf{Administração} - Gestão de usuários, salas e serviços (apenas recepcionistas)
+\end{itemize}
+
+% --- SEÇÃO 6: Prontuário Eletrônico ---
+\section*{\Large\textcolor{fisiopetBlue}{6. Prontuário Eletrônico}}
+
+O sistema possui um módulo completo de prontuário eletrônico que permite registrar e consultar todo o histórico médico do paciente.
+
+\subsection*{\textbf{O Que é o Prontuário Eletrônico}}
+
+O prontuário eletrônico é um registro digital completo de todas as informações médicas do animal, incluindo:
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Dados do paciente} - Nome, espécie, raça, idade, peso atual
+    \item \textbf{Dados do tutor} - Nome, telefone, e-mail, endereço
+    \item \textbf{Histórico de consultas} - Todas as consultas realizadas com diagnósticos e tratamentos
+    \item \textbf{Histórico de vacinações} - Vacinas aplicadas e próximas doses
+    \item \textbf{Informações importantes} - Alergias, medicações em uso, condições especiais
+    \item \textbf{Histórico de atendimentos} - Todos os atendimentos na fila relacionados ao paciente
+\end{itemize}
+
+\subsection*{\textbf{Como Acessar o Prontuário}}
+
+\begin{enumerate}[leftmargin=*]
+    \item \textbf{Durante o atendimento:} Clique em "Ver Prontuário" na entrada da fila
+    \item \textbf{Pela página de pacientes:} Acesse "Pacientes" no menu principal e selecione o paciente desejado
+    \item \textbf{Pelo histórico:} Ao visualizar o histórico, clique em "Ver Prontuário" em qualquer atendimento
+\end{enumerate}
+
+\subsection*{\textbf{Como Registrar uma Consulta}}
+
+\begin{enumerate}[leftmargin=*]
+    \item Acesse o prontuário do paciente (métodos acima)
+    \item Selecione a aba \textbf{"Consultas"}
+    \item Clique em \textbf{"Nova Consulta"}
+    \item Preencha os campos:
+    \begin{itemize}
+        \item \textbf{Data} - Data e hora da consulta (padrão: data/hora atual)
+        \item \textbf{Diagnóstico} - Diagnóstico principal
+        \item \textbf{Tratamento} - Tratamento prescrito
+        \item \textbf{Prescrição} - Medicações e dosagens
+        \item \textbf{Peso (kg)} - Peso atual do animal
+        \item \textbf{Observações} - Notas adicionais
+    \end{itemize}
+    \item Clique em \textbf{"Salvar Consulta"}
+    \item A consulta será registrada no histórico do paciente
+\end{enumerate}
+
+\subsection*{\textbf{Como Registrar uma Vacinação}}
+
+\begin{enumerate}[leftmargin=*]
+    \item Acesse o prontuário do paciente
+    \item Selecione a aba \textbf{"Vacinas"}
+    \item Clique em \textbf{"Nova Vacina"}
+    \item Preencha os campos:
+    \begin{itemize}
+        \item \textbf{Nome da Vacina} - Ex: V8, V10, Antirrábica, etc.
+        \item \textbf{Data de Aplicação} - Data em que foi aplicada
+        \item \textbf{Lote} - Número do lote da vacina (opcional)
+        \item \textbf{Próxima Dose} - Data para próxima aplicação (se aplicável)
+        \item \textbf{Observações} - Notas adicionais
+    \end{itemize}
+    \item Clique em \textbf{"Salvar Vacina"}
+    \item A vacinação será registrada e o sistema alertará sobre próximas doses
+\end{enumerate}
+
+\subsection*{\textbf{Benefícios do Prontuário Eletrônico}}
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Histórico completo} - Acesso rápido a todo o histórico médico
+    \item \textbf{Rastreamento de vacinações} - Controle de vacinas aplicadas e próximas doses
+    \item \textbf{Diagnósticos e tratamentos} - Registro de todas as consultas e tratamentos
+    \item \textbf{Evolução do peso} - Acompanhamento do peso ao longo do tempo
+    \item \textbf{Informações críticas} - Alergias e medicações sempre visíveis
+    \item \textbf{Acesso rápido} - Disponível durante qualquer atendimento
+\end{itemize}
+
+% --- SEÇÃO 7: Funcionalidades Avançadas (Recepcionistas) ---
+\section*{\Large\textcolor{fisiopetBlue}{7. Funcionalidades Avançadas (Apenas Recepcionistas)}}
+
+Recepcionistas têm acesso a funcionalidades administrativas adicionais para gerenciar o sistema.
+
+\subsection*{\textbf{Gestão de Pacientes}}
+
+Acesse pelo menu "Pacientes" na página principal:
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Cadastrar novo paciente} - Incluir paciente e tutor no sistema
+    \item \textbf{Editar informações} - Atualizar dados de pacientes existentes
+    \item \textbf{Buscar pacientes} - Localizar rapidamente por nome, tutor ou espécie
+    \item \textbf{Visualizar prontuário completo} - Acessar todo o histórico médico
+    \item \textbf{Informações importantes} - Cadastrar alergias, medicações e condições especiais
+\end{itemize}
+
+\subsection*{\textbf{Administração do Sistema}}
+
+Acesse pelo menu "Admin" no canto superior direito:
+
+\subsubsection*{\textbf{Gestão de Usuários}}
+
+\begin{itemize}[leftmargin=*]
+    \item Criar novos usuários (recepcionistas e veterinários)
+    \item Editar informações de usuários existentes
+    \item Alterar senhas
+    \item Desativar usuários (quando necessário)
+\end{itemize}
+
+\subsubsection*{\textbf{Gestão de Salas}}
+
+\begin{itemize}[leftmargin=*]
+    \item Adicionar novas salas/consultórios
+    \item Editar nomes de salas
+    \item Ativar/desativar salas
+    \item Visualizar salas existentes
+\end{itemize}
+
+\subsubsection*{\textbf{Gestão de Serviços}}
+
+\begin{itemize}[leftmargin=*]
+    \item Adicionar novos tipos de serviço
+    \item Editar serviços existentes
+    \item Ativar/desativar serviços
+    \item Gerenciar tipos de atendimento disponíveis
+\end{itemize}
+
+\subsection*{\textbf{Auditoria}}
+
+A aba "Auditoria" na página da fila permite:
+
+\begin{itemize}[leftmargin=*]
+    \item Visualizar log completo de todas as ações no sistema
+    \item Filtrar por usuário, data, ação ou tipo de entidade
+    \item Rastrear todas as alterações realizadas
+    \item Identificar quem realizou cada ação
+    \item Verificar histórico de modificações
+\end{itemize}
+
+\NoteBox{A auditoria é importante para segurança e rastreabilidade. Todas as ações importantes são registradas automaticamente no sistema.}
+
+% --- SEÇÃO 8: Relatórios Detalhados ---
+\section*{\Large\textcolor{fisiopetBlue}{8. Relatórios e Estatísticas}}
+
+O sistema oferece relatórios detalhados para análise de desempenho e gestão.
+
+\subsection*{\textbf{Relatórios Disponíveis}}
+
+\subsubsection*{\textbf{Métricas Gerais}}
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Total de Atendimentos} - Quantidade total no período
+    \item \textbf{Média por Dia} - Média de atendimentos diários
+    \item \textbf{Tempo Médio de Espera} - Tempo médio que pacientes aguardam
+    \item \textbf{Tempo Médio de Atendimento} - Duração média dos atendimentos
+    \item \textbf{Taxa de Cancelamento} - Percentual de atendimentos cancelados
+\end{itemize}
+
+\subsubsection*{\textbf{Análises Gráficas}}
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Distribuição por Tipo de Serviço} - Gráfico de barras mostrando quantidade por serviço
+    \item \textbf{Distribuição por Prioridade} - Gráfico de pizza com emergências, alta e normal
+    \item \textbf{Top Veterinários} - Gráfico de barras horizontais com mais atendimentos
+    \item \textbf{Horários de Pico} - Gráfico de área mostrando horários mais movimentados
+    \item \textbf{Utilização das Salas} - Barras de progresso e estatísticas por consultório
+\end{itemize}
+
+\subsection*{\textbf{Como Usar os Relatórios}}
+
+\begin{enumerate}[leftmargin=*]
+    \item Acesse a aba \textbf{"Relatórios"} na página da fila
+    \item Selecione o \textbf{período desejado} (data inicial e final)
+    \item Os relatórios serão atualizados automaticamente
+    \item Visualize os gráficos e métricas
+    \item Use os dados para análise e tomada de decisão
+\end{enumerate}
+
+\SuccessBox{Os relatórios são atualizados em tempo real. Você pode alterar o período a qualquer momento para análise de diferentes intervalos.}
+
+% --- SEÇÃO 9: Solução de Problemas ---
+\section*{\Large\textcolor{fisiopetBlue}{9. Suporte Técnico e Solução de Problemas}}
+
+\subsection*{\textbf{Problemas Comuns e Soluções}}
+
+\begin{center}
+\begin{tabular}{p{0.28\linewidth} p{0.68\linewidth}}
+    \toprule
+    \textbf{Problema} & \textbf{Solução} \\
+    \midrule
+    Não consigo fazer login & 
+    \begin{enumerate}[leftmargin=*, nosep, topsep=0pt]
+        \item Verifique usuário e senha (sem espaços)
+        \item Confirme se o sistema está online
+        \item Limpe o cache do navegador
+        \item Tente outro navegador
+        \item Contate o administrador
+    \end{enumerate} \\
+    \midrule
+    A fila não aparece na TV & 
+    \begin{enumerate}[leftmargin=*, nosep, topsep=0pt]
+        \item Verifique o endereço: \texttt{/display}
+        \item Recarregue a página (F5)
+        \item Confirme a conexão com internet
+        \item Verifique se há pacientes na fila
+        \item Certifique-se de estar em modo tela cheia (F11)
+    \end{enumerate} \\
+    \midrule
+    Não consigo chamar o próximo & 
+    \begin{enumerate}[leftmargin=*, nosep, topsep=0pt]
+        \item Verifique se há pacientes aguardando
+        \item Veterinários: confirme check-in na sala
+        \item Recepcionistas: verifique se há veterinário com check-in
+        \item Recarregue a página (F5)
+        \item Verifique conexão com internet
+    \end{enumerate} \\
+    \midrule
+    O sistema está lento & 
+    \begin{enumerate}[leftmargin=*, nosep, topsep=0pt]
+        \item Verifique a conexão com internet
+        \item Feche abas desnecessárias do navegador
+        \item Limpe o cache do navegador
+        \item Reinicie o navegador
+        \item Se persistir, acione o suporte técnico
+    \end{enumerate} \\
+    \midrule
+    Não consigo registrar consulta/vacinação & 
+    \begin{enumerate}[leftmargin=*, nosep, topsep=0pt]
+        \item Verifique se o paciente tem prontuário
+        \item Confirme que está durante um atendimento
+        \item Clique em "Ver Prontuário" na entrada da fila
+        \item Selecione a aba correta (Consultas ou Vacinas)
+        \item Preencha todos os campos obrigatórios
+    \end{enumerate} \\
+    \midrule
+    A página não atualiza sozinha & 
+    \begin{enumerate}[leftmargin=*, nosep, topsep=0pt]
+        \item Recarregue manualmente (F5)
+        \item Verifique conexão com internet
+        \item Limpe o cache do navegador
+        \item Verifique se o JavaScript está habilitado
+        \item Tente outro navegador
+    \end{enumerate} \\
+    \midrule
+    Erro ao salvar dados & 
+    \begin{enumerate}[leftmargin=*, nosep, topsep=0pt]
+        \item Verifique conexão com internet
+        \item Certifique-se de preencher campos obrigatórios
+        \item Verifique se não há caracteres especiais problemáticos
+        \item Tente novamente após alguns segundos
+        \item Se persistir, contate o suporte
+    \end{enumerate} \\
+    \bottomrule
+\end{tabular}
+\end{center}
+
+\subsection*{\textbf{Dicas de Performance}}
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Mantenha poucas abas abertas} - Muitas abas podem deixar o navegador lento
+    \item \textbf{Use navegadores atualizados} - Versões antigas podem ter problemas de performance
+    \item \textbf{Conecte-se via Wi-Fi estável} - Conexão instável pode causar lentidão
+    \item \textbf{Reinicie o navegador periodicamente} - Especialmente após uso prolongado
+    \item \textbf{Limpe o cache regularmente} - Cache excessivo pode causar problemas
+\end{itemize}
+
+\subsection*{\textbf{Canais de Suporte}}
+
+\subsubsection*{\textbf{Contato Principal (Recomendado)}}
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Vinícius - Administrador do Sistema}
+    \item \textbf{WhatsApp:} \href{https://wa.me/5513974023753}{(13) 97402-3753}
+    \item \textbf{Disponibilidade:} Horário comercial e emergências técnicas
+\end{itemize}
+
+\subsubsection*{\textbf{Contato Alternativo}}
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Fernando} - Pode ajudar em caso de necessidade
+    \item \textbf{Quando usar:} Se Vinícius não estiver disponível
+\end{itemize}
+
+\NoteBox{É recomendado entrar em contato direto com o Vinícius pelo WhatsApp para qualquer problema ou dúvida sobre o sistema. Ele tem acesso completo ao sistema e pode resolver a maioria dos problemas rapidamente.}
+
+\subsection*{\textbf{Informações para Suporte}}
+
+Ao entrar em contato com o suporte, tenha em mãos:
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Descrição do problema} - O que está acontecendo
+    \item \textbf{Mensagem de erro} - Se aparecer alguma mensagem, copie o texto
+    \item \textbf{Navegador usado} - Chrome, Edge, Firefox, etc.
+    \item \textbf{Usuário afetado} - Seu nome de usuário
+    \item \textbf{Horário do problema} - Quando ocorreu
+    \item \textbf{Passos para reproduzir} - O que você estava fazendo quando aconteceu
+\end{itemize}
+
+% --- SEÇÃO 10: Atalhos de Teclado ---
+\section*{\Large\textcolor{fisiopetBlue}{10. Atalhos de Teclado e Dicas de Produtividade}}
+
+O sistema possui atalhos de teclado para agilizar o trabalho diário.
+
+\subsection*{\textbf{Atalhos Disponíveis}}
+
+\begin{center}
+\begin{tabular}{|p{0.25\linewidth}|p{0.70\linewidth}|}
+    \toprule
+    \textbf{Atalho} & \textbf{Ação} \\
+    \midrule
+    \texttt{Ctrl + N} & Abre formulário para adicionar paciente (apenas recepcionistas) \\
+    \midrule
+    \texttt{Enter} & Chama o próximo paciente da fila (quando não estiver digitando) \\
+    \midrule
+    \texttt{F11} & Ativa/desativa modo tela cheia (útil para display na TV) \\
+    \midrule
+    \texttt{F5} & Recarrega a página atual \\
+    \bottomrule
+\end{tabular}
+\end{center}
+
+\SuccessBox{Os atalhos funcionam apenas quando você não está digitando em um campo. Para usar Enter, certifique-se de que nenhum campo de texto está selecionado.}
+
+\subsection*{\textbf{Dicas de Produtividade}}
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Use o autocomplete} - Ao adicionar pacientes, o sistema sugere tutores e pets existentes
+    \item \textbf{Aproveite os filtros} - No histórico, use filtros para encontrar rapidamente atendimentos
+    \item \textbf{Atualização automática} - A fila atualiza sozinha a cada 3 segundos, não precisa recarregar
+    \item \textbf{Prontuário durante atendimento} - Acesse o prontuário diretamente da fila sem navegar
+    \item \textbf{Relatórios em tempo real} - Os relatórios são atualizados automaticamente ao mudar o período
+\end{itemize}
+
+% --- RODAPÉ ---
+\vfill
+\noindent\rule{\linewidth}{0.4pt}
+\begin{flushleft}
+\footnotesize
+\textbf{Versão do Documento:} 2.0 \\
+\textbf{Última atualização:} \today \\
+\textbf{Sistema:} VetQueue - Sistema de Fila de Atendimento Veterinário \\
+\textbf{Desenvolvido para:} Hospital Veterinário Fisiopet
+\end{flushleft}
+
+\end{document}
+
+
+

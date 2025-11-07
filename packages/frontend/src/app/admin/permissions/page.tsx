@@ -38,7 +38,7 @@ function sanitizeModules(modules: ModuleKey[], validKeys: Set<ModuleKey>): Modul
 export default function PermissionsPage() {
   const router = useRouter();
   const { user, isLoading: authLoading, canAccess } = useAuth();
-  const canConfigurePermissions = canAccess(ModuleKey.PERMISSIONS);
+  const canConfigurePermissions = user?.role === Role.ADMIN && canAccess(ModuleKey.PERMISSIONS);
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const handleError = createErrorHandler(toast);

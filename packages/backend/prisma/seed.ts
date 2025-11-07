@@ -19,6 +19,17 @@ async function main() {
     },
   });
 
+  const admin = await prisma.user.upsert({
+    where: { username: "alex" },
+    update: {},
+    create: {
+      username: "alex",
+      password: await bcrypt.hash("alex", 10),
+      name: "Administrador",
+      role: "ADMIN",
+    },
+  });
+
   const drjoao = await prisma.user.upsert({
     where: { username: "drjoao" },
     update: {},
@@ -30,7 +41,7 @@ async function main() {
     },
   });
 
-  console.log("✅ Created users:", { recepcao, drjoao });
+  console.log("✅ Created users:", { recepcao, admin, drjoao });
 
   const rooms = [
     { name: "Consultório 1" },

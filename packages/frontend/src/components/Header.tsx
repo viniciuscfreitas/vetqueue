@@ -80,6 +80,13 @@ export function Header() {
                 return null;
               }
 
+              const isAdminRole = user.role === "ADMIN";
+              const adminItems = adminMenuItems.filter(Boolean);
+
+              if (!isAdminRole || adminItems.length === 0) {
+                return null;
+              }
+
               return (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>

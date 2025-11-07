@@ -8,9 +8,35 @@ export async function cleanupDatabase() {
     await prisma.consultation.deleteMany();
     await prisma.vaccination.deleteMany();
     await prisma.user.deleteMany({ where: { username: 'testuser' } });
+    await prisma.user.deleteMany({ where: { username: 'alex' } });
   } catch (error) {
     console.warn('Cleanup error (might be expected):', error);
   }
+}
+
+export async function ensureAdminSeed() {
+  const adminUsername = 'alex';
+  const adminPassword = 'alex';
+
+  const existing = await prisma.user.findUnique({
+    where: { username: adminUsername },
+  });
+
+  if (existing) {
+    return existing;
+  }
+
+  const bcrypt = require('bcrypt');
+  const hashedPassword = await bcrypt.hash(adminPassword, 10);
+
+  return prisma.user.create({
+    data: {
+      username: adminUsername,
+      password: hashedPassword,
+      name: 'Administrador',
+      role: 'ADMIN',
+    },
+  });
 }
 
 export async function createTestUser() {

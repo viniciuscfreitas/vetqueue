@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { queueApi, PaymentStatus, QueueEntry } from "@/lib/api";
+import { queueApi, PaymentStatus, QueueEntry, userApi, Role } from "@/lib/api";
 import type { FinancialFiltersState } from "./FinancialFilters";
 import { formatCurrency, paymentStatusLabels } from "@/lib/financialUtils";
 import { Pagination } from "./Pagination";
@@ -18,7 +18,8 @@ import { createErrorHandler } from "@/lib/errors";
 import { useToast } from "./ui/use-toast";
 import { StatusBadge } from "./StatusBadge";
 import { PaymentDetailsModal } from "./PaymentDetailsModal";
-import { Eye } from "lucide-react";
+import { PaymentEditModal } from "./PaymentEditModal";
+import { Eye, Pencil } from "lucide-react";
 
 interface FinancialPaymentsTabProps {
   filters: FinancialFiltersState;
@@ -64,6 +65,8 @@ export function FinancialPaymentsTab({
   const [editingField, setEditingField] = useState<"amount" | "status" | null>(null);
   const [editingValue, setEditingValue] = useState<string>("");
   const [editingStatus, setEditingStatus] = useState<PaymentStatus>(PaymentStatus.PENDING);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingEntry, setEditingEntry] = useState<QueueEntry | null>(null);
 
   useEffect(() => {
     setPage(1);
@@ -75,6 +78,17 @@ export function FinancialPaymentsTab({
     queryKey: ["financial", "payments", params],
     queryFn: () => queueApi.getFinancial(params).then((res) => res.data),
   });
+
+  const { data: receptionistsData } = useQuery({
+    queryKey: ["users", "receptionists"],
+    queryFn: () => userApi.list().then((res) => res.data),
+  });
+
+  const receptionists =
+    receptionistsData?.filter((user) => user.role === Role.RECEPCAO).map((user) => ({
+      id: user.id,
+      name: user.name,
+    })) ?? [];
 
   const entries = data?.entries ?? [];
 
@@ -108,6 +122,40 @@ export function FinancialPaymentsTab({
   const handleViewDetails = (entry: QueueEntry) => {
     setSelectedEntry(entry);
     setIsDetailsModalOpen(true);
+  };
+
+  const handleEditPayment = (entry: QueueEntry) => {
+    setEditingEntry(entry);
+    setIsEditModalOpen(true);
+  };
+
+  const handleEditModalChange = (open: boolean) => {
+    setIsEditModalOpen(open);
+    if (!open) {
+      setEditingEntry(null);
+    }
+  };
+
+  const handleSavePayment = (
+    id: string,
+    payload: {
+      paymentMethod?: string | null;
+      paymentStatus?: PaymentStatus;
+      paymentAmount?: string | null;
+      paymentReceivedAt?: string | null;
+      paymentNotes?: string | null;
+      paymentReceivedById?: string | null;
+    }
+  ) => {
+    updatePaymentMutation.mutate(
+      { id, payload },
+      {
+        onSuccess: () => {
+          setIsEditModalOpen(false);
+          setEditingEntry(null);
+        },
+      }
+    );
   };
 
   const handleStartEdit = (entry: QueueEntry, field: "amount" | "status") => {
@@ -298,6 +346,15 @@ export function FinancialPaymentsTab({
                           <Eye className="h-4 w-4 mr-1" />
                           Detalhes
                         </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEditPayment(entry)}
+                          className="h-8"
+                        >
+                          <Pencil className="h-4 w-4 mr-1" />
+                          Editar
+                        </Button>
                       </div>
                     </td>
                   </tr>
@@ -323,6 +380,15 @@ export function FinancialPaymentsTab({
         open={isDetailsModalOpen}
         onOpenChange={setIsDetailsModalOpen}
         entry={selectedEntry}
+      />
+
+      <PaymentEditModal
+        open={isEditModalOpen}
+        onOpenChange={handleEditModalChange}
+        entry={editingEntry}
+        receptionists={receptionists}
+        onSave={handleSavePayment}
+        isLoading={updatePaymentMutation.isPending}
       />
     </>
   );

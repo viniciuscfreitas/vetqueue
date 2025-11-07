@@ -1,11 +1,11 @@
+import { FinancialReportData, FinancialSummary, PaymentStatus, Priority, QueueEntry, Status } from "../core/types";
+import { logger } from "../lib/logger";
 import { QueueRepository } from "../repositories/queueRepository";
 import { UserRepository } from "../repositories/userRepository";
-import { QueueEntry, Priority, Status, PaymentStatus, FinancialSummary, FinancialReportData } from "../core/types";
-import { logger } from "../lib/logger";
 
 export class QueueService {
   private userRepository: UserRepository;
-  
+
   constructor(private repository: QueueRepository) {
     this.userRepository = new UserRepository();
   }
@@ -38,7 +38,7 @@ export class QueueService {
     const scheduledTime = new Date(scheduledAt).getTime();
     const now = Date.now();
     const toleranceMs = 15 * 60 * 1000;
-    
+
     if (now >= scheduledTime + toleranceMs) {
       const finalPriority = basePriority === Priority.EMERGENCY ? Priority.EMERGENCY : Priority.NORMAL;
       return {
@@ -47,7 +47,7 @@ export class QueueService {
         scheduledAt: null,
       };
     }
-    
+
     return {
       priority: basePriority,
       hasScheduledAppointment: true,
@@ -78,7 +78,7 @@ export class QueueService {
       scheduledAt: data.scheduledAt,
       patientId: data.patientId,
     });
-    
+
     const processed = this.processPriorityAndSchedule(
       data.priority || Priority.NORMAL,
       data.hasScheduledAppointment,
@@ -117,9 +117,9 @@ export class QueueService {
       hasScheduledAppointment: processed.hasScheduledAppointment,
     };
     if (data.patientId) addQueueMeta.patientId = data.patientId;
-    
+
     logger.info("Adding to queue", addQueueMeta);
-    
+
     try {
       if (!data.patientName.trim() || !data.tutorName.trim()) {
         logger.warn("Missing required fields", { module: "Queue", hasPatientName: !!data.patientName.trim(), hasTutorName: !!data.tutorName.trim() });
@@ -136,9 +136,11 @@ export class QueueService {
         hasScheduledAppointment: processed.hasScheduledAppointment,
         scheduledAt: processed.scheduledAt || undefined,
         patientId: data.patientId,
+        simplesVetId: data.simplesVetId,
+        paymentMethod: data.paymentMethod,
       });
       const dbDuration = Date.now() - startTime;
-      
+
       logger.debug("Queue entry created", {
         module: "Queue",
         entryId: entry.id,
@@ -146,7 +148,7 @@ export class QueueService {
         patientName: entry.patientName,
         dbDuration: `${dbDuration}ms`,
       });
-      
+
       if (dbDuration > 500) {
         logger.warn("Slow database operation", {
           module: "Queue",
@@ -155,7 +157,7 @@ export class QueueService {
           entryId: entry.id,
         });
       }
-      
+
       return entry;
     } catch (error) {
       logger.error("Failed to create queue entry", {
@@ -176,7 +178,7 @@ export class QueueService {
 
   async callNext(vetId?: string, roomId?: string): Promise<QueueEntry | null> {
     logger.debug("Calling next patient", { module: "Queue", vetId, roomId });
-    
+
     if (vetId && !roomId) {
       const vet = await this.userRepository.findById(vetId);
       if (!vet?.currentRoomId) {
@@ -185,7 +187,7 @@ export class QueueService {
       }
       roomId = vet.currentRoomId;
     }
-    
+
     if (vetId && roomId) {
       const roomOccupied = await this.repository.getVetInRoom(roomId);
       if (roomOccupied && roomOccupied.vetId !== vetId) {
@@ -293,7 +295,7 @@ export class QueueService {
 
   async startService(id: string, userRole?: string): Promise<QueueEntry> {
     logger.debug("Starting service", { module: "Queue", entryId: id, userRole });
-    
+
     if (userRole === "RECEPCAO") {
       throw new Error("Recepção não pode iniciar atendimento");
     }
@@ -610,7 +612,7 @@ export class QueueService {
 
     const wasScheduled = entry.hasScheduledAppointment;
     const becomesWalkIn = wasScheduled && !processed.hasScheduledAppointment;
-    
+
     if (becomesWalkIn) {
       logger.info("Scheduled appointment converted to walk-in (late >15min) on update", {
         module: "Queue",
@@ -631,7 +633,7 @@ export class QueueService {
         hasScheduledAppointment: processed.hasScheduledAppointment,
         scheduledAt: processed.scheduledAt || undefined,
       });
-      
+
       const updateMeta: any = {
         module: "Queue",
         eventType: "QueueEntryUpdated",
@@ -640,17 +642,17 @@ export class QueueService {
         patientName: updated.patientName,
         priority: processed.priority,
       };
-      
+
       if (updated.status !== oldStatus) {
         updateMeta.eventType = "StatusTransition";
         updateMeta.oldStatus = oldStatus;
         updateMeta.newStatus = updated.status;
       }
-      
+
       logger.info("Queue entry updated", updateMeta);
       return updated;
     } catch (error) {
-      logger.error("Failed to update queue entry", { 
+      logger.error("Failed to update queue entry", {
         module: "Queue",
         eventType: "QueueEntryUpdateFailed",
         entryId: id,

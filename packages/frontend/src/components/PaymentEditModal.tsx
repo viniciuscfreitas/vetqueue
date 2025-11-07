@@ -1,16 +1,17 @@
-import { useState, useEffect } from "react";
-import { QueueEntry, PaymentStatus } from "@/lib/api";
+import { PaymentStatus, QueueEntry } from "@/lib/api";
+import { fromDateTimeLocal, paymentStatusLabels, toDateTimeLocal } from "@/lib/financialUtils";
+import { useEffect, useState } from "react";
+import { Button } from "./ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "./ui/dialog";
-import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
-import { Textarea } from "./ui/textarea";
 import {
   Select,
   SelectContent,
@@ -18,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
-import { paymentStatusLabels, toDateTimeLocal, fromDateTimeLocal } from "@/lib/financialUtils";
+import { Textarea } from "./ui/textarea";
 
 interface PaymentEditModalProps {
   open: boolean;
@@ -36,8 +37,10 @@ interface PaymentEditModalProps {
   isLoading?: boolean;
 }
 
+const NONE_VALUE = "__none";
+
 const paymentMethodOptions = [
-  { value: "", label: "Não informado" },
+  { value: NONE_VALUE, label: "Não informado" },
   { value: "CREDIT", label: "Crédito" },
   { value: "DEBIT", label: "Débito" },
   { value: "CASH", label: "Dinheiro" },
@@ -60,23 +63,23 @@ export function PaymentEditModal({
   isLoading = false,
 }: PaymentEditModalProps) {
   const [formData, setFormData] = useState({
-    paymentMethod: "",
+    paymentMethod: NONE_VALUE,
     paymentStatus: PaymentStatus.PENDING,
     paymentAmount: "",
     paymentReceivedAt: "",
     paymentNotes: "",
-    paymentReceivedById: "",
+    paymentReceivedById: NONE_VALUE,
   });
 
   useEffect(() => {
     if (entry) {
       setFormData({
-        paymentMethod: entry.paymentMethod ?? "",
+        paymentMethod: entry.paymentMethod ?? NONE_VALUE,
         paymentStatus: entry.paymentStatus ?? PaymentStatus.PENDING,
         paymentAmount: entry.paymentAmount ?? "",
         paymentReceivedAt: toDateTimeLocal(entry.paymentReceivedAt),
         paymentNotes: entry.paymentNotes ?? "",
-        paymentReceivedById: entry.paymentReceivedById ?? "",
+        paymentReceivedById: entry.paymentReceivedById ?? NONE_VALUE,
       });
     }
   }, [entry, open]);
@@ -85,12 +88,12 @@ export function PaymentEditModal({
 
   const handleSave = () => {
     const payload = {
-      paymentMethod: formData.paymentMethod || null,
+      paymentMethod: formData.paymentMethod === NONE_VALUE ? null : formData.paymentMethod,
       paymentStatus: formData.paymentStatus,
       paymentAmount: formData.paymentAmount || null,
       paymentReceivedAt: fromDateTimeLocal(formData.paymentReceivedAt),
       paymentNotes: formData.paymentNotes.trim() || null,
-      paymentReceivedById: formData.paymentReceivedById || null,
+      paymentReceivedById: formData.paymentReceivedById === NONE_VALUE ? null : formData.paymentReceivedById,
     };
     onSave(entry.id, payload);
   };
@@ -100,6 +103,9 @@ export function PaymentEditModal({
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Editar Pagamento</DialogTitle>
+          <DialogDescription>
+            Atualize as informações financeiras do atendimento para manter relatórios consistentes.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 mt-4">
@@ -131,8 +137,8 @@ export function PaymentEditModal({
                   setFormData({ ...formData, paymentMethod: value })
                 }
               >
-                <SelectTrigger id="edit-method">
-                  <SelectValue />
+              <SelectTrigger id="edit-method">
+                <SelectValue placeholder="Selecione..." />
                 </SelectTrigger>
                 <SelectContent>
                   {paymentMethodOptions.map((option) => (
@@ -151,8 +157,8 @@ export function PaymentEditModal({
                   setFormData({ ...formData, paymentStatus: value as PaymentStatus })
                 }
               >
-                <SelectTrigger id="edit-status">
-                  <SelectValue />
+              <SelectTrigger id="edit-status">
+                <SelectValue placeholder="Selecione..." />
                 </SelectTrigger>
                 <SelectContent>
                   {paymentStatusOptions.map((status) => (
@@ -178,7 +184,7 @@ export function PaymentEditModal({
                   <SelectValue placeholder="Selecione..." />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Não informado</SelectItem>
+                  <SelectItem value={NONE_VALUE}>Não informado</SelectItem>
                   {receptionists.map((recep) => (
                     <SelectItem key={recep.id} value={recep.id}>
                       {recep.name}

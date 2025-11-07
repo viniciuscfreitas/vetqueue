@@ -13,6 +13,7 @@
     "migrate:resolve-failed": "tsx prisma/resolve-failed-migrations.ts",
     "db:studio": "prisma studio",
     "db:seed": "tsx prisma/seed.ts",
+    "db:seed:massive": "tsx prisma/seed-massive.ts",
     "test": "vitest",
     "test:run": "vitest run"
   },

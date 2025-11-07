@@ -3,8 +3,8 @@ import { QueueService } from "../../services/queueService";
 import { QueueRepository } from "../../repositories/queueRepository";
 import { AuditService } from "../../services/auditService";
 import { AuditRepository } from "../../repositories/auditRepository";
-import { Priority, PaymentStatus } from "../../core/types";
-import { authMiddleware, AuthenticatedRequest, requireRole } from "../../middleware/authMiddleware";
+import { Priority, PaymentStatus, ModuleKey } from "../../core/types";
+import { authMiddleware, AuthenticatedRequest, requireRole, requireModule } from "../../middleware/authMiddleware";
 import { z } from "zod";
 import { parseDateRange } from "../../utils/dateParsing";
 import { asyncHandler } from "../../middleware/asyncHandler";
@@ -133,8 +133,8 @@ router.post("/", authMiddleware, async (req: AuthenticatedRequest, res: Response
         entityId: entry.id,
         metadata: { patientName: entry.patientName, tutorName: entry.tutorName, serviceType: entry.serviceType },
       }).catch((error) => {
-        logger.error("Failed to log audit", { 
-          error: error instanceof Error ? error.message : String(error) 
+        logger.error("Failed to log audit", {
+          error: error instanceof Error ? error.message : String(error)
         });
       });
     }
@@ -177,8 +177,8 @@ router.post("/call-next", authMiddleware, async (req: AuthenticatedRequest, res:
           roomId: data.roomId,
         },
       }).catch((error) => {
-        logger.error("Failed to log audit", { 
-          error: error instanceof Error ? error.message : String(error) 
+        logger.error("Failed to log audit", {
+          error: error instanceof Error ? error.message : String(error)
         });
       });
     }
@@ -210,8 +210,8 @@ router.post("/:id/call", authMiddleware, async (req: AuthenticatedRequest, res: 
           roomId: data.roomId,
         },
       }).catch((error) => {
-        logger.error("Failed to log audit", { 
-          error: error instanceof Error ? error.message : String(error) 
+        logger.error("Failed to log audit", {
+          error: error instanceof Error ? error.message : String(error)
         });
       });
     }
@@ -246,8 +246,8 @@ router.patch("/:id/start", authMiddleware, async (req: AuthenticatedRequest, res
           serviceType: entry.serviceType,
         },
       }).catch((error) => {
-        logger.error("Failed to log audit", { 
-          error: error instanceof Error ? error.message : String(error) 
+        logger.error("Failed to log audit", {
+          error: error instanceof Error ? error.message : String(error)
         });
       });
     }
@@ -273,8 +273,8 @@ router.patch("/:id/complete", authMiddleware, async (req: AuthenticatedRequest, 
           serviceType: entry.serviceType,
         },
       }).catch((error) => {
-        logger.error("Failed to log audit", { 
-          error: error instanceof Error ? error.message : String(error) 
+        logger.error("Failed to log audit", {
+          error: error instanceof Error ? error.message : String(error)
         });
       });
     }
@@ -284,7 +284,7 @@ router.patch("/:id/complete", authMiddleware, async (req: AuthenticatedRequest, 
   }
 });
 
-router.patch("/:id/cancel", authMiddleware, requireRole(["RECEPCAO"]), async (req: AuthenticatedRequest, res: Response) => {
+router.patch("/:id/cancel", authMiddleware, requireModule(ModuleKey.QUEUE), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const entry = await queueService.cancelEntry(req.params.id);
     if (req.user) {
@@ -299,8 +299,8 @@ router.patch("/:id/cancel", authMiddleware, requireRole(["RECEPCAO"]), async (re
           serviceType: entry.serviceType,
         },
       }).catch((error) => {
-        logger.error("Failed to log audit", { 
-          error: error instanceof Error ? error.message : String(error) 
+        logger.error("Failed to log audit", {
+          error: error instanceof Error ? error.message : String(error)
         });
       });
     }
@@ -404,12 +404,12 @@ router.get("/reports/rooms", authMiddleware, asyncHandler(async (req: Request, r
   res.json(stats);
 }));
 
-router.get("/entry/:id/audit", authMiddleware, requireRole(["RECEPCAO"]), asyncHandler(async (req: Request, res: Response) => {
+router.get("/entry/:id/audit", authMiddleware, requireModule(ModuleKey.AUDIT), asyncHandler(async (req: Request, res: Response) => {
   const logs = await auditService.getAuditLogsByEntity("QueueEntry", req.params.id);
   res.json(logs);
 }));
 
-router.get("/audit/logs", authMiddleware, requireRole(["RECEPCAO"]), asyncHandler(async (req: Request, res: Response) => {
+router.get("/audit/logs", authMiddleware, requireModule(ModuleKey.AUDIT), asyncHandler(async (req: Request, res: Response) => {
   const dateRange = parseDateRange(req.query);
   const filters: any = {
     startDate: dateRange.start,
@@ -433,7 +433,7 @@ router.get("/audit/logs", authMiddleware, requireRole(["RECEPCAO"]), asyncHandle
     page,
     limit,
   });
-  
+
   res.json({
     entries: result.logs,
     total: result.total,
@@ -449,11 +449,11 @@ router.get("/room-occupations", authMiddleware, asyncHandler(async (req: Authent
 }));
 
 
-router.patch("/:id", authMiddleware, requireRole(["RECEPCAO"]), async (req: AuthenticatedRequest, res: Response) => {
+router.patch("/:id", authMiddleware, requireModule(ModuleKey.QUEUE), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const data = updateQueueSchema.parse(req.body);
     const userRole = req.user?.role;
-    
+
     const updatedEntry = await queueService.updateEntry(
       req.params.id,
       {
@@ -463,7 +463,7 @@ router.patch("/:id", authMiddleware, requireRole(["RECEPCAO"]), async (req: Auth
       },
       userRole
     );
-    
+
     if (req.user) {
       auditService.log({
         userId: req.user.id,
@@ -472,12 +472,12 @@ router.patch("/:id", authMiddleware, requireRole(["RECEPCAO"]), async (req: Auth
         entityId: updatedEntry.id,
         metadata: { patientName: updatedEntry.patientName, tutorName: updatedEntry.tutorName, serviceType: updatedEntry.serviceType },
       }).catch((error) => {
-        logger.error("Failed to log audit", { 
-          error: error instanceof Error ? error.message : String(error) 
+        logger.error("Failed to log audit", {
+          error: error instanceof Error ? error.message : String(error)
         });
       });
     }
-    
+
     res.json(updatedEntry);
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -488,11 +488,7 @@ router.patch("/:id", authMiddleware, requireRole(["RECEPCAO"]), async (req: Auth
   }
 });
 
-router.get("/financial", authMiddleware, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  if (req.user?.role !== "RECEPCAO") {
-    res.status(403).json({ error: "Apenas recepção pode acessar dados financeiros" });
-    return;
-  }
+router.get("/financial", authMiddleware, requireModule(ModuleKey.FINANCIAL), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
 
   const dateRange = parseDateRange(req.query);
   const filters: any = extractFinancialFilters(req);
@@ -515,11 +511,7 @@ router.get("/financial", authMiddleware, asyncHandler(async (req: AuthenticatedR
   res.json(result);
 }));
 
-router.patch("/:id/payment", authMiddleware, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  if (req.user?.role !== "RECEPCAO") {
-    res.status(403).json({ error: "Apenas recepção pode editar pagamento" });
-    return;
-  }
+router.patch("/:id/payment", authMiddleware, requireModule(ModuleKey.FINANCIAL), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
 
   try {
     const validated = paymentSchema.parse(req.body);
@@ -552,7 +544,7 @@ router.patch("/:id/payment", authMiddleware, asyncHandler(async (req: Authentica
       },
       req.user?.id
     );
-    
+
     if (req.user) {
       auditService.log({
         userId: req.user.id,
@@ -565,12 +557,12 @@ router.patch("/:id/payment", authMiddleware, asyncHandler(async (req: Authentica
           paymentAmount,
         },
       }).catch((error) => {
-        logger.error("Failed to log audit", { 
-          error: error instanceof Error ? error.message : String(error) 
+        logger.error("Failed to log audit", {
+          error: error instanceof Error ? error.message : String(error)
         });
       });
     }
-    
+
     res.json(updatedEntry);
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -581,11 +573,7 @@ router.patch("/:id/payment", authMiddleware, asyncHandler(async (req: Authentica
   }
 }));
 
-router.get("/financial/summary", authMiddleware, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  if (req.user?.role !== "RECEPCAO") {
-    res.status(403).json({ error: "Apenas recepção pode acessar resumo financeiro" });
-    return;
-  }
+router.get("/financial/summary", authMiddleware, requireModule(ModuleKey.FINANCIAL), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
 
   const dateRange = parseDateRange(req.query);
   const startDate = dateRange.start || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
@@ -597,11 +585,7 @@ router.get("/financial/summary", authMiddleware, asyncHandler(async (req: Authen
   res.json(summary);
 }));
 
-router.get("/financial/reports", authMiddleware, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  if (req.user?.role !== "RECEPCAO") {
-    res.status(403).json({ error: "Apenas recepção pode acessar relatórios financeiros" });
-    return;
-  }
+router.get("/financial/reports", authMiddleware, requireModule(ModuleKey.FINANCIAL), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
 
   const dateRange = parseDateRange(req.query);
   const startDate = dateRange.start || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);

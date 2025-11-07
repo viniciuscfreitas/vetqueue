@@ -11,26 +11,24 @@ import { useQueryClient } from "@tanstack/react-query";
 
 interface QueueTabProps {
   user: { id: string; role: Role } | null;
-  currentRoom: { id: string } | null;
   authLoading: boolean;
-  onShowRoomModal: () => void;
-  onShowAddQueueModal: () => void;
+  onShowAddQueueModal?: () => void;
+  canManageQueue: boolean;
   onStart?: (id: string) => void;
   onComplete: (id: string) => void;
   onCancel?: (id: string) => void;
   onCall?: (entryId: string) => void;
   onViewRecord?: (patientId: string, queueEntryId: string) => void;
   onRegisterConsultation?: (patientId: string, queueEntryId: string) => void;
-  onCallNext: () => void;
+  onCallNext?: () => void;
   callNextPending: boolean;
 }
 
 export function QueueTab({
   user,
-  currentRoom,
   authLoading,
-  onShowRoomModal,
   onShowAddQueueModal,
+  canManageQueue,
   onStart,
   onComplete,
   onCancel,
@@ -42,11 +40,13 @@ export function QueueTab({
 }: QueueTabProps) {
   const queryClient = useQueryClient();
 
+  const isVet = user?.role === Role.VET;
+
   const { data: entries = [], isLoading, isError } = useQuery<QueueEntry[]>({
-    queryKey: ["queue", "active", user?.role === "VET" ? user.id : undefined],
-    queryFn: () => queueApi.listActive(
-      user?.role === "VET" ? user.id : undefined
-    ).then((res) => res.data),
+    queryKey: ["queue", "active", isVet ? user?.id : undefined],
+    queryFn: () => queueApi
+      .listActive(isVet ? user?.id : undefined)
+      .then((res) => res.data),
     refetchInterval: (query) => (query.state.error ? false : 3000),
     enabled: !authLoading && !!user,
   });
@@ -60,7 +60,6 @@ export function QueueTab({
         isLoading={isLoading}
         isError={isError}
         waitingCount={waitingCount}
-        userRole={user?.role}
         onAddClick={onShowAddQueueModal}
         onCallNextClick={onCallNext}
         callNextPending={callNextPending}
@@ -111,8 +110,8 @@ export function QueueTab({
           onCall={onCall}
           onViewRecord={onViewRecord}
           onRegisterConsultation={onRegisterConsultation}
-          userRole={user?.role}
           onAddClick={onShowAddQueueModal}
+          canManageQueue={canManageQueue}
         />
       )}
     </div>

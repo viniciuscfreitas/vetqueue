@@ -1,8 +1,9 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { User, Role } from "../core/types";
+import { User, Role, ModuleKey } from "../core/types";
 import { prisma } from "../lib/prisma";
 import { logger } from "../lib/logger";
+import { PermissionService } from "./permissionService";
 
 const JWT_SECRET = process.env.JWT_SECRET || "vetqueue-secret-key-change-in-production";
 const JWT_EXPIRES_IN = "24h";
@@ -10,12 +11,15 @@ const JWT_EXPIRES_IN = "24h";
 export interface LoginResult {
   user: User;
   token: string;
+  permissions: ModuleKey[];
 }
 
 export class AuthService {
+  constructor(private permissionService: PermissionService = new PermissionService()) {}
+
   async login(username: string, password: string): Promise<LoginResult> {
     logger.info("Login attempt", { module: "Auth", username });
-    
+
     const user = await prisma.user.findUnique({
       where: { username },
     });
@@ -32,12 +36,16 @@ export class AuthService {
       throw new Error("Credenciais inválidas");
     }
 
+    const role = user.role as Role;
+    const permissions = await this.permissionService.getModulesForRole(role);
+
     const token = jwt.sign(
       {
         id: user.id,
         username: user.username,
         name: user.name,
         role: user.role,
+        permissions,
       },
       JWT_SECRET,
       { expiresIn: JWT_EXPIRES_IN }
@@ -49,19 +57,21 @@ export class AuthService {
       userId: user.id,
       userRole: user.role,
     });
-    
+
     return {
       user: {
         id: user.id,
         username: user.username,
         name: user.name,
-        role: user.role as Role,
+        role,
         createdAt: user.createdAt,
         currentRoomId: user.currentRoomId,
         roomCheckedInAt: user.roomCheckedInAt,
         lastActivityAt: user.lastActivityAt,
+        permissions,
       },
       token,
+      permissions,
     };
   }
 

@@ -4,10 +4,12 @@ import { UserRepository } from "../../repositories/userRepository";
 import { authMiddleware, AuthenticatedRequest } from "../../middleware/authMiddleware";
 import { z } from "zod";
 import { asyncHandler } from "../../middleware/asyncHandler";
+import { PermissionService } from "../../services/permissionService";
 
 const router = Router();
 const authService = new AuthService();
 const userRepository = new UserRepository();
+const permissionService = new PermissionService();
 
 const loginSchema = z.object({
   username: z.string().min(1, "Usuário é obrigatório"),
@@ -38,7 +40,8 @@ router.get("/me", authMiddleware, asyncHandler(async (req: AuthenticatedRequest,
     res.status(401).json({ error: "Usuário não encontrado" });
     return;
   }
-  res.json({ user });
+  const permissions = await permissionService.getModulesForRole(user.role);
+  res.json({ user: { ...user, permissions }, permissions });
 }));
 
 export default router;

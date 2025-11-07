@@ -8,11 +8,11 @@ import { Spinner } from "@/components/ui/spinner";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
 import { Clock, UserCircle2, Users, DollarSign } from "lucide-react";
-import { Role } from "@/lib/api";
+import { ModuleKey } from "@/lib/api";
 
 export default function Home() {
   const router = useRouter();
-  const { user, isLoading: authLoading } = useAuth();
+  const { user, isLoading: authLoading, canAccess } = useAuth();
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -34,26 +34,30 @@ export default function Home() {
       ariaLabel: "Gerenciar fila de atendimento e chamar pacientes",
       href: "/queue",
       icon: Clock,
+      requiredModule: ModuleKey.QUEUE,
     },
     {
       title: "Pacientes",
       ariaLabel: "Cadastrar e gerenciar pacientes e prontuários",
       href: "/patients",
       icon: UserCircle2,
+      requiredModule: ModuleKey.PATIENTS,
     },
     {
       title: "Tutores",
       ariaLabel: "Cadastrar e gerenciar tutores",
       href: "/tutors",
       icon: Users,
+      requiredModule: ModuleKey.TUTORS,
     },
-    ...(user?.role === Role.RECEPCAO ? [{
+    {
       title: "Financeiro",
       ariaLabel: "Controle financeiro e pagamentos",
       href: "/financial",
       icon: DollarSign,
-    }] : []),
-  ];
+      requiredModule: ModuleKey.FINANCIAL,
+    },
+  ].filter((module) => canAccess(module.requiredModule));
 
   return (
     <div className="min-h-screen bg-background">

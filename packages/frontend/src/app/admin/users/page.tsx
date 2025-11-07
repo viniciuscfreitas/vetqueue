@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { userApi, Role, User } from "@/lib/api";
+import { userApi, Role, User, ModuleKey } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,7 +24,7 @@ import { Spinner } from "@/components/ui/spinner";
 
 export default function UsersPage() {
   const router = useRouter();
-  const { user, isLoading: authLoading } = useAuth();
+  const { user, isLoading: authLoading, canAccess } = useAuth();
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const handleError = createErrorHandler(toast);
@@ -37,13 +37,20 @@ export default function UsersPage() {
     role: Role.VET as Role,
   });
 
+  const canManageUsers = canAccess(ModuleKey.ADMIN_USERS);
+
   useEffect(() => {
-    if (!authLoading && (!user || user.role !== "RECEPCAO")) {
+    if (!authLoading && !user) {
+      router.push("/login");
+      return;
+    }
+
+    if (!authLoading && user && !canManageUsers) {
       router.push("/");
     }
-  }, [user, authLoading, router]);
+  }, [user, authLoading, canManageUsers, router]);
 
-  const isAuthorized = !authLoading && !!user && user.role === "RECEPCAO";
+  const isAuthorized = !authLoading && !!user && canManageUsers;
 
   const { data: users = [], isLoading } = useQuery({
     queryKey: ["users"],
@@ -80,7 +87,7 @@ export default function UsersPage() {
     onError: handleError,
   });
 
-  if (authLoading || !user || user.role !== "RECEPCAO") {
+  if (authLoading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Spinner size="lg" />
@@ -88,9 +95,13 @@ export default function UsersPage() {
     );
   }
 
+  if (!canManageUsers) {
+    return null;
+  }
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!editingUser && formData.password.length < 6) {
       toast({
         variant: "destructive",
@@ -99,7 +110,7 @@ export default function UsersPage() {
       });
       return;
     }
-    
+
     if (editingUser && formData.password && formData.password.length < 6) {
       toast({
         variant: "destructive",
@@ -108,7 +119,7 @@ export default function UsersPage() {
       });
       return;
     }
-    
+
     if (editingUser) {
       updateMutation.mutate({
         id: editingUser.id,
@@ -161,8 +172,8 @@ export default function UsersPage() {
             <CardHeader className="bg-muted/50">
               <div className="flex items-center justify-between">
                 <CardTitle>{editingUser ? "Editar Usuário" : "Novo Usuário"}</CardTitle>
-                <Button 
-                  variant="ghost" 
+                <Button
+                  variant="ghost"
                   size="sm"
                   onClick={handleCancel}
                   className="h-8 w-8 p-0"
@@ -221,16 +232,17 @@ export default function UsersPage() {
                       <SelectContent>
                         <SelectItem value={Role.VET}>Veterinário</SelectItem>
                         <SelectItem value={Role.RECEPCAO}>Recepção</SelectItem>
+                        <SelectItem value={Role.ADMIN}>Admin</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                 </div>
                 <div className="flex gap-2">
                   <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
-                    {createMutation.isPending || updateMutation.isPending 
-                      ? "Salvando..." 
-                      : editingUser 
-                      ? "Salvar Alterações" 
+                    {createMutation.isPending || updateMutation.isPending
+                      ? "Salvando..."
+                      : editingUser
+                      ? "Salvar Alterações"
                       : "Criar Usuário"}
                   </Button>
                   <Button type="button" variant="outline" onClick={handleCancel}>

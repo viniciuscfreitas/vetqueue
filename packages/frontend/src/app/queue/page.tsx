@@ -1,18 +1,13 @@
 "use client";
 
-import { queueApi, Status, Role, Priority } from "@/lib/api";
-import { useEffect, useState, useRef, useCallback } from "react";
-import { Header } from "@/components/Header";
 import { AddQueueFormInline } from "@/components/AddQueueFormInline";
-import { useAuth } from "@/contexts/AuthContext";
-import { useRouter } from "next/navigation";
+import { AuditTab } from "@/components/AuditTab";
+import { Header } from "@/components/Header";
+import { HistoryTab } from "@/components/HistoryTab";
+import { PatientRecordDialog } from "@/components/PatientRecordDialog";
+import { QueueTab } from "@/components/QueueTab";
+import { ReportsTab } from "@/components/ReportsTab";
 import { RoomSelectModal } from "@/components/RoomSelectModal";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,25 +24,29 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useToast } from "@/components/ui/use-toast";
-import { useQueryClient, useQuery } from "@tanstack/react-query";
-import { QueueTab } from "@/components/QueueTab";
-import { HistoryTab } from "@/components/HistoryTab";
-import { ReportsTab } from "@/components/ReportsTab";
-import { AuditTab } from "@/components/AuditTab";
-import { useQueueMutations } from "@/hooks/useQueueMutations";
 import { Spinner } from "@/components/ui/spinner";
-import { PatientRecordDialog } from "@/components/PatientRecordDialog";
-import { patientApi, Patient } from "@/lib/api";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { useQueueMutations } from "@/hooks/useQueueMutations";
+import { ModuleKey, patientApi, Priority, queueApi, Role, Status } from "@/lib/api";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export default function QueuePage() {
   const router = useRouter();
-  const { user, currentRoom, isLoading: authLoading } = useAuth();
+  const { user, currentRoom, isLoading: authLoading, canAccess } = useAuth();
   const queryClient = useQueryClient();
   const { toast: toastFn } = useToast();
   const toastRef = useRef(toastFn);
   toastRef.current = toastFn;
-  
+
   const [showRoomModal, setShowRoomModal] = useState(false);
   const [showAddQueueModal, setShowAddQueueModal] = useState(false);
   const [entryToCall, setEntryToCall] = useState<string | null>(null);
@@ -58,11 +57,17 @@ export default function QueuePage() {
 
   const previousEntriesRef = useRef<any[]>([]);
 
+  const isVet = user?.role === Role.VET;
+  const canManageQueue = canAccess(ModuleKey.QUEUE);
+  const canCallOrManageQueue = canManageQueue || isVet;
+  const canViewReports = canAccess(ModuleKey.REPORTS);
+  const canViewAudit = canAccess(ModuleKey.AUDIT);
+
   const { data: entries = [] } = useQuery({
-    queryKey: ["queue", "active", user?.role === "VET" ? user.id : undefined],
-    queryFn: () => queueApi.listActive(
-      user?.role === "VET" ? user.id : undefined
-    ).then((res) => res.data),
+    queryKey: ["queue", "active", isVet ? user?.id : undefined],
+    queryFn: () => queueApi
+      .listActive(isVet ? user?.id : undefined)
+      .then((res) => res.data),
     refetchInterval: (query) => (query.state.error ? false : 3000),
     enabled: !authLoading && !!user,
   });
@@ -88,6 +93,12 @@ export default function QueuePage() {
   }, [user, authLoading, router]);
 
   useEffect(() => {
+    if (!authLoading && user && !canCallOrManageQueue) {
+      router.push("/");
+    }
+  }, [authLoading, user, canCallOrManageQueue, router]);
+
+  useEffect(() => {
     if (entries.length > 0 && previousEntriesRef.current.length > 0) {
       entries.forEach((newEntry) => {
         const oldEntry = previousEntriesRef.current.find((e) => e.id === newEntry.id);
@@ -110,7 +121,7 @@ export default function QueuePage() {
 
   const callNextFnRef = useRef(queueMutations.callNext);
   callNextFnRef.current = queueMutations.callNext;
-  
+
   const handleCallNext = useCallback(() => {
     if (currentRoom) {
       callNextFnRef.current(currentRoom.id);
@@ -126,7 +137,7 @@ export default function QueuePage() {
 
       if (e.ctrlKey && e.key === "n") {
         e.preventDefault();
-        if (user?.role === Role.RECEPCAO) {
+        if (canManageQueue) {
           setShowAddQueueModal(true);
         }
         return;
@@ -134,7 +145,7 @@ export default function QueuePage() {
 
       if (e.key === "Enter" && !isInputFocused && !showRoomModal && !showAddQueueModal) {
         const waitingCount = entries.filter((e) => e.status === Status.WAITING).length;
-        if (waitingCount > 0 && (user?.role === Role.RECEPCAO || user?.role === Role.VET)) {
+        if (waitingCount > 0 && canCallOrManageQueue) {
           handleCallNext();
         }
       }
@@ -142,13 +153,13 @@ export default function QueuePage() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [user?.role, entries, showRoomModal, showAddQueueModal, handleCallNext]);
+  }, [canManageQueue, canCallOrManageQueue, entries, showRoomModal, showAddQueueModal, handleCallNext]);
 
   const startServiceFnRef = useRef(queueMutations.startService);
   const completeServiceFnRef = useRef(queueMutations.completeService);
   const callPatientFnRef = useRef(queueMutations.callPatient);
   const cancelEntryFnRef = useRef(queueMutations.cancelEntry);
-  
+
   startServiceFnRef.current = queueMutations.startService;
   completeServiceFnRef.current = queueMutations.completeService;
   callPatientFnRef.current = queueMutations.callPatient;
@@ -176,7 +187,7 @@ export default function QueuePage() {
     if (currentRoom) {
       callPatientFnRef.current({ entryId, roomId: currentRoom.id });
     } else {
-      if (user?.role === Role.RECEPCAO) {
+      if (canManageQueue) {
         setShowRoomModal(true);
         setEntryToCall(entryId);
       } else {
@@ -187,11 +198,7 @@ export default function QueuePage() {
         });
       }
     }
-  }, [currentRoom, user?.role]);
-
-  const handleShowRoomModal = useCallback(() => {
-    setShowRoomModal(true);
-  }, []);
+  }, [currentRoom, canManageQueue]);
 
   const handleShowAddQueueModal = useCallback(() => {
     setShowAddQueueModal(true);
@@ -218,75 +225,81 @@ export default function QueuePage() {
     );
   }
 
+  if (!canCallOrManageQueue) {
+    return null;
+  }
+
+  const secondaryTabs = [
+    canManageQueue && { value: "history", label: "Histórico" },
+    canViewReports && { value: "reports", label: "Relatórios" },
+    canViewAudit && { value: "audit", label: "Auditoria" },
+  ].filter(Boolean) as Array<{ value: string; label: string }>;
+
+  const tabLayoutClass = secondaryTabs.length === 0
+    ? "grid-cols-1"
+    : secondaryTabs.length === 1
+      ? "grid-cols-2"
+      : secondaryTabs.length === 2
+        ? "grid-cols-3"
+        : "grid-cols-4";
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
 
       <main className="container mx-auto px-4 py-8">
         <Tabs defaultValue="queue" className="space-y-8">
-          <TabsList className={`grid w-full h-auto ${user?.role === Role.RECEPCAO ? 'grid-cols-4' : 'grid-cols-1'}`}>
+          <TabsList className={`grid w-full h-auto ${tabLayoutClass}`}>
             <TabsTrigger
               value="queue"
               className="data-[state=active]:font-semibold py-2.5 text-sm sm:text-base"
             >
               Fila
             </TabsTrigger>
-            {user?.role === Role.RECEPCAO && (
-              <>
-                <TabsTrigger
-                  value="history"
-                  className="data-[state=active]:font-semibold py-2.5 text-sm sm:text-base"
-                >
-                  Histórico
-                </TabsTrigger>
-                <TabsTrigger
-                  value="reports"
-                  className="data-[state=active]:font-semibold py-2.5 text-sm sm:text-base"
-                >
-                  Relatórios
-                </TabsTrigger>
-                <TabsTrigger
-                  value="audit"
-                  className="data-[state=active]:font-semibold py-2.5 text-sm sm:text-base"
-                >
-                  Auditoria
-                </TabsTrigger>
-              </>
-            )}
+            {secondaryTabs.map((tab) => (
+              <TabsTrigger
+                key={tab.value}
+                value={tab.value}
+                className="data-[state=active]:font-semibold py-2.5 text-sm sm:text-base"
+              >
+                {tab.label}
+              </TabsTrigger>
+            ))}
           </TabsList>
 
           <TabsContent value="queue" className="space-y-6 mt-6">
             <QueueTab
               user={user}
-              currentRoom={currentRoom}
               authLoading={authLoading}
-              onShowRoomModal={handleShowRoomModal}
-              onShowAddQueueModal={handleShowAddQueueModal}
-              onStart={user?.role === Role.VET ? handleStart : undefined}
+              onShowAddQueueModal={canManageQueue ? handleShowAddQueueModal : undefined}
+              canManageQueue={canManageQueue}
+              onStart={isVet ? handleStart : undefined}
               onComplete={handleComplete}
-              onCancel={user?.role === Role.RECEPCAO ? handleCancel : undefined}
-              onCall={(user?.role === Role.RECEPCAO || user?.role === Role.VET) ? handleCall : undefined}
+              onCancel={canManageQueue ? handleCancel : undefined}
+              onCall={canCallOrManageQueue ? handleCall : undefined}
               onViewRecord={handleViewRecord}
-              onRegisterConsultation={user?.role === Role.VET ? handleRegisterConsultation : undefined}
-              onCallNext={handleCallNext}
+              onRegisterConsultation={isVet ? handleRegisterConsultation : undefined}
+              onCallNext={canCallOrManageQueue ? handleCallNext : undefined}
               callNextPending={queueMutations.callNextPending}
             />
           </TabsContent>
 
-          {user?.role === Role.RECEPCAO && (
-            <>
-              <TabsContent value="history" className="space-y-6 mt-6">
-                <HistoryTab authLoading={authLoading} />
-              </TabsContent>
+          {canManageQueue && (
+            <TabsContent value="history" className="space-y-6 mt-6">
+              <HistoryTab authLoading={authLoading} />
+            </TabsContent>
+          )}
 
-              <TabsContent value="reports" className="space-y-6 mt-6">
-                <ReportsTab authLoading={authLoading} />
-              </TabsContent>
+          {canViewReports && (
+            <TabsContent value="reports" className="space-y-6 mt-6">
+              <ReportsTab authLoading={authLoading} />
+            </TabsContent>
+          )}
 
-              <TabsContent value="audit" className="space-y-6 mt-6">
-                <AuditTab authLoading={authLoading} />
-              </TabsContent>
-            </>
+          {canViewAudit && (
+            <TabsContent value="audit" className="space-y-6 mt-6">
+              <AuditTab authLoading={authLoading} />
+            </TabsContent>
           )}
         </Tabs>
       </main>

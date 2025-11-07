@@ -10,7 +10,7 @@ import { FinancialFilters, FinancialFiltersState } from "@/components/FinancialF
 import { FinancialOverviewTab } from "@/components/FinancialOverviewTab";
 import { FinancialPaymentsTab } from "@/components/FinancialPaymentsTab";
 import { FinancialReportsTab } from "@/components/FinancialReportsTab";
-import { Role, userApi } from "@/lib/api";
+import { ModuleKey, Role, userApi } from "@/lib/api";
 import { useDateRange } from "@/hooks/useDateRange";
 import { useQuery } from "@tanstack/react-query";
 
@@ -27,18 +27,18 @@ const DEFAULT_FILTERS = {
 
 export default function FinancialPage() {
   const router = useRouter();
-  const { user, isLoading: authLoading } = useAuth();
+  const { user, isLoading: authLoading, canAccess } = useAuth();
 
   useEffect(() => {
     if (!authLoading && !user) {
       router.push("/login");
       return;
     }
-    if (!authLoading && user?.role !== Role.RECEPCAO) {
+    if (!authLoading && user && !canAccess(ModuleKey.FINANCIAL)) {
       router.push("/");
       return;
     }
-  }, [user, authLoading, router]);
+  }, [user, authLoading, router, canAccess]);
 
   const { startDate, endDate, setStartDate, setEndDate, reset: resetDateRange } = useDateRange();
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
@@ -91,7 +91,7 @@ export default function FinancialPage() {
     );
   }
 
-  if (user.role !== Role.RECEPCAO) {
+  if (!canAccess(ModuleKey.FINANCIAL)) {
     return null;
   }
 

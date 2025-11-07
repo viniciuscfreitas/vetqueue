@@ -1,23 +1,23 @@
 "use client";
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { serviceApi, Service } from "@/lib/api";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/components/ui/use-toast";
-import { createErrorHandler } from "@/lib/errors";
-import { useState, useEffect } from "react";
-import { useAuth } from "@/contexts/AuthContext";
-import { useRouter } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Header } from "@/components/Header";
 import { Spinner } from "@/components/ui/spinner";
+import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { ModuleKey, Service, serviceApi } from "@/lib/api";
+import { createErrorHandler } from "@/lib/errors";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export default function ServicesPage() {
   const router = useRouter();
-  const { user, isLoading: authLoading } = useAuth();
+  const { user, isLoading: authLoading, canAccess } = useAuth();
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const handleError = createErrorHandler(toast);
@@ -25,13 +25,20 @@ export default function ServicesPage() {
   const [editingService, setEditingService] = useState<Service | null>(null);
   const [serviceName, setServiceName] = useState("");
 
+  const canManageServices = canAccess(ModuleKey.ADMIN_SERVICES);
+
   useEffect(() => {
-    if (!authLoading && (!user || user.role !== "RECEPCAO")) {
+    if (!authLoading && !user) {
+      router.push("/login");
+      return;
+    }
+
+    if (!authLoading && user && !canManageServices) {
       router.push("/");
     }
-  }, [user, authLoading, router]);
+  }, [user, authLoading, canManageServices, router]);
 
-  const isAuthorized = !authLoading && !!user && user.role === "RECEPCAO";
+  const isAuthorized = !authLoading && !!user && canManageServices;
 
   const { data: services = [], isLoading } = useQuery({
     queryKey: ["services", "all"],
@@ -81,12 +88,16 @@ export default function ServicesPage() {
     onError: handleError,
   });
 
-  if (authLoading || !user || user.role !== "RECEPCAO") {
+  if (authLoading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Spinner size="lg" />
       </div>
     );
+  }
+
+  if (!canManageServices) {
+    return null;
   }
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -128,8 +139,8 @@ export default function ServicesPage() {
             <CardHeader className="bg-muted/50">
               <div className="flex items-center justify-between">
                 <CardTitle>{editingService ? "Editar Serviço" : "Novo Serviço"}</CardTitle>
-                <Button 
-                  variant="ghost" 
+                <Button
+                  variant="ghost"
                   size="sm"
                   onClick={handleCancel}
                   className="h-8 w-8 p-0"
@@ -151,10 +162,10 @@ export default function ServicesPage() {
                 </div>
                 <div className="flex gap-2">
                   <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
-                    {createMutation.isPending || updateMutation.isPending 
-                      ? "Salvando..." 
-                      : editingService 
-                      ? "Salvar Alterações" 
+                    {createMutation.isPending || updateMutation.isPending
+                      ? "Salvando..."
+                      : editingService
+                      ? "Salvar Alterações"
                       : "Criar Serviço"}
                   </Button>
                   <Button type="button" variant="outline" onClick={handleCancel}>

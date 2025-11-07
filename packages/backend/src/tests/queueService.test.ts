@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { PaymentStatus, Priority, QueueEntry, Status } from "../core/types";
+import { PaymentStatus, Priority, QueueEntry, Role, Status } from "../core/types";
 import { QueueRepository } from "../repositories/queueRepository";
 import { QueueService } from "../services/queueService";
 
@@ -135,7 +135,7 @@ describe("QueueService critical flows", () => {
       scheduledAt,
     });
 
-    expect(entry.hasScheduledApepointment).toBe(true);
+    expect(entry.hasScheduledAppointment).toBe(true);
     expect(entry.scheduledAt?.toISOString()).toBe(scheduledAt.toISOString());
   });
 
@@ -172,6 +172,23 @@ describe("QueueService critical flows", () => {
 
     const stored = await repository.findById(entry.id);
     expect(stored?.paymentAmount).toBe("150.00");
+  });
+
+  it("permite apenas recepção ou admin atualizar atendimento", async () => {
+    const { service } = buildService();
+    const entry = await service.addToQueue({
+      patientName: "Thor",
+      tutorName: "Clara",
+      serviceType: "CONSULTA",
+      priority: Priority.NORMAL,
+    });
+
+    await expect(
+      service.updateEntry(entry.id, { tutorName: "Clara Atualizada" }, Role.VET)
+    ).rejects.toThrowError(/Apenas recepção pode editar atendimentos/);
+
+    const updated = await service.updateEntry(entry.id, { tutorName: "Clara Atualizada" }, Role.ADMIN);
+    expect(updated.tutorName).toBe("Clara Atualizada");
   });
 });
 

@@ -2,8 +2,8 @@ import { Router, Request, Response } from "express";
 import { UserService } from "../../services/userService";
 import { UserRepository } from "../../repositories/userRepository";
 import { QueueRepository } from "../../repositories/queueRepository";
-import { Role } from "../../core/types";
-import { authMiddleware, requireRole, AuthenticatedRequest } from "../../middleware/authMiddleware";
+import { Role, ModuleKey } from "../../core/types";
+import { authMiddleware, requireRole, AuthenticatedRequest, requireModule } from "../../middleware/authMiddleware";
 import { z } from "zod";
 import { asyncHandler } from "../../middleware/asyncHandler";
 
@@ -25,12 +25,12 @@ const updateUserSchema = z.object({
   password: z.string().min(6, "Senha deve ter no mínimo 6 caracteres").optional(),
 });
 
-router.get("/", authMiddleware, requireRole(["RECEPCAO"]), asyncHandler(async (req: Request, res: Response) => {
+router.get("/", authMiddleware, requireModule(ModuleKey.ADMIN_USERS), asyncHandler(async (req: Request, res: Response) => {
   const users = await userService.listUsers();
   res.json(users);
 }));
 
-router.post("/", authMiddleware, requireRole(["RECEPCAO"]), async (req: Request, res: Response) => {
+router.post("/", authMiddleware, requireModule(ModuleKey.ADMIN_USERS), async (req: Request, res: Response) => {
   try {
     const data = createUserSchema.parse(req.body);
     const user = await userService.createUser(data);
@@ -44,7 +44,7 @@ router.post("/", authMiddleware, requireRole(["RECEPCAO"]), async (req: Request,
   }
 });
 
-router.patch("/:id", authMiddleware, requireRole(["RECEPCAO"]), async (req: Request, res: Response) => {
+router.patch("/:id", authMiddleware, requireModule(ModuleKey.ADMIN_USERS), async (req: Request, res: Response) => {
   try {
     const data = updateUserSchema.parse(req.body);
     const user = await userService.updateUser(req.params.id, data);
@@ -58,7 +58,7 @@ router.patch("/:id", authMiddleware, requireRole(["RECEPCAO"]), async (req: Requ
   }
 });
 
-router.get("/active-vets", authMiddleware, requireRole(["RECEPCAO"]), asyncHandler(async (req: Request, res: Response) => {
+router.get("/active-vets", authMiddleware, requireModule(ModuleKey.QUEUE), asyncHandler(async (req: Request, res: Response) => {
   const activeVets = await queueRepository.getActiveVets();
   res.json(activeVets);
 }));
@@ -91,7 +91,7 @@ router.post("/rooms/check-out", authMiddleware, requireRole(["VET"]), async (req
   }
 });
 
-router.post("/:vetId/rooms/check-out", authMiddleware, requireRole(["RECEPCAO"]), async (req: Request, res: Response) => {
+router.post("/:vetId/rooms/check-out", authMiddleware, requireModule(ModuleKey.QUEUE), async (req: Request, res: Response) => {
   try {
     const user = await userService.checkOutRoom(req.params.vetId);
     res.json(user);

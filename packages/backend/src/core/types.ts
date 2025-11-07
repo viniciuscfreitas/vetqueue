@@ -23,6 +23,33 @@ export enum ServiceType {
 export enum Role {
   VET = "VET",
   RECEPCAO = "RECEPCAO",
+  ADMIN = "ADMIN",
+}
+
+export enum ModuleKey {
+  QUEUE = "queue",
+  PATIENTS = "patients",
+  TUTORS = "tutors",
+  FINANCIAL = "financial",
+  ADMIN_USERS = "admin_users",
+  ADMIN_ROOMS = "admin_rooms",
+  ADMIN_SERVICES = "admin_services",
+  PERMISSIONS = "permissions",
+  REPORTS = "reports",
+  AUDIT = "audit",
+}
+
+export interface ModuleDefinition {
+  key: ModuleKey;
+  label: string;
+  description?: string;
+}
+
+export interface RoleModulePermission {
+  id: string;
+  role: Role;
+  module: ModuleKey;
+  createdAt: Date;
 }
 
 export enum PaymentStatus {
@@ -107,6 +134,7 @@ export interface User {
   currentRoomId?: string | null;
   roomCheckedInAt?: Date | null;
   lastActivityAt?: Date | null;
+  permissions?: ModuleKey[];
 }
 
 export interface Room {

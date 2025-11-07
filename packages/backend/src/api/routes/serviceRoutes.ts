@@ -1,7 +1,8 @@
 import { Router, Request, Response } from "express";
 import { ServiceService } from "../../services/serviceService";
 import { ServiceRepository } from "../../repositories/serviceRepository";
-import { authMiddleware, requireRole } from "../../middleware/authMiddleware";
+import { authMiddleware, requireModule } from "../../middleware/authMiddleware";
+import { ModuleKey } from "../../core/types";
 import { z } from "zod";
 import { asyncHandler } from "../../middleware/asyncHandler";
 
@@ -23,12 +24,12 @@ router.get("/", authMiddleware, asyncHandler(async (req: Request, res: Response)
   res.json(services);
 }));
 
-router.get("/all", authMiddleware, requireRole(["RECEPCAO"]), asyncHandler(async (req: Request, res: Response) => {
+router.get("/all", authMiddleware, requireModule(ModuleKey.ADMIN_SERVICES), asyncHandler(async (req: Request, res: Response) => {
   const services = await serviceService.getAllServices();
   res.json(services);
 }));
 
-router.post("/", authMiddleware, requireRole(["RECEPCAO"]), async (req: Request, res: Response) => {
+router.post("/", authMiddleware, requireModule(ModuleKey.ADMIN_SERVICES), async (req: Request, res: Response) => {
   try {
     const data = createServiceSchema.parse(req.body);
     const service = await serviceService.createService(data);
@@ -42,7 +43,7 @@ router.post("/", authMiddleware, requireRole(["RECEPCAO"]), async (req: Request,
   }
 });
 
-router.patch("/:id", authMiddleware, requireRole(["RECEPCAO"]), async (req: Request, res: Response) => {
+router.patch("/:id", authMiddleware, requireModule(ModuleKey.ADMIN_SERVICES), async (req: Request, res: Response) => {
   try {
     const data = updateServiceSchema.parse(req.body);
     const service = await serviceService.updateService(req.params.id, data);
@@ -56,7 +57,7 @@ router.patch("/:id", authMiddleware, requireRole(["RECEPCAO"]), async (req: Requ
   }
 });
 
-router.delete("/:id", authMiddleware, requireRole(["RECEPCAO"]), asyncHandler(async (req: Request, res: Response) => {
+router.delete("/:id", authMiddleware, requireModule(ModuleKey.ADMIN_SERVICES), asyncHandler(async (req: Request, res: Response) => {
   await serviceService.deleteService(req.params.id);
   res.json({ message: "Serviço desativado com sucesso" });
 }));

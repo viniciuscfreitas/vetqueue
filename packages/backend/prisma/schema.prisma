@@ -30,7 +30,6 @@ model User {
   auditLogs       AuditLog[]
   consultations   Consultation[]
   vaccinations    Vaccination[]
-
   @@index([currentRoomId])
   @@map("users")
 }
@@ -206,4 +205,15 @@ model Vaccination {
   @@index([nextDoseDate])
   @@index([vetId])
   @@map("vaccinations")
+}
+
+model RoleModulePermission {
+  id        String   @id @default(uuid())
+  role      String
+  module    String
+  createdAt DateTime @default(now())
+
+  @@unique([role, module])
+  @@index([role])
+  @@map("role_module_permissions")
 }

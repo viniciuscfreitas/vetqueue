@@ -9,6 +9,7 @@ import patientRoutes from "./api/routes/patientRoutes";
 import tutorRoutes from "./api/routes/tutorRoutes";
 import consultationRoutes from "./api/routes/consultationRoutes";
 import vaccinationRoutes from "./api/routes/vaccinationRoutes";
+import permissionRoutes from "./api/routes/permissionRoutes";
 import { checkAndCleanupInactiveRooms } from "./jobs/inactivityCheck";
 import { prisma } from "./lib/prisma";
 import { requestIdMiddleware } from "./middleware/requestId";
@@ -97,6 +98,7 @@ app.use("/api/patients", patientRoutes);
 app.use("/api/tutors", tutorRoutes);
 app.use("/api/consultations", consultationRoutes);
 app.use("/api/vaccinations", vaccinationRoutes);
+app.use("/api/permissions", permissionRoutes);
 
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   const requestId = req.requestId || "unknown";

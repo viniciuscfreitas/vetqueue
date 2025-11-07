@@ -2,7 +2,8 @@ import { Router, Request, Response } from "express";
 import { PatientService } from "../../services/patientService";
 import { PatientRepository } from "../../repositories/patientRepository";
 import { QueueRepository } from "../../repositories/queueRepository";
-import { authMiddleware, requireRole } from "../../middleware/authMiddleware";
+import { authMiddleware, requireModule } from "../../middleware/authMiddleware";
+import { ModuleKey } from "../../core/types";
 import { z } from "zod";
 import { asyncHandler } from "../../middleware/asyncHandler";
 
@@ -95,7 +96,7 @@ router.patch("/:id", authMiddleware, asyncHandler(async (req: Request, res: Resp
   res.json(patient);
 }));
 
-router.delete("/:id", authMiddleware, requireRole(["RECEPCAO"]), asyncHandler(async (req: Request, res: Response) => {
+router.delete("/:id", authMiddleware, requireModule(ModuleKey.PATIENTS), asyncHandler(async (req: Request, res: Response) => {
   await patientService.deletePatient(req.params.id);
   res.json({ message: "Paciente deletado com sucesso" });
 }));

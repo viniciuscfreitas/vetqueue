@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
-import { QueueEntry, Priority, queueApi, userApi, serviceApi, Role } from "@/lib/api";
+import { QueueEntry, Priority, queueApi, userApi, serviceApi, ModuleKey } from "@/lib/api";
 import { useToast } from "@/components/ui/use-toast";
 import { createErrorHandler } from "@/lib/errors";
 import { useAuth } from "@/contexts/AuthContext";
@@ -31,7 +31,7 @@ export function EditQueueDialog({
   onOpenChange,
   onSuccess,
 }: EditQueueDialogProps) {
-  const { user } = useAuth();
+  const { user, canAccess } = useAuth();
   const { toast } = useToast();
   const handleError = createErrorHandler(toast);
   const [loading, setLoading] = useState(false);
@@ -45,14 +45,14 @@ export function EditQueueDialog({
     scheduledAt: "",
   });
 
-  const isRecepcao = user?.role === Role.RECEPCAO;
+  const canManageQueue = canAccess(ModuleKey.QUEUE);
 
   useEffect(() => {
     if (open && entry) {
       const scheduledTime = entry.scheduledAt
         ? new Date(entry.scheduledAt).toTimeString().slice(0, 5)
         : "";
-      
+
       setFormData({
         patientName: entry.patientName,
         tutorName: entry.tutorName,
@@ -68,7 +68,7 @@ export function EditQueueDialog({
   const { data: vets = [] } = useQuery({
     queryKey: ["users", "active-vets"],
     queryFn: () => userApi.getActiveVets().then((res) => res.data),
-    enabled: isRecepcao && open,
+    enabled: canManageQueue && open,
   });
 
   const { data: services = [] } = useQuery({
@@ -216,7 +216,7 @@ export function EditQueueDialog({
               </Select>
             </div>
 
-            {isRecepcao && (
+            {canManageQueue && (
               <div className="space-y-2">
                 <Label htmlFor="edit-assignedVetId" className="text-sm font-medium">
                   Veterinário

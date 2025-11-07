@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { tutorApi, patientApi, Tutor, Patient } from "@/lib/api";
+import { tutorApi, patientApi, Tutor, Patient, ModuleKey } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,7 +35,7 @@ import {
 
 export default function TutorsPage() {
   const router = useRouter();
-  const { user, isLoading: authLoading } = useAuth();
+  const { user, isLoading: authLoading, canAccess } = useAuth();
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const handleError = createErrorHandler(toast);
@@ -56,10 +56,16 @@ export default function TutorsPage() {
   useEffect(() => {
     if (!authLoading && !user) {
       router.push("/login");
+      return;
     }
-  }, [user, authLoading, router]);
 
-  const isAuthorized = !authLoading && !!user;
+    if (!authLoading && user && !canAccess(ModuleKey.TUTORS)) {
+      router.push("/");
+    }
+  }, [user, authLoading, router, canAccess]);
+
+  const hasTutorAccess = canAccess(ModuleKey.TUTORS);
+  const isAuthorized = !authLoading && !!user && hasTutorAccess;
 
   const { data: allTutors = [], isLoading } = useQuery({
     queryKey: ["tutors"],
@@ -148,6 +154,10 @@ export default function TutorsPage() {
     );
   }
 
+  if (!hasTutorAccess) {
+    return null;
+  }
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (editingTutor) {
@@ -218,8 +228,8 @@ export default function TutorsPage() {
             <CardHeader className="bg-muted/50">
               <div className="flex items-center justify-between">
                 <CardTitle>{editingTutor ? "Editar Tutor" : "Novo Tutor"}</CardTitle>
-                <Button 
-                  variant="ghost" 
+                <Button
+                  variant="ghost"
                   size="sm"
                   onClick={handleCancel}
                   className="h-8 w-8 p-0"
@@ -285,10 +295,10 @@ export default function TutorsPage() {
                 </div>
                 <div className="flex gap-2">
                   <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
-                    {createMutation.isPending || updateMutation.isPending 
-                      ? "Salvando..." 
-                      : editingTutor 
-                      ? "Salvar Alterações" 
+                    {createMutation.isPending || updateMutation.isPending
+                      ? "Salvando..."
+                      : editingTutor
+                      ? "Salvar Alterações"
                       : "Criar Tutor"}
                   </Button>
                   <Button type="button" variant="outline" onClick={handleCancel}>
@@ -370,7 +380,7 @@ export default function TutorsPage() {
                         >
                           Editar
                         </Button>
-                        {user.role === "RECEPCAO" && (
+                        {hasTutorAccess && (
                           <Button
                             variant="destructive"
                             size="sm"

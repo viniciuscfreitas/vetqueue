@@ -1,4 +1,4 @@
-import { QueueEntry, Priority, Status, Role } from "@/lib/api";
+import { QueueEntry, Status } from "@/lib/api";
 import { QueueCard } from "./QueueCard";
 import { Button } from "./ui/button";
 import { Plus } from "lucide-react";
@@ -12,7 +12,7 @@ interface QueueListProps {
   onViewRecord?: (patientId: string, queueEntryId: string) => void;
   onRegisterConsultation?: (patientId: string, queueEntryId: string) => void;
   emptyMessage?: string;
-  userRole?: Role;
+  canManageQueue?: boolean;
   onAddClick?: () => void;
   mode?: "history";
 }
@@ -26,7 +26,7 @@ export function QueueList({
   onViewRecord,
   onRegisterConsultation,
   emptyMessage = "Nenhuma entrada na fila no momento",
-  userRole,
+  canManageQueue = false,
   onAddClick,
   mode,
 }: QueueListProps) {
@@ -34,7 +34,7 @@ export function QueueList({
     return (
       <div className="text-center py-12 space-y-4">
         <p className="text-muted-foreground">{emptyMessage}</p>
-        {userRole === Role.RECEPCAO && onAddClick && (
+        {canManageQueue && onAddClick && (
           <Button onClick={onAddClick} size="lg" className="mt-4">
             <Plus className="mr-2 h-4 w-4" />
             Adicionar primeiro paciente
@@ -62,7 +62,7 @@ export function QueueList({
           <QueueCard
             key={entry.id}
             entry={entry}
-            userRole={userRole}
+            canManageQueue={canManageQueue}
             onStart={onStart}
             onComplete={onComplete}
             onCancel={onCancel}
@@ -106,7 +106,7 @@ export function QueueList({
                 key={entry.id}
                 entry={entry}
                 position={position}
-                userRole={userRole}
+                canManageQueue={canManageQueue}
                 onStart={onStart}
                 onComplete={onComplete}
                 onCancel={onCancel}

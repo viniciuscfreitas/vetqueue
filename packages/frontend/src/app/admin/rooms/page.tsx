@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { roomApi, Room, userApi, ActiveVet } from "@/lib/api";
+import { roomApi, Room, userApi, ActiveVet, ModuleKey } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,7 +27,7 @@ import {
 
 export default function RoomsPage() {
   const router = useRouter();
-  const { user, isLoading: authLoading } = useAuth();
+  const { user, isLoading: authLoading, canAccess } = useAuth();
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const handleError = createErrorHandler(toast);
@@ -37,13 +37,20 @@ export default function RoomsPage() {
   const [vetToRelease, setVetToRelease] = useState<ActiveVet | null>(null);
   const [showReleaseDialog, setShowReleaseDialog] = useState(false);
 
+  const canManageRooms = canAccess(ModuleKey.ADMIN_ROOMS);
+
   useEffect(() => {
-    if (!authLoading && (!user || user.role !== "RECEPCAO")) {
+    if (!authLoading && !user) {
+      router.push("/login");
+      return;
+    }
+
+    if (!authLoading && user && !canManageRooms) {
       router.push("/");
     }
-  }, [user, authLoading, router]);
+  }, [user, authLoading, canManageRooms, router]);
 
-  const isAuthorized = !authLoading && !!user && user.role === "RECEPCAO";
+  const isAuthorized = !authLoading && !!user && canManageRooms;
 
   const { data: rooms = [], isLoading } = useQuery({
     queryKey: ["rooms", "all"],
@@ -113,12 +120,16 @@ export default function RoomsPage() {
     onError: handleError,
   });
 
-  if (authLoading || !user || user.role !== "RECEPCAO") {
+  if (authLoading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Spinner size="lg" />
       </div>
     );
+  }
+
+  if (!canManageRooms) {
+    return null;
   }
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -160,8 +171,8 @@ export default function RoomsPage() {
             <CardHeader className="bg-muted/50">
               <div className="flex items-center justify-between">
                 <CardTitle>{editingRoom ? "Editar Sala" : "Nova Sala"}</CardTitle>
-                <Button 
-                  variant="ghost" 
+                <Button
+                  variant="ghost"
                   size="sm"
                   onClick={handleCancel}
                   className="h-8 w-8 p-0"
@@ -183,10 +194,10 @@ export default function RoomsPage() {
                 </div>
                 <div className="flex gap-2">
                   <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
-                    {createMutation.isPending || updateMutation.isPending 
-                      ? "Salvando..." 
-                      : editingRoom 
-                      ? "Salvar Alterações" 
+                    {createMutation.isPending || updateMutation.isPending
+                      ? "Salvando..."
+                      : editingRoom
+                      ? "Salvar Alterações"
                       : "Criar Sala"}
                   </Button>
                   <Button type="button" variant="outline" onClick={handleCancel}>

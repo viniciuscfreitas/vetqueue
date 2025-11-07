@@ -28,7 +28,7 @@ api.interceptors.response.use(
         window.location.href = "/login";
       }
     }
-    
+
     const errorKey = `${error.config?.url || "unknown"}-${error.response?.status || error.code}`;
     const now = Date.now();
     const shouldLog = errorKey !== lastLoggedError || now - lastLoggedTime > LOG_THROTTLE_MS;
@@ -81,6 +81,26 @@ export enum ServiceType {
 export enum Role {
   VET = "VET",
   RECEPCAO = "RECEPCAO",
+  ADMIN = "ADMIN",
+}
+
+export enum ModuleKey {
+  QUEUE = "queue",
+  PATIENTS = "patients",
+  TUTORS = "tutors",
+  FINANCIAL = "financial",
+  ADMIN_USERS = "admin_users",
+  ADMIN_ROOMS = "admin_rooms",
+  ADMIN_SERVICES = "admin_services",
+  PERMISSIONS = "permissions",
+  REPORTS = "reports",
+  AUDIT = "audit",
+}
+
+export interface ModuleDefinition {
+  key: ModuleKey;
+  label: string;
+  description?: string;
 }
 
 export enum PaymentStatus {
@@ -165,6 +185,7 @@ export interface User {
   currentRoomId?: string | null;
   roomCheckedInAt?: string | null;
   lastActivityAt?: string | null;
+  permissions?: ModuleKey[];
 }
 
 export interface Room {
@@ -258,10 +279,10 @@ export const queueApi = {
     paymentMethod?: string;
   }) => api.post<QueueEntry>("/api/queue", data),
 
-  listActive: (vetId?: string | null) => 
+  listActive: (vetId?: string | null) =>
     api.get<QueueEntry[]>("/api/queue/active", { params: vetId !== undefined ? { vetId } : {} }),
 
-  callNext: (roomId: string, vetId?: string) => 
+  callNext: (roomId: string, vetId?: string) =>
     api.post<QueueEntry | { message: string }>("/api/queue/call-next", { vetId, roomId }),
 
   callPatient: (id: string, roomId: string, vetId?: string) =>
@@ -347,7 +368,7 @@ export const queueApi = {
     endDate?: string;
   }) => api.get<VetStats>(`/api/queue/vet-stats/${vetId}`, { params: filters }),
 
-  getRoomOccupations: () => 
+  getRoomOccupations: () =>
     api.get<Record<string, { vetId: string; vetName: string } | null>>("/api/queue/room-occupations"),
 
   getPatientStats: (filters?: {
@@ -371,56 +392,67 @@ export const queueApi = {
   }) => api.get<RoomUtilizationStats>("/api/queue/reports/rooms", { params: filters }),
 };
 
+interface LoginResponse {
+  user: User;
+  token: string;
+  permissions: ModuleKey[];
+}
+
+interface MeResponse {
+  user: User;
+  permissions?: ModuleKey[];
+}
+
 export const authApi = {
   login: (username: string, password: string) =>
-    api.post<{ user: User; token: string }>("/api/auth/login", { username, password }),
-  
-  me: () => api.get<{ user: User }>("/api/auth/me"),
+    api.post<LoginResponse>("/api/auth/login", { username, password }),
+
+  me: () => api.get<MeResponse>("/api/auth/me"),
 };
 
 export const roomApi = {
   list: () => api.get<Room[]>("/api/rooms"),
-  
+
   listAll: () => api.get<Room[]>("/api/rooms/all"),
-  
+
   create: (name: string) => api.post<Room>("/api/rooms", { name }),
-  
+
   update: (id: string, data: { name?: string; isActive?: boolean }) =>
     api.patch<Room>(`/api/rooms/${id}`, data),
-  
+
   delete: (id: string) => api.delete(`/api/rooms/${id}`),
 };
 
 export const userApi = {
   list: () => api.get<User[]>("/api/users"),
-  
+
   getActiveVets: () => api.get<ActiveVet[]>("/api/users/active-vets"),
-  
+
   checkInRoom: (roomId: string) => api.post<User>(`/api/users/rooms/${roomId}/check-in`),
-  
+
   checkOutRoom: () => api.post<User>("/api/users/rooms/check-out"),
-  
+
   checkOutRoomForVet: (vetId: string) => api.post<User>(`/api/users/${vetId}/rooms/check-out`),
-  
+
   changeRoom: (roomId: string) => api.post<User>(`/api/users/rooms/${roomId}/change`),
-  
+
   create: (data: { username: string; password: string; name: string; role: Role }) =>
     api.post<User>("/api/users", data),
-  
+
   update: (id: string, data: { name?: string; role?: Role; password?: string }) =>
     api.patch<User>(`/api/users/${id}`, data),
 };
 
 export const serviceApi = {
   list: () => api.get<Service[]>("/api/services"),
-  
+
   listAll: () => api.get<Service[]>("/api/services/all"),
-  
+
   create: (name: string) => api.post<Service>("/api/services", { name }),
-  
+
   update: (id: string, data: { name?: string; isActive?: boolean }) =>
     api.patch<Service>(`/api/services/${id}`, data),
-  
+
   delete: (id: string) => api.delete(`/api/services/${id}`),
 };
 
@@ -434,9 +466,17 @@ export const auditApi = {
     page?: number;
     limit?: number;
   }) => api.get<PaginatedResult<AuditLog>>("/api/queue/audit/logs", { params: filters }),
-  
+
   getLogsByEntry: (entryId: string) =>
     api.get<AuditLog[]>(`/api/queue/entry/${entryId}/audit`),
+};
+
+export const permissionsApi = {
+  listModules: () => api.get<ModuleDefinition[]>("/api/permissions/modules"),
+  listAll: () => api.get<Record<Role, ModuleKey[]>>("/api/permissions"),
+  getForRole: (role: Role) => api.get<{ role: Role; modules: ModuleKey[] }>(`/api/permissions/roles/${role}`),
+  updateRole: (role: Role, modules: ModuleKey[]) =>
+    api.patch<{ role: Role; modules: ModuleKey[] }>(`/api/permissions/roles/${role}`, { modules }),
 };
 
 export interface Tutor {
@@ -542,32 +582,32 @@ export interface UpdatePatientData {
 export const tutorApi = {
   list: (filters?: { name?: string; phone?: string; cpfCnpj?: string }) =>
     api.get<Tutor[]>("/api/tutors", { params: filters }),
-  
+
   getById: (id: string) => api.get<Tutor>(`/api/tutors/${id}`),
-  
+
   create: (data: CreateTutorData) => api.post<Tutor>("/api/tutors", data),
-  
+
   update: (id: string, data: UpdateTutorData) =>
     api.patch<Tutor>(`/api/tutors/${id}`, data),
-  
+
   delete: (id: string) => api.delete(`/api/tutors/${id}`),
-  
+
   getPatients: (id: string) => api.get<Patient[]>(`/api/tutors/${id}/patients`),
 };
 
 export const patientApi = {
-  list: (filters?: { name?: string; tutorName?: string; tutorId?: string }) => 
+  list: (filters?: { name?: string; tutorName?: string; tutorId?: string }) =>
     api.get<Patient[]>("/api/patients", { params: filters }),
-  
+
   getById: (id: string) => api.get<Patient>(`/api/patients/${id}`),
-  
+
   create: (data: CreatePatientData) => api.post<Patient>("/api/patients", data),
-  
-  update: (id: string, data: UpdatePatientData) => 
+
+  update: (id: string, data: UpdatePatientData) =>
     api.patch<Patient>(`/api/patients/${id}`, data),
-  
+
   delete: (id: string) => api.delete(`/api/patients/${id}`),
-  
+
   getQueueEntries: (id: string) => api.get<QueueEntry[]>(`/api/patients/${id}/queue-entries`),
 };
 

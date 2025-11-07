@@ -1,4 +1,4 @@
-import { QueueEntry, Status, Role, ServiceType } from "@/lib/api";
+import { QueueEntry, Status, ServiceType } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { PriorityBadge } from "./PriorityBadge";
 import { Badge } from "./ui/badge";
@@ -12,7 +12,7 @@ import { useQueryClient } from "@tanstack/react-query";
 interface QueueCardProps {
   entry: QueueEntry;
   position?: number;
-  userRole?: Role;
+  canManageQueue?: boolean;
   onStart?: (id: string) => void;
   onComplete?: (id: string) => void;
   onCancel?: (id: string) => void;
@@ -62,7 +62,7 @@ const statusConfig = {
 export function QueueCard({
   entry,
   position,
-  userRole,
+  canManageQueue = false,
   onStart,
   onComplete,
   onCancel,
@@ -73,24 +73,24 @@ export function QueueCard({
   const status = statusConfig[entry.status];
   const canStart = entry.status === Status.CALLED || entry.status === Status.WAITING;
   const canComplete = entry.status === Status.IN_PROGRESS || entry.status === Status.CALLED;
-  
+
   const [, setCurrentTime] = useState(Date.now());
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  
+
   useEffect(() => {
     if (entry.status === Status.WAITING || entry.status === Status.IN_PROGRESS) {
       const interval = setInterval(() => setCurrentTime(Date.now()), 1000);
       return () => clearInterval(interval);
     }
   }, [entry.status]);
-  
+
   const waitTime = calculateWaitTime(entry.createdAt, entry.calledAt);
   const serviceTime = calculateServiceTime(entry.calledAt, entry.completedAt);
 
   const StatusIcon = status.icon;
-  const canEdit = entry.status === Status.WAITING && userRole === Role.RECEPCAO;
+  const canEdit = entry.status === Status.WAITING && canManageQueue;
   const queryClient = useQueryClient();
-  
+
   return (
     <>
       <Card className="transition-all hover:shadow-md">
@@ -107,7 +107,7 @@ export function QueueCard({
                   )}
                 </CardTitle>
                 {position !== undefined && entry.status === Status.WAITING && (
-                  <Badge 
+                  <Badge
                     className="flex-shrink-0 font-semibold"
                     style={{
                       backgroundColor: '#3B3839',
@@ -120,8 +120,8 @@ export function QueueCard({
               </div>
               <div className="flex items-center gap-2 mt-1">
                 <PriorityBadge priority={entry.priority} />
-                <Badge 
-                  className="border flex items-center gap-1" 
+                <Badge
+                  className="border flex items-center gap-1"
                   variant="outline"
                   style={{
                     backgroundColor: status.bgColor,
@@ -155,7 +155,7 @@ export function QueueCard({
               <p className="font-semibold text-sm">{entry.tutorName}</p>
             </div>
           </div>
-          
+
           <div className="flex items-start gap-2">
             <Stethoscope className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
             <div className="flex-1 min-w-0">
@@ -165,7 +165,7 @@ export function QueueCard({
           </div>
 
           {entry.status === Status.WAITING && waitTime && (
-            <div 
+            <div
               className="flex items-start gap-2 p-2 rounded-md border"
               style={{
                 backgroundColor: "rgba(183, 136, 68, 0.1)",
@@ -232,10 +232,10 @@ export function QueueCard({
               </Button>
             )}
             {/* TODO: Remover o `false &&` abaixo para reativar o botão "Registrar Consulta" */}
-            {false && 
-             entry.status === Status.IN_PROGRESS && 
-             (entry.serviceType === ServiceType.CONSULTA || entry.serviceType === "Consulta") && 
-             entry.patientId && 
+            {false &&
+             entry.status === Status.IN_PROGRESS &&
+             (entry.serviceType === ServiceType.CONSULTA || entry.serviceType === "Consulta") &&
+             entry.patientId &&
              onRegisterConsultation && (
               <Button
                 onClick={() => onRegisterConsultation?.(entry.patientId!, entry.id)}
@@ -247,10 +247,10 @@ export function QueueCard({
                 Registrar Consulta
               </Button>
             )}
-            {entry.status === Status.IN_PROGRESS && 
+            {entry.status === Status.IN_PROGRESS &&
              entry.serviceType !== ServiceType.CONSULTA &&
              entry.serviceType !== "Consulta" &&
-             entry.patientId && 
+             entry.patientId &&
              onViewRecord && (
               <Button
                 onClick={() => onViewRecord(entry.patientId!, entry.id)}

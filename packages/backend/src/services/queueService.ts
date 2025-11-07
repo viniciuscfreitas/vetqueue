@@ -1,4 +1,4 @@
-import { FinancialReportData, FinancialSummary, PaymentStatus, Priority, QueueEntry, Status } from "../core/types";
+import { FinancialReportData, FinancialSummary, PaymentStatus, Priority, QueueEntry, Role, Status } from "../core/types";
 import { logger } from "../lib/logger";
 import { QueueRepository } from "../repositories/queueRepository";
 import { UserRepository } from "../repositories/userRepository";
@@ -288,7 +288,7 @@ export class QueueService {
   async startService(id: string, userRole?: string): Promise<QueueEntry> {
     log.debug("Starting service", { entryId: id, userRole });
 
-    if (userRole === "RECEPCAO") {
+    if (userRole === Role.RECEPCAO) {
       throw new Error("Recepção não pode iniciar atendimento");
     }
 
@@ -337,7 +337,7 @@ export class QueueService {
       throw new Error("Atendimento já foi finalizado");
     }
 
-    if (userRole === "RECEPCAO" && !entry.assignedVetId) {
+    if (userRole === Role.RECEPCAO && !entry.assignedVetId) {
       throw new Error("Não é possível finalizar atendimento sem veterinário atribuído");
     }
 
@@ -580,7 +580,7 @@ export class QueueService {
     },
     userRole?: string
   ): Promise<QueueEntry> {
-    if (userRole !== "RECEPCAO") {
+    if (userRole !== Role.RECEPCAO && userRole !== Role.ADMIN) {
       throw new Error("Apenas recepção pode editar atendimentos");
     }
 

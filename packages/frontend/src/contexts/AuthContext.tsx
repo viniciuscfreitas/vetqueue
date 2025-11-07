@@ -1,13 +1,13 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
-import { authApi, User, Room, roomApi, userApi } from "@/lib/api";
+import { authApi, User, Room, roomApi, userApi, ModuleKey, Role } from "@/lib/api";
 
 async function loadUserRoom(userId: string | null | undefined, currentRoomId: string | null | undefined): Promise<Room | null> {
   if (!userId || !currentRoomId) {
     return null;
   }
-  
+
   try {
     const roomsResponse = await roomApi.list();
     const room = roomsResponse.data.find(r => r.id === currentRoomId);
@@ -20,18 +20,21 @@ async function loadUserRoom(userId: string | null | undefined, currentRoomId: st
 
 interface AuthContextType {
   user: User | null;
+  permissions: ModuleKey[];
   currentRoom: Room | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (username: string, password: string) => Promise<void>;
   logout: () => void;
   setCurrentRoom: (room: Room | null) => void;
+  canAccess: (module: ModuleKey | ModuleKey[]) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [permissions, setPermissions] = useState<ModuleKey[]>([]);
   const [currentRoom, setCurrentRoom] = useState<Room | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -41,13 +44,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setIsLoading(false);
         return;
       }
-      
+
       const token = localStorage.getItem("auth_token");
       if (token) {
         try {
           const response = await authApi.me();
-          setUser(response.data.user);
-          
+          const incomingPermissions = response.data.user.permissions ?? response.data.permissions ?? [];
+          setUser({ ...response.data.user, permissions: incomingPermissions });
+          setPermissions(incomingPermissions);
+
           const room = await loadUserRoom(response.data.user.id, response.data.user.currentRoomId);
           if (room) {
             setCurrentRoom(room);
@@ -64,11 +69,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = useCallback(async (username: string, password: string) => {
     const response = await authApi.login(username, password);
-    setUser(response.data.user);
+    const incomingPermissions = response.data.user.permissions ?? response.data.permissions ?? [];
+    setUser({ ...response.data.user, permissions: incomingPermissions });
+    setPermissions(incomingPermissions);
     if (typeof window !== "undefined") {
       localStorage.setItem("auth_token", response.data.token);
     }
-    
+
     const room = await loadUserRoom(response.data.user.id, response.data.user.currentRoomId);
     if (room) {
       setCurrentRoom(room);
@@ -76,7 +83,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const logout = useCallback(async () => {
-    if (user?.currentRoomId && user?.role === "VET") {
+    if (user?.currentRoomId && user?.role === Role.VET) {
       try {
         await userApi.checkOutRoom();
       } catch (error) {
@@ -88,6 +95,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
     setUser(null);
+    setPermissions([]);
     setCurrentRoom(null);
     if (typeof window !== "undefined") {
       localStorage.removeItem("auth_token");
@@ -98,16 +106,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setCurrentRoom(room);
   }, []);
 
+  const canAccess = useCallback((module: ModuleKey | ModuleKey[]) => {
+    if (!user) {
+      return false;
+    }
+
+    if (user.role === Role.ADMIN) {
+      return true;
+    }
+
+    const required = Array.isArray(module) ? module : [module];
+    return required.every((item) => permissions.includes(item));
+  }, [user, permissions]);
+
   return (
     <AuthContext.Provider
       value={{
         user,
+        permissions,
         currentRoom,
         isAuthenticated: !!user,
         isLoading,
         login,
         logout,
         setCurrentRoom: setCurrentRoomCallback,
+        canAccess,
       }}
     >
       {children}

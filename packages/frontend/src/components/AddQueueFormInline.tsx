@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
-import { Priority, queueApi, userApi, serviceApi, Role, ActiveVet, Patient } from "@/lib/api";
+import { Priority, queueApi, userApi, serviceApi, ActiveVet, Patient, ModuleKey } from "@/lib/api";
 import { useToast } from "@/components/ui/use-toast";
 import { createErrorHandler } from "@/lib/errors";
 import { useAuth } from "@/contexts/AuthContext";
@@ -26,7 +26,7 @@ interface AddQueueFormInlineProps {
 }
 
 export function AddQueueFormInline({ onSuccess, onClose, inline = true }: AddQueueFormInlineProps) {
-  const { user } = useAuth();
+  const { user, canAccess } = useAuth();
   const { toast } = useToast();
   const handleError = createErrorHandler(toast);
   const [loading, setLoading] = useState(false);
@@ -44,13 +44,13 @@ export function AddQueueFormInline({ onSuccess, onClose, inline = true }: AddQue
   });
   const [showAdvanced, setShowAdvanced] = useState(false);
 
-  const isRecepcao = user?.role === Role.RECEPCAO;
+  const canManageQueue = canAccess(ModuleKey.QUEUE);
 
 
   const { data: vets = [] } = useQuery({
     queryKey: ["users", "active-vets"],
     queryFn: () => userApi.getActiveVets().then((res) => res.data),
-    enabled: isRecepcao,
+    enabled: canManageQueue,
   });
 
   const { data: services = [] } = useQuery({
@@ -232,7 +232,7 @@ export function AddQueueFormInline({ onSuccess, onClose, inline = true }: AddQue
 
         {showAdvanced && (
           <div className="mt-4 space-y-4">
-            {isRecepcao && (
+            {canManageQueue && (
               <div className="space-y-2">
                 <Label htmlFor="assignedVetId" className="text-sm font-medium">
                   Veterinário
@@ -302,9 +302,9 @@ export function AddQueueFormInline({ onSuccess, onClose, inline = true }: AddQue
       </div>
 
       <div className="flex justify-end">
-        <Button 
-          type="submit" 
-          disabled={loading} 
+        <Button
+          type="submit"
+          disabled={loading}
           className="w-full md:w-auto"
           size="lg"
         >

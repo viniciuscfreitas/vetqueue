@@ -2,7 +2,8 @@ import { Router, Request, Response } from "express";
 import { TutorService } from "../../services/tutorService";
 import { TutorRepository } from "../../repositories/tutorRepository";
 import { PatientRepository } from "../../repositories/patientRepository";
-import { authMiddleware, requireRole } from "../../middleware/authMiddleware";
+import { authMiddleware, requireModule } from "../../middleware/authMiddleware";
+import { ModuleKey } from "../../core/types";
 import { z } from "zod";
 import { asyncHandler } from "../../middleware/asyncHandler";
 
@@ -64,7 +65,7 @@ router.patch("/:id", authMiddleware, asyncHandler(async (req: Request, res: Resp
   res.json(tutor);
 }));
 
-router.delete("/:id", authMiddleware, requireRole(["RECEPCAO"]), asyncHandler(async (req: Request, res: Response) => {
+router.delete("/:id", authMiddleware, requireModule(ModuleKey.TUTORS), asyncHandler(async (req: Request, res: Response) => {
   await tutorService.deleteTutor(req.params.id);
   res.json({ message: "Tutor deletado com sucesso" });
 }));

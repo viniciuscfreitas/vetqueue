@@ -61,14 +61,14 @@ export function FinancialOverviewTab({ filters }: FinancialOverviewTabProps) {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {[...Array(3)].map((_, index) => (
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {[...Array(4)].map((_, index) => (
           <Card key={index}>
-            <CardHeader>
-              <Skeleton className="h-5 w-24" />
+            <CardHeader className="pb-2">
+              <Skeleton className="h-4 w-20" />
             </CardHeader>
-            <CardContent>
-              <Skeleton className="h-12 w-32" />
+            <CardContent className="pt-0">
+              <Skeleton className="h-6 w-24" />
             </CardContent>
           </Card>
         ))}
@@ -94,72 +94,72 @@ export function FinancialOverviewTab({ filters }: FinancialOverviewTabProps) {
     formatCurrency(data.byStatus?.[PaymentStatus.PAID]?.amount ?? "0");
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <Card>
-          <CardHeader>
-            <CardTitle className="text-sm text-muted-foreground">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xs font-medium text-muted-foreground">
               Total recebido
             </CardTitle>
           </CardHeader>
-          <CardContent className="text-2xl font-semibold">
-            {formatCurrency(data.totals.paid)}
+          <CardContent className="pt-0">
+            <p className="text-xl font-semibold">{formatCurrency(data.totals.paid)}</p>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader>
-            <CardTitle className="text-sm text-muted-foreground">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xs font-medium text-muted-foreground">
               Total pendente
             </CardTitle>
           </CardHeader>
-          <CardContent className="text-2xl font-semibold">
-            {pendingAmount}
-            <p className="text-xs text-muted-foreground mt-1">
-              {pendingCount} atendimento(s) pendente(s)
+          <CardContent className="pt-0">
+            <p className="text-xl font-semibold">{pendingAmount}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {pendingCount} atendimento(s)
             </p>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader>
-            <CardTitle className="text-sm text-muted-foreground">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xs font-medium text-muted-foreground">
               Total parcial
             </CardTitle>
           </CardHeader>
-          <CardContent className="text-2xl font-semibold">
-            {partialAmount}
+          <CardContent className="pt-0">
+            <p className="text-xl font-semibold">{partialAmount}</p>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader>
-            <CardTitle className="text-sm text-muted-foreground">
-              Atendimentos concluídos
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xs font-medium text-muted-foreground">
+              Atendimentos
             </CardTitle>
           </CardHeader>
-          <CardContent className="text-2xl font-semibold">
-            {data.totalEntries}
-            <p className="text-xs text-muted-foreground mt-1">
-              Walk-in: {data.walkIns} · Agendados: {data.scheduled}
+          <CardContent className="pt-0">
+            <p className="text-xl font-semibold">{data.totalEntries}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {data.walkIns} walk-in · {data.scheduled} agendados
             </p>
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Por forma de pagamento</CardTitle>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-semibold">Por forma de pagamento</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2">
+          <CardContent className="pt-0 space-y-1.5">
             {Object.entries(data.byPaymentMethod).map(([method, stats]) => (
-              <div key={method} className="flex items-center justify-between text-sm">
-                <span>{method}</span>
+              <div key={method} className="flex items-center justify-between text-sm py-1">
+                <span className="text-muted-foreground">{method}</span>
                 <span className="font-medium">
-                  {formatCurrency(stats.amount)} · {stats.count}
+                  {formatCurrency(stats.amount)} <span className="text-muted-foreground">·</span> {stats.count}
                 </span>
               </div>
             ))}
             {Object.keys(data.byPaymentMethod).length === 0 && (
-              <div className="text-sm text-muted-foreground">
+              <div className="text-sm text-muted-foreground py-2">
                 Nenhum recebimento registrado.
               </div>
             )}
@@ -167,15 +167,15 @@ export function FinancialOverviewTab({ filters }: FinancialOverviewTabProps) {
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Por status de pagamento</CardTitle>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-semibold">Por status de pagamento</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2">
+          <CardContent className="pt-0 space-y-1.5">
             {Object.entries(data.byStatus).map(([status, stats]) => (
-              <div key={status} className="flex items-center justify-between text-sm">
-                <span>{status}</span>
+              <div key={status} className="flex items-center justify-between text-sm py-1">
+                <span className="text-muted-foreground">{status}</span>
                 <span className="font-medium">
-                  {formatCurrency(stats.amount)} · {stats.count}
+                  {formatCurrency(stats.amount)} <span className="text-muted-foreground">·</span> {stats.count}
                 </span>
               </div>
             ))}
@@ -184,22 +184,22 @@ export function FinancialOverviewTab({ filters }: FinancialOverviewTabProps) {
       </div>
 
       {reportsData && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Top serviços</CardTitle>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-semibold">Top serviços</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2">
+            <CardContent className="pt-0 space-y-1.5">
               {reportsData.revenueByService.slice(0, 3).map((service) => (
-                <div key={service.service || "NÃO_INFORMADO"} className="flex items-center justify-between text-sm">
-                  <span>{service.service || "Não informado"}</span>
+                <div key={service.service || "NÃO_INFORMADO"} className="flex items-center justify-between text-sm py-1">
+                  <span className="text-muted-foreground">{service.service || "Não informado"}</span>
                   <span className="font-medium">
-                    {formatCurrency(service.amount)} · {service.count}
+                    {formatCurrency(service.amount)} <span className="text-muted-foreground">·</span> {service.count}
                   </span>
                 </div>
               ))}
               {reportsData.revenueByService.length === 0 && (
-                <div className="text-sm text-muted-foreground">
+                <div className="text-sm text-muted-foreground py-2">
                   Nenhum serviço faturado no período.
                 </div>
               )}
@@ -207,24 +207,24 @@ export function FinancialOverviewTab({ filters }: FinancialOverviewTabProps) {
           </Card>
 
           <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Pendências recentes</CardTitle>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-semibold">Pendências recentes</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2">
+            <CardContent className="pt-0 space-y-1.5">
               {reportsData.pendingPayments.slice(0, 3).map((pending) => (
-                <div key={pending.id} className="flex flex-col text-sm border rounded-lg px-3 py-2">
+                <div key={pending.id} className="flex flex-col text-sm border rounded-md px-2.5 py-1.5 bg-muted/30">
                   <div className="flex justify-between">
-                    <span className="font-medium">{pending.patientName}</span>
-                    <span>{formatCurrency(pending.paymentAmount ?? "0")}</span>
+                    <span className="font-medium text-xs">{pending.patientName}</span>
+                    <span className="font-semibold text-xs">{formatCurrency(pending.paymentAmount ?? "0")}</span>
                   </div>
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-xs text-muted-foreground mt-0.5">
                     {pending.tutorName} · {pending.paymentStatus} ·{" "}
                     {pending.completedAt ? new Date(pending.completedAt).toLocaleDateString("pt-BR") : "sem data"}
                   </span>
                 </div>
               ))}
               {reportsData.pendingPayments.length === 0 && (
-                <div className="text-sm text-muted-foreground">
+                <div className="text-sm text-muted-foreground py-2">
                   Nenhum pagamento pendente para os filtros selecionados.
                 </div>
               )}

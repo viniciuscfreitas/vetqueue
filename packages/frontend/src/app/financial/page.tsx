@@ -101,7 +101,7 @@ export default function FinancialPage() {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <main className="container mx-auto px-4 py-6 md:px-6 md:py-8 lg:px-8 lg:py-10 space-y-6">
+      <main className="container mx-auto px-4 py-4 md:px-6 md:py-5 lg:px-8 lg:py-6 space-y-4">
         <FinancialFilters
           filters={combinedFilters}
           onChange={handleFilterChange}
@@ -109,22 +109,22 @@ export default function FinancialPage() {
           receptionists={receptionistsData}
         />
 
-        <Tabs value={tab} onValueChange={(value) => setTab(value as typeof tab)} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 md:w-[400px]">
-            <TabsTrigger value="overview">Resumo</TabsTrigger>
-            <TabsTrigger value="payments">Pagamentos</TabsTrigger>
-            <TabsTrigger value="reports">Relatórios</TabsTrigger>
+        <Tabs value={tab} onValueChange={(value) => setTab(value as typeof tab)} className="space-y-4">
+          <TabsList className="grid w-full grid-cols-3 md:w-[400px] h-9">
+            <TabsTrigger value="overview" className="text-sm">Resumo</TabsTrigger>
+            <TabsTrigger value="payments" className="text-sm">Pagamentos</TabsTrigger>
+            <TabsTrigger value="reports" className="text-sm">Relatórios</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="overview">
+          <TabsContent value="overview" className="mt-4">
             <FinancialOverviewTab filters={combinedFilters} />
           </TabsContent>
 
-          <TabsContent value="payments">
+          <TabsContent value="payments" className="mt-4">
             <FinancialPaymentsTab filters={combinedFilters} receptionists={receptionists} />
           </TabsContent>
 
-          <TabsContent value="reports">
+          <TabsContent value="reports" className="mt-4">
             <FinancialReportsTab filters={combinedFilters} />
           </TabsContent>
         </Tabs>

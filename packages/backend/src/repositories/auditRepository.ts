@@ -1,6 +1,58 @@
 import { AuditLog as PrismaAuditLog } from "@prisma/client";
-import { AuditLog, Role } from "../core/types";
+import { AuditLog, ModuleKey, Role } from "../core/types";
 import { prisma } from "../lib/prisma";
+
+const ENTITY_TYPE_TO_MODULE: Record<string, ModuleKey> = {
+  QueueEntry: ModuleKey.QUEUE,
+};
+
+const MODULE_TO_ENTITY_TYPES: Record<ModuleKey, string[]> = {
+  [ModuleKey.QUEUE]: ["QueueEntry"],
+  [ModuleKey.PATIENTS]: ["Patient"],
+  [ModuleKey.TUTORS]: ["Tutor"],
+  [ModuleKey.FINANCIAL]: ["Payment", "QueueEntry"],
+  [ModuleKey.ADMIN_USERS]: ["User"],
+  [ModuleKey.ADMIN_ROOMS]: ["Room"],
+  [ModuleKey.ADMIN_SERVICES]: ["Service"],
+  [ModuleKey.PERMISSIONS]: ["RoleModulePermission"],
+  [ModuleKey.REPORTS]: ["Report"],
+  [ModuleKey.AUDIT]: ["AuditLog"],
+};
+
+function normalizeEntityType(entityType: string): string {
+  if (!entityType) return entityType;
+  switch (entityType) {
+    case "QUEUE_ENTRY":
+      return "QueueEntry";
+    default:
+      return entityType;
+  }
+}
+
+function resolveModule(entityType: string): ModuleKey | undefined {
+  const normalized = normalizeEntityType(entityType);
+  return ENTITY_TYPE_TO_MODULE[normalized];
+}
+
+function buildEntityTypeFilter(options: {
+  module?: ModuleKey;
+  entityType?: string;
+}): string | { in: string[] } | undefined {
+  if (options.module) {
+    const entityTypes = MODULE_TO_ENTITY_TYPES[options.module];
+    if (entityTypes && entityTypes.length > 0) {
+      return entityTypes.length === 1 ? entityTypes[0] : { in: entityTypes };
+    }
+    return options.module;
+  }
+
+  if (options.entityType) {
+    const normalized = normalizeEntityType(options.entityType);
+    return normalized;
+  }
+
+  return undefined;
+}
 
 function mapPrismaToDomain(entry: PrismaAuditLog & { user?: { id: string; username: string; name: string; role: string; createdAt: Date } | null }): AuditLog {
   return {
@@ -18,6 +70,7 @@ function mapPrismaToDomain(entry: PrismaAuditLog & { user?: { id: string; userna
     entityId: entry.entityId,
     metadata: entry.metadata,
     timestamp: entry.timestamp,
+    module: resolveModule(entry.entityType),
   };
 }
 
@@ -63,6 +116,7 @@ export class AuditRepository {
     userId?: string;
     action?: string;
     entityType?: string;
+    module?: ModuleKey;
     page?: number;
     limit?: number;
   }): Promise<{ logs: AuditLog[]; total: number; page: number; totalPages: number }> {
@@ -90,8 +144,13 @@ export class AuditRepository {
       where.action = filters.action;
     }
 
-    if (filters?.entityType) {
-      where.entityType = filters.entityType;
+    const entityTypeFilter = buildEntityTypeFilter({
+      module: filters?.module,
+      entityType: filters?.entityType,
+    });
+
+    if (entityTypeFilter) {
+      where.entityType = entityTypeFilter;
     }
 
     const [logs, total] = await Promise.all([

@@ -1,7 +1,6 @@
 "use client";
 
 import { AddQueueFormInline } from "@/components/AddQueueFormInline";
-import { AuditTab } from "@/components/AuditTab";
 import { Header } from "@/components/Header";
 import { HistoryTab } from "@/components/HistoryTab";
 import { PatientRecordDialog } from "@/components/PatientRecordDialog";
@@ -61,7 +60,6 @@ export default function QueuePage() {
   const canManageQueue = canAccess(ModuleKey.QUEUE);
   const canCallOrManageQueue = canManageQueue || isVet;
   const canViewReports = canAccess(ModuleKey.REPORTS);
-  const canViewAudit = canAccess(ModuleKey.AUDIT);
 
   const { data: entries = [] } = useQuery({
     queryKey: ["queue", "active", isVet ? user?.id : undefined],
@@ -232,7 +230,6 @@ export default function QueuePage() {
   const secondaryTabs = [
     canManageQueue && { value: "history", label: "Histórico" },
     canViewReports && { value: "reports", label: "Relatórios" },
-    canViewAudit && { value: "audit", label: "Auditoria" },
   ].filter(Boolean) as Array<{ value: string; label: string }>;
 
   const tabLayoutClass = secondaryTabs.length === 0
@@ -296,11 +293,6 @@ export default function QueuePage() {
             </TabsContent>
           )}
 
-          {canViewAudit && (
-            <TabsContent value="audit" className="space-y-6 mt-6">
-              <AuditTab authLoading={authLoading} />
-            </TabsContent>
-          )}
         </Tabs>
       </main>
 

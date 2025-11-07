@@ -153,6 +153,7 @@ export interface AuditLog {
   entityId?: string | null;
   metadata?: any;
   timestamp: Date;
+  module?: ModuleKey;
 }
 
 export interface ActiveVet {

@@ -7,7 +7,7 @@ import { Header } from "@/components/Header";
 import { Spinner } from "@/components/ui/spinner";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
-import { Clock, UserCircle2, Users, DollarSign } from "lucide-react";
+import { Clock, UserCircle2, Users, DollarSign, FileText } from "lucide-react";
 import { ModuleKey } from "@/lib/api";
 
 export default function Home() {
@@ -56,6 +56,13 @@ export default function Home() {
       href: "/financial",
       icon: DollarSign,
       requiredModule: ModuleKey.FINANCIAL,
+    },
+    {
+      title: "Auditoria",
+      ariaLabel: "Visualizar ações registradas no sistema",
+      href: "/audit",
+      icon: FileText,
+      requiredModule: ModuleKey.AUDIT,
     },
   ].filter((module) => canAccess(module.requiredModule));
 

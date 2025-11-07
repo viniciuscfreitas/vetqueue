@@ -9,6 +9,7 @@ import { z } from "zod";
 import { parseDateRange } from "../../utils/dateParsing";
 import { asyncHandler } from "../../middleware/asyncHandler";
 import { logger } from "../../lib/logger";
+import auditRoutes from "./auditRoutes";
 
 const router = Router();
 const repository = new QueueRepository();
@@ -409,38 +410,7 @@ router.get("/entry/:id/audit", authMiddleware, requireModule(ModuleKey.AUDIT), a
   res.json(logs);
 }));
 
-router.get("/audit/logs", authMiddleware, requireModule(ModuleKey.AUDIT), asyncHandler(async (req: Request, res: Response) => {
-  const dateRange = parseDateRange(req.query);
-  const filters: any = {
-    startDate: dateRange.start,
-    endDate: dateRange.end,
-  };
-  if (req.query.userId) {
-    filters.userId = req.query.userId as string;
-  }
-  if (req.query.action) {
-    filters.action = req.query.action as string;
-  }
-  if (req.query.entityType) {
-    filters.entityType = req.query.entityType as string;
-  }
-
-  const page = req.query.page ? parseInt(req.query.page as string) : undefined;
-  const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
-
-  const result = await auditService.getAllLogs({
-    ...filters,
-    page,
-    limit,
-  });
-
-  res.json({
-    entries: result.logs,
-    total: result.total,
-    page: result.page,
-    totalPages: result.totalPages,
-  });
-}));
+router.use("/audit", auditRoutes);
 
 router.get("/room-occupations", authMiddleware, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const vetId = req.user?.id;

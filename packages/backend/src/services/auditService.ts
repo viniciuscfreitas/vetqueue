@@ -1,3 +1,4 @@
+import { ModuleKey } from "../core/types";
 import { AuditRepository } from "../repositories/auditRepository";
 
 export class AuditService {
@@ -27,6 +28,7 @@ export class AuditService {
     userId?: string;
     action?: string;
     entityType?: string;
+    module?: ModuleKey;
     page?: number;
     limit?: number;
   }) {

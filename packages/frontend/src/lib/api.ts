@@ -235,6 +235,7 @@ export interface AuditLog {
   entityId?: string | null;
   metadata?: any;
   timestamp: string;
+  module?: ModuleKey;
 }
 
 export interface PatientStats {
@@ -463,9 +464,10 @@ export const auditApi = {
     userId?: string;
     action?: string;
     entityType?: string;
+    module?: ModuleKey;
     page?: number;
     limit?: number;
-  }) => api.get<PaginatedResult<AuditLog>>("/api/queue/audit/logs", { params: filters }),
+  }) => api.get<PaginatedResult<AuditLog>>("/api/audit/logs", { params: filters }),
 
   getLogsByEntry: (entryId: string) =>
     api.get<AuditLog[]>(`/api/queue/entry/${entryId}/audit`),

@@ -1,7 +1,8 @@
 import express, { Request, Response, NextFunction } from "express";
 import cors from "cors";
-import queueRoutes from "./api/routes/queueRoutes";
 import authRoutes from "./api/routes/authRoutes";
+import auditRoutes from "./api/routes/auditRoutes";
+import queueRoutes from "./api/routes/queueRoutes";
 import roomRoutes from "./api/routes/roomRoutes";
 import userRoutes from "./api/routes/userRoutes";
 import serviceRoutes from "./api/routes/serviceRoutes";
@@ -93,6 +94,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/rooms", roomRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/queue", queueRoutes);
+app.use("/api/audit", auditRoutes);
 app.use("/api/services", serviceRoutes);
 app.use("/api/patients", patientRoutes);
 app.use("/api/tutors", tutorRoutes);

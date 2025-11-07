@@ -19,6 +19,21 @@ const EMPTY_ROLE_PERMISSIONS: Record<Role, ModuleKey[]> = {
   [Role.RECEPCAO]: [],
   [Role.VET]: [],
 };
+type RolePermissionsMap = Record<Role, ModuleKey[]>;
+
+const CRITICAL_MODULES = new Set<ModuleKey>([ModuleKey.PERMISSIONS]);
+
+function clonePermissions(data?: RolePermissionsMap): RolePermissionsMap {
+  return {
+    [Role.ADMIN]: [...(data?.[Role.ADMIN] ?? [])],
+    [Role.RECEPCAO]: [...(data?.[Role.RECEPCAO] ?? [])],
+    [Role.VET]: [...(data?.[Role.VET] ?? [])],
+  };
+}
+
+function sanitizeModules(modules: ModuleKey[], validKeys: Set<ModuleKey>): ModuleKey[] {
+  return modules.filter((module) => validKeys.has(module));
+}
 
 export default function PermissionsPage() {
   const router = useRouter();
@@ -57,37 +72,65 @@ export default function PermissionsPage() {
     return map;
   }, [modulesData]);
 
+  const validModuleKeys = useMemo(() => {
+    return new Set(modulesData?.map((module) => module.key) ?? []);
+  }, [modulesData]);
+
   const updateMutation = useMutation({
     mutationFn: ({ role, modules }: { role: Role; modules: ModuleKey[] }) =>
       permissionsApi.updateRole(role, modules).then((res) => res.data.modules),
-    onSuccess: (modules, variables) => {
-      queryClient.setQueryData<Record<Role, ModuleKey[]> | undefined>(
-        ["permissions", "roles"],
-        (current = EMPTY_ROLE_PERMISSIONS) => {
-          const next: Record<Role, ModuleKey[]> = {
-            [Role.ADMIN]: [...(current[Role.ADMIN] ?? [])],
-            [Role.RECEPCAO]: [...(current[Role.RECEPCAO] ?? [])],
-            [Role.VET]: [...(current[Role.VET] ?? [])],
-          };
-          next[variables.role] = modules;
-          return next;
-        }
-      );
-      toast({
-        title: "Permissões atualizadas",
-        description: `Permissões de ${variables.role} salvas com sucesso`,
-      });
-    },
-    onError: handleError,
   });
 
-  const handleToggle = (role: Role, moduleKey: ModuleKey, checked: boolean) => {
+  const handleToggle = async (role: Role, moduleKey: ModuleKey, checked: boolean) => {
+    if (!modulesData) {
+      return;
+    }
+
+    if (!checked && CRITICAL_MODULES.has(moduleKey) && role === user?.role) {
+      toast({
+        variant: "destructive",
+        title: "Permissão obrigatória",
+        description: "Você não pode remover a própria permissão de gerenciar acessos.",
+      });
+      return;
+    }
+
     const currentModules = rolePermissions[role] ?? [];
     const nextModules = checked
       ? Array.from(new Set([...currentModules, moduleKey]))
       : currentModules.filter((module) => module !== moduleKey);
 
-    updateMutation.mutate({ role, modules: nextModules });
+    const filteredNextModules = sanitizeModules(nextModules, validModuleKeys);
+
+    const previous =
+      (queryClient.getQueryData<RolePermissionsMap>(["permissions", "roles"]) ??
+        rolePermissions) as RolePermissionsMap;
+    const previousClone = clonePermissions(previous);
+
+    const optimistic = clonePermissions(previousClone);
+    optimistic[role] = filteredNextModules;
+    queryClient.setQueryData<RolePermissionsMap>(["permissions", "roles"], optimistic);
+
+    try {
+      const updatedModules = await updateMutation.mutateAsync({
+        role,
+        modules: filteredNextModules,
+      });
+      const sanitizedResponse = sanitizeModules(updatedModules, validModuleKeys);
+
+      const confirmed = clonePermissions(optimistic);
+      confirmed[role] = sanitizedResponse;
+      queryClient.setQueryData<RolePermissionsMap>(["permissions", "roles"], confirmed);
+
+      toast({
+        title: "Permissões atualizadas",
+        description: `Permissões de ${role} salvas com sucesso`,
+      });
+      queryClient.invalidateQueries({ queryKey: ["permissions", "roles"] });
+    } catch (error) {
+      queryClient.setQueryData<RolePermissionsMap>(["permissions", "roles"], previousClone);
+      handleError(error);
+    }
   };
 
   if (authLoading || !user) {
@@ -156,9 +199,12 @@ export default function PermissionsPage() {
                         <Checkbox
                           checked={assignedModules.has(module.key)}
                           onCheckedChange={(checked) =>
-                            handleToggle(role, module.key, Boolean(checked))
+                            void handleToggle(role, module.key, Boolean(checked))
                           }
-                          disabled={updateMutation.isPending}
+                          disabled={
+                            updateMutation.isPending ||
+                            (CRITICAL_MODULES.has(module.key) && role === user?.role)
+                          }
                         />
                         <div className="space-y-1">
                           <Label className="text-sm font-medium leading-none">

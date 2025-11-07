@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { ModuleKey, Role } from "../core/types";
+import { logger } from "../lib/logger";
 import { AuthService } from "../services/authService";
 import { PermissionService } from "../services/permissionService";
 
@@ -42,7 +43,11 @@ export async function authMiddleware(
     try {
       permissions = await permissionService.getModulesForRole(role);
     } catch (permissionError) {
-      res.status(500).json({ error: "Não foi possível validar permissões" });
+      logger.error("Permission lookup failed repeatedly", {
+        role,
+        error: permissionError instanceof Error ? permissionError.message : String(permissionError),
+      });
+      res.status(503).json({ error: "Permissões temporariamente indisponíveis" });
       return;
     }
 

@@ -98,34 +98,56 @@ export default function FinancialPage() {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <main className="container mx-auto px-4 py-6">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-semibold">Financeiro</h1>
-        </div>
-
-        <FinancialFilters
-          filters={combinedFilters}
-          onChange={handleFilterChange}
-          onReset={handleReset}
-          receptionists={receptionistsData}
-        />
-
-        <Tabs value={tab} onValueChange={(value) => setTab(value as typeof tab)} className="mt-6">
-          <TabsList className="grid w-full grid-cols-3 md:w-[400px]">
-            <TabsTrigger value="overview">Resumo</TabsTrigger>
-            <TabsTrigger value="payments">Pagamentos</TabsTrigger>
-            <TabsTrigger value="reports">Relatórios</TabsTrigger>
+      <main className="container mx-auto px-4 py-8">
+        <Tabs value={tab} onValueChange={(value) => setTab(value as typeof tab)} className="space-y-6">
+          <TabsList className="grid w-full grid-cols-3 h-auto">
+            <TabsTrigger
+              value="overview"
+              className="data-[state=active]:font-semibold py-2.5 text-sm sm:text-base"
+            >
+              Resumo
+            </TabsTrigger>
+            <TabsTrigger
+              value="payments"
+              className="data-[state=active]:font-semibold py-2.5 text-sm sm:text-base"
+            >
+              Pagamentos
+            </TabsTrigger>
+            <TabsTrigger
+              value="reports"
+              className="data-[state=active]:font-semibold py-2.5 text-sm sm:text-base"
+            >
+              Relatórios
+            </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="overview" className="mt-6">
+          <TabsContent value="overview" className="space-y-6 mt-6">
+            <FinancialFilters
+              filters={combinedFilters}
+              onChange={handleFilterChange}
+              onReset={handleReset}
+              receptionists={receptionistsData}
+            />
             <FinancialOverviewTab filters={combinedFilters} />
           </TabsContent>
 
-          <TabsContent value="payments" className="mt-6">
+          <TabsContent value="payments" className="space-y-6 mt-6">
+            <FinancialFilters
+              filters={combinedFilters}
+              onChange={handleFilterChange}
+              onReset={handleReset}
+              receptionists={receptionistsData}
+            />
             <FinancialPaymentsTab filters={combinedFilters} />
           </TabsContent>
 
-          <TabsContent value="reports" className="mt-6">
+          <TabsContent value="reports" className="space-y-6 mt-6">
+            <FinancialFilters
+              filters={combinedFilters}
+              onChange={handleFilterChange}
+              onReset={handleReset}
+              receptionists={receptionistsData}
+            />
             <FinancialReportsTab filters={combinedFilters} />
           </TabsContent>
         </Tabs>

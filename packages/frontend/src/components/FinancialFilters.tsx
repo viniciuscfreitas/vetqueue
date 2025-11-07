@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Card, CardContent } from "./ui/card";
 import { Input } from "./ui/input";
-import { Label } from "./ui/label";
 import {
   Select,
   SelectContent,
@@ -75,167 +74,130 @@ export function FinancialFilters({
     filters.maxAmount;
 
   return (
-    <Card className="mb-6">
-      <CardContent className="pt-6">
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div>
-              <Label htmlFor="financial-start">Data inicial</Label>
-              <Input
-                id="financial-start"
-                type="date"
-                value={filters.startDate}
-                onChange={(event) => onChange({ startDate: event.target.value })}
-              />
-            </div>
-            <div>
-              <Label htmlFor="financial-end">Data final</Label>
-              <Input
-                id="financial-end"
-                type="date"
-                value={filters.endDate}
-                onChange={(event) => onChange({ endDate: event.target.value })}
-              />
-            </div>
-            <div>
-              <Label>Status</Label>
-              <Select
-                value={filters.paymentStatus}
-                onValueChange={(value) =>
-                  onChange({ paymentStatus: value as PaymentStatus | "ALL" })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Todos" />
-                </SelectTrigger>
-                <SelectContent>
-                  {paymentStatusOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>Forma de pagamento</Label>
-              <Select
-                value={filters.paymentMethod}
-                onValueChange={(value) => onChange({ paymentMethod: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Todas" />
-                </SelectTrigger>
-                <SelectContent>
-                  {paymentMethodOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+    <Card>
+      <CardContent className="p-4">
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="flex items-center gap-2">
+            <Input
+              type="date"
+              value={filters.startDate}
+              onChange={(event) => onChange({ startDate: event.target.value })}
+              className="h-9 w-[140px]"
+            />
+            <span className="text-sm text-muted-foreground whitespace-nowrap">até</span>
+            <Input
+              type="date"
+              value={filters.endDate}
+              onChange={(event) => onChange({ endDate: event.target.value })}
+              className="h-9 w-[140px]"
+            />
           </div>
-
-          {isExpanded && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 border-t">
-              <div>
-                <Label htmlFor="financial-tutor">Tutor</Label>
-                <Input
-                  id="financial-tutor"
-                  placeholder="Nome do tutor..."
-                  value={filters.tutorName}
-                  onChange={(event) => onChange({ tutorName: event.target.value })}
-                />
-              </div>
-              <div>
-                <Label htmlFor="financial-patient">Paciente</Label>
-                <Input
-                  id="financial-patient"
-                  placeholder="Nome do paciente..."
-                  value={filters.patientName}
-                  onChange={(event) => onChange({ patientName: event.target.value })}
-                />
-              </div>
-              <div>
-                <Label htmlFor="financial-service">Serviço</Label>
-                <Input
-                  id="financial-service"
-                  placeholder="Tipo de serviço..."
-                  value={filters.serviceType}
-                  onChange={(event) => onChange({ serviceType: event.target.value })}
-                />
-              </div>
-              <div>
-                <Label>Recebido por</Label>
-                <Select
-                  value={filters.paymentReceivedById}
-                  onValueChange={(value) =>
-                    onChange({ paymentReceivedById: value as string | "ALL" })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Todos" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {receptionistOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="financial-min-amount">Valor mínimo</Label>
-                <Input
-                  id="financial-min-amount"
-                  type="number"
-                  step="0.01"
-                  placeholder="0,00"
-                  value={filters.minAmount}
-                  onChange={(event) => onChange({ minAmount: event.target.value })}
-                />
-              </div>
-              <div>
-                <Label htmlFor="financial-max-amount">Valor máximo</Label>
-                <Input
-                  id="financial-max-amount"
-                  type="number"
-                  step="0.01"
-                  placeholder="0,00"
-                  value={filters.maxAmount}
-                  onChange={(event) => onChange({ maxAmount: event.target.value })}
-                />
-              </div>
-            </div>
-          )}
-
-          <div className="flex items-center justify-between pt-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsExpanded(!isExpanded)}
-            >
-              {isExpanded ? (
-                <>
-                  <ChevronUp className="h-4 w-4 mr-1" />
-                  Menos filtros
-                </>
-              ) : (
-                <>
-                  <ChevronDown className="h-4 w-4 mr-1" />
-                  Mais filtros
-                </>
-              )}
+          <Select
+            value={filters.paymentStatus}
+            onValueChange={(value) =>
+              onChange({ paymentStatus: value as PaymentStatus | "ALL" })
+            }
+          >
+            <SelectTrigger className="h-9 w-[130px]">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              {paymentStatusOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select
+            value={filters.paymentMethod}
+            onValueChange={(value) => onChange({ paymentMethod: value })}
+          >
+            <SelectTrigger className="h-9 w-[150px]">
+              <SelectValue placeholder="Forma pagamento" />
+            </SelectTrigger>
+            <SelectContent>
+              {paymentMethodOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {hasActiveFilters && (
+            <Button variant="outline" size="sm" onClick={onReset} className="h-9">
+              Limpar
             </Button>
-            {hasActiveFilters && (
-              <Button variant="outline" size="sm" onClick={onReset}>
-                Limpar filtros
-              </Button>
+          )}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="h-9"
+          >
+            {isExpanded ? (
+              <ChevronUp className="h-4 w-4" />
+            ) : (
+              <ChevronDown className="h-4 w-4" />
             )}
-          </div>
+          </Button>
         </div>
+
+        {isExpanded && (
+          <div className="flex flex-wrap items-end gap-3 mt-3 pt-3 border-t">
+            <Input
+              placeholder="Tutor..."
+              value={filters.tutorName}
+              onChange={(event) => onChange({ tutorName: event.target.value })}
+              className="h-9 w-[150px]"
+            />
+            <Input
+              placeholder="Paciente..."
+              value={filters.patientName}
+              onChange={(event) => onChange({ patientName: event.target.value })}
+              className="h-9 w-[150px]"
+            />
+            <Input
+              placeholder="Serviço..."
+              value={filters.serviceType}
+              onChange={(event) => onChange({ serviceType: event.target.value })}
+              className="h-9 w-[150px]"
+            />
+            <Select
+              value={filters.paymentReceivedById}
+              onValueChange={(value) =>
+                onChange({ paymentReceivedById: value as string | "ALL" })
+              }
+            >
+              <SelectTrigger className="h-9 w-[150px]">
+                <SelectValue placeholder="Recebido por" />
+              </SelectTrigger>
+              <SelectContent>
+                {receptionistOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Input
+              type="number"
+              step="0.01"
+              placeholder="Valor mín..."
+              value={filters.minAmount}
+              onChange={(event) => onChange({ minAmount: event.target.value })}
+              className="h-9 w-[120px]"
+            />
+            <Input
+              type="number"
+              step="0.01"
+              placeholder="Valor máx..."
+              value={filters.maxAmount}
+              onChange={(event) => onChange({ maxAmount: event.target.value })}
+              className="h-9 w-[120px]"
+            />
+          </div>
+        )}
       </CardContent>
     </Card>
   );

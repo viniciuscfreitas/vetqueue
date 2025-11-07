@@ -29,6 +29,15 @@ Referência rápida para resolver problemas que já apareceram no VetQueue.
   2. Revisar payload de `updatePayment` (valor string vs number).
   3. Se erro de validação, rodar teste `pnpm --filter backend test queueService.test.ts` para reproduzir.
 
+## Erros no Frontend
+
+- **Sintoma:** tela branca ou mensagem sem stack no Dozzle.
+- **Log chave:** buscar `"module":"Frontend"` em `backend` com `message` iniciando por `Client error received`.
+- **Passos:**
+  1. Conferir payload recebido em `/api/client-logs` (requestId + sessionId ajudam a cruzar com usuário).
+  2. Ver stack no campo `stack` e argumentos no `extra.arguments`.
+  3. Se flood, ajustar env `CLIENT_LOG_RATE_LIMIT_MAX` ou investigar bug recorrente.
+
 ## Check-list pós incidentes
 
 - Anotar causa raiz na seção de post-mortems.

@@ -3,6 +3,8 @@ import { logger } from "../lib/logger";
 import { QueueRepository } from "../repositories/queueRepository";
 import { UserRepository } from "../repositories/userRepository";
 
+const log = logger.withContext({ module: "Queue" });
+
 export class QueueService {
   private userRepository: UserRepository;
 
@@ -13,7 +15,7 @@ export class QueueService {
   private updateActivityIfNeeded(vetId?: string | null): void {
     if (vetId) {
       this.userRepository.updateLastActivity(vetId).catch((error) => {
-        logger.error("Failed to update user activity", { module: "Queue", vetId, error: error instanceof Error ? error.message : String(error) });
+        log.error("Failed to update user activity", { vetId, error: error instanceof Error ? error.message : String(error) });
       });
     }
   }
@@ -67,8 +69,7 @@ export class QueueService {
     simplesVetId?: string;
     paymentMethod?: string;
   }): Promise<QueueEntry> {
-    logger.debug("addToQueue called", {
-      module: "Queue",
+    log.debug("addToQueue called", {
       patientName: data.patientName,
       tutorName: data.tutorName,
       serviceType: data.serviceType,
@@ -86,8 +87,7 @@ export class QueueService {
     );
 
     if (data.hasScheduledAppointment && !processed.hasScheduledAppointment) {
-      logger.info("Scheduled appointment converted to walk-in (late >15min)", {
-        module: "Queue",
+      log.info("Scheduled appointment converted to walk-in (late >15min)", {
         eventType: "AppointmentConversion",
         patientName: data.patientName,
         patientId: data.patientId || null,
@@ -97,8 +97,7 @@ export class QueueService {
     if (processed.hasScheduledAppointment && processed.scheduledAt) {
       const now = new Date();
       if (processed.scheduledAt < now) {
-        logger.warn("Cannot schedule appointment in the past", {
-          module: "Queue",
+        log.warn("Cannot schedule appointment in the past", {
           scheduledAt: processed.scheduledAt,
           now,
           patientId: data.patientId || null,
@@ -108,7 +107,6 @@ export class QueueService {
     }
 
     const addQueueMeta: any = {
-      module: "Queue",
       eventType: "AnimalEnqueued",
       patientName: data.patientName,
       tutorName: data.tutorName,
@@ -118,11 +116,11 @@ export class QueueService {
     };
     if (data.patientId) addQueueMeta.patientId = data.patientId;
 
-    logger.info("Adding to queue", addQueueMeta);
+    log.info("Adding to queue", addQueueMeta);
 
     try {
       if (!data.patientName.trim() || !data.tutorName.trim()) {
-        logger.warn("Missing required fields", { module: "Queue", hasPatientName: !!data.patientName.trim(), hasTutorName: !!data.tutorName.trim() });
+        log.warn("Missing required fields", { hasPatientName: !!data.patientName.trim(), hasTutorName: !!data.tutorName.trim() });
         throw new Error("Nome do paciente e tutor são obrigatórios");
       }
 
@@ -141,8 +139,7 @@ export class QueueService {
       });
       const dbDuration = Date.now() - startTime;
 
-      logger.debug("Queue entry created", {
-        module: "Queue",
+      log.debug("Queue entry created", {
         entryId: entry.id,
         patientId: entry.patientId || null,
         patientName: entry.patientName,
@@ -150,8 +147,7 @@ export class QueueService {
       });
 
       if (dbDuration > 500) {
-        logger.warn("Slow database operation", {
-          module: "Queue",
+        log.warn("Slow database operation", {
           operation: "create queue entry",
           duration: `${dbDuration}ms`,
           entryId: entry.id,
@@ -160,8 +156,7 @@ export class QueueService {
 
       return entry;
     } catch (error) {
-      logger.error("Failed to create queue entry", {
-        module: "Queue",
+      log.error("Failed to create queue entry", {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
         patientId: data.patientId || null,
@@ -177,12 +172,12 @@ export class QueueService {
   }
 
   async callNext(vetId?: string, roomId?: string): Promise<QueueEntry | null> {
-    logger.debug("Calling next patient", { module: "Queue", vetId, roomId });
+    log.debug("Calling next patient", { vetId, roomId });
 
     if (vetId && !roomId) {
       const vet = await this.userRepository.findById(vetId);
       if (!vet?.currentRoomId) {
-        logger.warn("Vet tried to call without room check-in", { module: "Queue", vetId });
+        log.warn("Vet tried to call without room check-in", { vetId });
         throw new Error("Você deve fazer check-in em uma sala primeiro");
       }
       roomId = vet.currentRoomId;
@@ -191,7 +186,7 @@ export class QueueService {
     if (vetId && roomId) {
       const roomOccupied = await this.repository.getVetInRoom(roomId);
       if (roomOccupied && roomOccupied.vetId !== vetId) {
-        logger.warn("Room occupied by another vet", { module: "Queue", roomId, vetId });
+        log.warn("Room occupied by another vet", { roomId, vetId });
         throw new Error(`Sala já está ocupada por veterinário ${roomOccupied.vetName}`);
       }
     }
@@ -199,7 +194,7 @@ export class QueueService {
     if (!vetId && roomId) {
       const hasVet = await this.repository.hasVetInRoom(roomId);
       if (!hasVet) {
-        logger.warn("Room has no active vet", { module: "Queue", roomId });
+        log.warn("Room has no active vet", { roomId });
         throw new Error("A sala selecionada não possui veterinário ativo");
       }
     }
@@ -211,15 +206,14 @@ export class QueueService {
     );
 
     if (!result) {
-      logger.info("No entries available in queue", { module: "Queue", vetId: vetId || null, roomId: roomId || null });
+      log.info("No entries available in queue", { vetId: vetId || null, roomId: roomId || null });
       return null;
     }
 
     const actualVetId = vetId || (result.assignedVetId || undefined);
     this.updateActivityIfNeeded(actualVetId);
 
-    logger.info("Patient called", {
-      module: "Queue",
+    log.info("Patient called", {
       eventType: "StatusTransition",
       entryId: result.id,
       patientId: result.patientId || null,
@@ -233,17 +227,16 @@ export class QueueService {
   }
 
   async callPatient(id: string, vetId?: string, roomId?: string): Promise<QueueEntry> {
-    logger.debug("Calling specific patient", { module: "Queue", entryId: id, vetId, roomId });
+    log.debug("Calling specific patient", { entryId: id, vetId, roomId });
     const entry = await this.repository.findById(id);
 
     if (!entry) {
-      logger.error("Queue entry not found for call", { module: "Queue", entryId: id });
+      log.error("Queue entry not found for call", { entryId: id });
       throw new Error("Entrada não encontrada");
     }
 
     if (entry.status !== Status.WAITING) {
-      logger.warn("Cannot call patient - invalid status", {
-        module: "Queue",
+      log.warn("Cannot call patient - invalid status", {
         entryId: id,
         currentStatus: entry.status,
         patientId: entry.patientId || null,
@@ -278,8 +271,7 @@ export class QueueService {
 
     this.updateActivityIfNeeded(vetId);
 
-    logger.info("Patient called (direct)", {
-      module: "Queue",
+    log.info("Patient called (direct)", {
       eventType: "StatusTransition",
       entryId: result.id,
       patientId: result.patientId || null,
@@ -294,7 +286,7 @@ export class QueueService {
   }
 
   async startService(id: string, userRole?: string): Promise<QueueEntry> {
-    logger.debug("Starting service", { module: "Queue", entryId: id, userRole });
+    log.debug("Starting service", { entryId: id, userRole });
 
     if (userRole === "RECEPCAO") {
       throw new Error("Recepção não pode iniciar atendimento");
@@ -303,12 +295,12 @@ export class QueueService {
     const entry = await this.repository.findById(id);
 
     if (!entry) {
-      logger.error("Queue entry not found", { module: "Queue", entryId: id });
+      log.error("Queue entry not found", { entryId: id });
       throw new Error("Entrada não encontrada");
     }
 
     if (entry.status !== Status.CALLED && entry.status !== Status.WAITING) {
-      logger.warn("Invalid status to start service", { module: "Queue", entryId: id, currentStatus: entry.status });
+      log.warn("Invalid status to start service", { entryId: id, currentStatus: entry.status });
       throw new Error("Apenas entradas chamadas ou aguardando podem iniciar atendimento");
     }
 
@@ -319,8 +311,7 @@ export class QueueService {
 
     this.updateActivityIfNeeded(entry.assignedVetId);
 
-    logger.info("Service started", {
-      module: "Queue",
+    log.info("Service started", {
       eventType: "StatusTransition",
       entryId: id,
       patientId: entry.patientId || null,
@@ -334,11 +325,11 @@ export class QueueService {
   }
 
   async completeService(id: string, userRole?: string): Promise<QueueEntry> {
-    logger.debug("Completing service", { module: "Queue", entryId: id, userRole });
+    log.debug("Completing service", { entryId: id, userRole });
     const entry = await this.repository.findById(id);
 
     if (!entry) {
-      logger.error("Queue entry not found to complete", { module: "Queue", entryId: id });
+      log.error("Queue entry not found to complete", { entryId: id });
       throw new Error("Entrada não encontrada");
     }
 
@@ -355,8 +346,7 @@ export class QueueService {
 
     this.updateActivityIfNeeded(entry.assignedVetId);
 
-    logger.info("Service completed", {
-      module: "Queue",
+    log.info("Service completed", {
       eventType: "StatusTransition",
       entryId: id,
       patientId: entry.patientId || null,
@@ -614,8 +604,7 @@ export class QueueService {
     const becomesWalkIn = wasScheduled && !processed.hasScheduledAppointment;
 
     if (becomesWalkIn) {
-      logger.info("Scheduled appointment converted to walk-in (late >15min) on update", {
-        module: "Queue",
+      log.info("Scheduled appointment converted to walk-in (late >15min) on update", {
         eventType: "AppointmentConversion",
         entryId: id,
         patientId: entry.patientId || null,
@@ -623,7 +612,7 @@ export class QueueService {
       });
     }
 
-    logger.debug("Updating queue entry", { module: "Queue", entryId: id, data });
+    log.debug("Updating queue entry", { entryId: id, data });
 
     try {
       const oldStatus = entry.status;
@@ -635,7 +624,6 @@ export class QueueService {
       });
 
       const updateMeta: any = {
-        module: "Queue",
         eventType: "QueueEntryUpdated",
         entryId: id,
         patientId: updated.patientId || null,
@@ -649,11 +637,10 @@ export class QueueService {
         updateMeta.newStatus = updated.status;
       }
 
-      logger.info("Queue entry updated", updateMeta);
+      log.info("Queue entry updated", updateMeta);
       return updated;
     } catch (error) {
-      logger.error("Failed to update queue entry", {
-        module: "Queue",
+      log.error("Failed to update queue entry", {
         eventType: "QueueEntryUpdateFailed",
         entryId: id,
         error: error instanceof Error ? error.message : String(error),

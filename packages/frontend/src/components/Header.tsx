@@ -3,9 +3,8 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
-import { ModuleKey } from "@/lib/api";
 import { RoomSelector } from "./RoomSelector";
-import { User, Settings, Monitor, LogOut, Users } from "lucide-react";
+import { User, Monitor, LogOut } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,7 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 export function Header() {
-  const { user, logout, canAccess } = useAuth();
+  const { user, logout } = useAuth();
   const router = useRouter();
 
   const handleLogout = async () => {
@@ -43,60 +42,6 @@ export function Header() {
 
           <div className="flex items-center gap-3">
             <RoomSelector />
-
-            {(() => {
-              const adminModules = [
-                ModuleKey.ADMIN_USERS,
-                ModuleKey.ADMIN_ROOMS,
-                ModuleKey.ADMIN_SERVICES,
-                ModuleKey.PERMISSIONS,
-              ];
-              const hasAdminAccess = adminModules.some((module) => canAccess(module));
-              const supportingLinks = [
-                canAccess(ModuleKey.TUTORS) && {
-                  href: "/tutors",
-                  label: "Tutores",
-                  icon: Users,
-                },
-              ].filter(Boolean) as Array<{ href: string; label: string; icon: typeof Users }>;
-
-              return (
-                <>
-                  {hasAdminAccess && (
-                    <Button variant="outline" size="sm" asChild className="hidden sm:inline-flex">
-                      <Link href="/admin" className="flex items-center gap-2">
-                        <Settings className="h-4 w-4" />
-                        Administração
-                      </Link>
-                    </Button>
-                  )}
-                  {hasAdminAccess && (
-                    <Button variant="outline" size="icon" asChild className="sm:hidden">
-                      <Link href="/admin" className="flex items-center justify-center">
-                        <Settings className="h-4 w-4" />
-                        <span className="sr-only">Administração</span>
-                      </Link>
-                    </Button>
-                  )}
-                  {supportingLinks.map((item) => (
-                    <Button key={item.href} variant="ghost" size="sm" asChild className="hidden sm:inline-flex">
-                      <Link href={item.href} className="flex items-center gap-2">
-                        <item.icon className="h-4 w-4" />
-                        {item.label}
-                      </Link>
-                    </Button>
-                  ))}
-                  {supportingLinks.map((item) => (
-                    <Button key={`${item.href}-mobile`} variant="ghost" size="icon" asChild className="sm:hidden">
-                      <Link href={item.href} className="flex items-center justify-center">
-                        <item.icon className="h-4 w-4" />
-                        <span className="sr-only">{item.label}</span>
-                      </Link>
-                    </Button>
-                  ))}
-                </>
-              );
-            })()}
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

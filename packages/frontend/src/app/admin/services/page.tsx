@@ -190,6 +190,12 @@ export default function ServicesPage() {
             </Card>
           ))}
         </div>
+      ) : services.length === 0 ? (
+        <Card className="border border-dashed border-muted-foreground/40">
+          <CardContent className="py-10 text-center text-sm text-muted-foreground">
+            Nenhum serviço cadastrado ainda.
+          </CardContent>
+        </Card>
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
           {services.map((service) => (

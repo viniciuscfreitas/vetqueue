@@ -7,7 +7,7 @@ import { Header } from "@/components/Header";
 import { Spinner } from "@/components/ui/spinner";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
-import { Clock, UserCircle2, Users, DollarSign, FileText } from "lucide-react";
+import { Clock, UserCircle2, Users, DollarSign, FileText, Settings } from "lucide-react";
 import { ModuleKey } from "@/lib/api";
 
 export default function Home() {
@@ -28,7 +28,7 @@ export default function Home() {
     );
   }
 
-  const modules = [
+  const moduleCards = [
     {
       title: "Fila",
       ariaLabel: "Gerenciar fila de atendimento e chamar pacientes",
@@ -64,7 +64,29 @@ export default function Home() {
       icon: FileText,
       requiredModule: ModuleKey.AUDIT,
     },
-  ].filter((module) => canAccess(module.requiredModule));
+  ];
+
+  const adminModuleKeys = [
+    ModuleKey.ADMIN_USERS,
+    ModuleKey.ADMIN_ROOMS,
+    ModuleKey.ADMIN_SERVICES,
+    ModuleKey.PERMISSIONS,
+  ];
+
+  const hasAdminAccess = adminModuleKeys.some((module) => canAccess(module));
+
+  if (hasAdminAccess) {
+    moduleCards.unshift({
+      title: "Administração",
+      ariaLabel: "Configurar usuários, salas, serviços e permissões",
+      href: "/admin",
+      icon: Settings,
+    });
+  }
+
+  const modules = moduleCards.filter(
+    (module) => !module.requiredModule || canAccess(module.requiredModule),
+  );
 
   return (
     <div className="min-h-screen bg-background">

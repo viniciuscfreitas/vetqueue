@@ -267,16 +267,29 @@ export default function UsersPage() {
             </Card>
           ))}
         </div>
+      ) : users.length === 0 ? (
+        <Card className="border border-dashed border-muted-foreground/40">
+          <CardContent className="py-10 text-center text-sm text-muted-foreground">
+            Nenhum usuário cadastrado no momento.
+          </CardContent>
+        </Card>
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
           {users.map((usr) => (
-            <Card key={usr.id} className="border border-muted-foreground/30 transition hover:border-muted-foreground/50">
+            <Card
+              key={usr.id}
+              className="border border-muted-foreground/30 transition hover:border-muted-foreground/50"
+            >
               <CardContent className="flex items-start justify-between gap-4 pt-6">
                 <div>
                   <p className="font-semibold text-base">{usr.name}</p>
                   <p className="text-sm text-muted-foreground">@{usr.username}</p>
                   <p className="mt-1 text-xs uppercase tracking-wide text-muted-foreground">
-                    {usr.role === Role.VET ? "Veterinário" : usr.role === Role.RECEPCAO ? "Recepção" : "Admin"}
+                    {usr.role === Role.VET
+                      ? "Veterinário"
+                      : usr.role === Role.RECEPCAO
+                      ? "Recepção"
+                      : "Admin"}
                   </p>
                 </div>
                 <Button variant="outline" size="sm" onClick={() => handleEdit(usr)}>

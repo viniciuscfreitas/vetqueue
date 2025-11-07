@@ -23,7 +23,7 @@ export default function AdminOverviewPage() {
   );
 
   return (
-    <div className="space-y-8">
+    <section className="space-y-8">
       <div>
         <h1 className="text-3xl font-semibold tracking-tight">Administração</h1>
         <p className="mt-2 text-muted-foreground">
@@ -37,7 +37,7 @@ export default function AdminOverviewPage() {
         {featureItems.map((item) => {
           const Icon = item.icon;
           return (
-            <Card key={item.href} className="border-muted-foreground/20">
+            <Card key={item.href} className="border border-muted-foreground/30 shadow-sm">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
                 <CardTitle className="text-lg font-semibold flex items-center gap-2">
                   <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -68,7 +68,7 @@ export default function AdminOverviewPage() {
           </CardContent>
         </Card>
       )}
-    </div>
+    </section>
   );
 }
 

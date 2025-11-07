@@ -1,16 +1,16 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { ModuleDefinition, ModuleKey, Role, permissionsApi } from "@/lib/api";
+import { ModuleKey, Role, permissionsApi } from "@/lib/api";
 import { createErrorHandler } from "@/lib/errors";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { cn } from "@/lib/utils";
+import { ChevronRight } from "lucide-react";
 
 const MANAGEABLE_ROLES: Role[] = [Role.RECEPCAO, Role.VET];
 const EMPTY_ROLE_PERMISSIONS: Record<Role, ModuleKey[]> = {
@@ -65,12 +65,6 @@ export default function PermissionsPage() {
     enabled: !authLoading && !!user && canConfigurePermissions,
   });
 
-  const modulesByKey = useMemo(() => {
-    const map = new Map<ModuleKey, ModuleDefinition>();
-    modulesData?.forEach((module) => map.set(module.key, module));
-    return map;
-  }, [modulesData]);
-
   const validModuleKeys = useMemo(() => {
     return new Set(modulesData?.map((module) => module.key) ?? []);
   }, [modulesData]);
@@ -79,6 +73,34 @@ export default function PermissionsPage() {
     mutationFn: ({ role, modules }: { role: Role; modules: ModuleKey[] }) =>
       permissionsApi.updateRole(role, modules).then((res) => res.data.modules),
   });
+
+  const [expandedRoles, setExpandedRoles] = useState<Record<Role, boolean>>({
+    [Role.ADMIN]: false,
+    [Role.RECEPCAO]: true,
+    [Role.VET]: false,
+  });
+
+  const roleCopy: Record<Role, { title: string; description: string }> = {
+    [Role.ADMIN]: {
+      title: "Administrador",
+      description: "Acesso total a todos os módulos.",
+    },
+    [Role.RECEPCAO]: {
+      title: "Recepção",
+      description: "Rotinas de atendimento, cadastros básicos e suporte à operação.",
+    },
+    [Role.VET]: {
+      title: "Veterinário",
+      description: "Recursos assistenciais para acompanhar filas e prontuários.",
+    },
+  };
+
+  const toggleRole = (role: Role) => {
+    setExpandedRoles((prev) => ({
+      ...prev,
+      [role]: !prev[role],
+    }));
+  };
 
   const handleToggle = async (role: Role, moduleKey: ModuleKey, checked: boolean) => {
     if (!modulesData) {
@@ -164,67 +186,107 @@ export default function PermissionsPage() {
           <Spinner size="lg" />
         </div>
       ) : (
-        <div className="grid gap-6 md:grid-cols-2">
-          <Card className="border border-dashed border-muted-foreground/40 bg-muted/20">
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between text-base font-semibold uppercase tracking-wide text-muted-foreground">
-                Administrador
-              </CardTitle>
-              <p className="text-sm text-muted-foreground">
-                Sempre possui acesso total a todos os módulos.
+        <div className="space-y-6">
+          <div className="rounded-lg border border-dashed border-muted-foreground/40 bg-muted/20 p-4 sm:p-5">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                  {roleCopy[Role.ADMIN].title}
+                </h2>
+                <p className="mt-1 text-sm text-muted-foreground/80">
+                  {roleCopy[Role.ADMIN].description}
+                </p>
+              </div>
+              <span className="rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
+                Acesso total
+              </span>
+            </div>
+          </div>
+
+          <div className="overflow-hidden rounded-lg border border-muted-foreground/30 bg-background shadow-sm">
+            <div className="border-b border-muted-foreground/20 px-4 py-3">
+              <p className="text-sm font-medium text-muted-foreground">Roles disponíveis</p>
+              <p className="text-xs text-muted-foreground/80">
+                Clique para expandir e ajustar os módulos de cada perfil.
               </p>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                {modulesData?.map((module) => (
-                  <li key={module.key}>• {module.label}</li>
-                ))}
-              </ul>
-            </CardContent>
-          </Card>
+            </div>
 
-          {MANAGEABLE_ROLES.map((role) => {
-            const assignedModules = new Set(rolePermissions[role] ?? []);
+            <div className="divide-y divide-muted-foreground/20">
+              {MANAGEABLE_ROLES.map((role) => {
+                const assignedModules = new Set(rolePermissions[role] ?? []);
+                const isExpanded = expandedRoles[role];
 
-            return (
-              <Card key={role} className="border border-muted-foreground/30">
-                <CardHeader>
-                  <CardTitle className="text-base font-semibold uppercase tracking-wide">
-                    {role === Role.RECEPCAO ? "Recepção" : "Veterinário"}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {modulesData?.map((module) => (
-                    <label
-                      key={module.key}
-                      className="flex items-start gap-3 rounded-lg border border-muted-foreground/20 p-3 transition hover:border-muted-foreground/40 hover:bg-muted/30"
+                return (
+                  <div key={role} className="bg-background/60">
+                    <button
+                      type="button"
+                      onClick={() => toggleRole(role)}
+                      className="flex w-full items-center justify-between gap-4 px-4 py-3 text-left transition hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                     >
-                      <Checkbox
-                        checked={assignedModules.has(module.key)}
-                        onCheckedChange={(checked) =>
-                          void handleToggle(role, module.key, Boolean(checked))
-                        }
-                        disabled={
-                          updateMutation.isPending ||
-                          (CRITICAL_MODULES.has(module.key) && role === user?.role)
-                        }
-                      />
-                      <div className="space-y-1">
-                        <Label className="text-sm font-medium leading-none">{module.label}</Label>
-                        {module.description && (
-                          <p className="text-xs text-muted-foreground">{module.description}</p>
-                        )}
+                      <div className="flex items-center gap-3">
+                        <span
+                          className={cn(
+                            "inline-flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold",
+                            "bg-primary/10 text-primary",
+                          )}
+                        >
+                          {role === Role.RECEPCAO ? "R" : "V"}
+                        </span>
+                        <div>
+                          <p className="font-medium">{roleCopy[role].title}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {roleCopy[role].description}
+                          </p>
+                        </div>
                       </div>
-                    </label>
-                  ))}
-                </CardContent>
-              </Card>
-            );
-          })}
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                        <span>{assignedModules.size} módulos ativos</span>
+                        <ChevronRight
+                          className={cn("h-4 w-4 transition-transform", isExpanded && "rotate-90")}
+                        />
+                      </div>
+                    </button>
+
+                    <div
+                      className={cn(
+                        "space-y-2 border-t border-muted-foreground/10 px-4 pb-4 pt-3",
+                        !isExpanded && "hidden",
+                      )}
+                    >
+                      {modulesData?.map((module) => (
+                        <label
+                          key={module.key}
+                          className={cn(
+                            "group flex items-start gap-3 rounded-md border border-transparent px-3 py-2",
+                            "hover:border-muted-foreground/40 hover:bg-muted/30",
+                          )}
+                        >
+                          <Checkbox
+                            checked={assignedModules.has(module.key)}
+                            onCheckedChange={(checked) =>
+                              void handleToggle(role, module.key, Boolean(checked))
+                            }
+                            disabled={
+                              updateMutation.isPending ||
+                              (CRITICAL_MODULES.has(module.key) && role === user?.role)
+                            }
+                          />
+                          <div className="space-y-1">
+                            <span className="text-sm font-medium leading-none">{module.label}</span>
+                            {module.description && (
+                              <p className="text-xs text-muted-foreground">{module.description}</p>
+                            )}
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
       )}
     </section>
   );
 }
-
-

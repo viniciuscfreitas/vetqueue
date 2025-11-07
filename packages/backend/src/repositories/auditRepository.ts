@@ -43,7 +43,7 @@ function buildEntityTypeFilter(options: {
     if (entityTypes && entityTypes.length > 0) {
       return entityTypes.length === 1 ? entityTypes[0] : { in: entityTypes };
     }
-    return options.module;
+    return undefined;
   }
 
   if (options.entityType) {

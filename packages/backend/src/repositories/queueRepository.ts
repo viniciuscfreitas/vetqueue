@@ -1,8 +1,13 @@
 import { Prisma, QueueEntry as PrismaQueueEntry } from "@prisma/client";
-import { QueueEntry, Priority, Status, User, Role, Patient } from "../core/types";
+import { QueueEntry, Priority, Status, User, Role, Patient, PaymentStatus } from "../core/types";
 import { prisma } from "../lib/prisma";
 
-function mapPrismaToDomain(entry: PrismaQueueEntry & { assignedVet?: { id: string; username: string; name: string; role: string; createdAt: Date } | null; room?: { id: string; name: string; isActive: boolean; createdAt: Date } | null; patient?: { id: string; name: string; species: string | null; breed: string | null; birthDate: Date | null; gender: string | null; tutorName: string; tutorPhone: string | null; tutorEmail: string | null; notes: string | null; createdAt: Date; updatedAt: Date } | null }): QueueEntry {
+function mapPrismaToDomain(entry: PrismaQueueEntry & {
+  assignedVet?: { id: string; username: string; name: string; role: string; createdAt: Date } | null;
+  room?: { id: string; name: string; isActive: boolean; createdAt: Date } | null;
+  patient?: { id: string; name: string; species: string | null; breed: string | null; birthDate: Date | null; gender: string | null; tutorName: string; tutorPhone: string | null; tutorEmail: string | null; notes: string | null; createdAt: Date; updatedAt: Date } | null;
+  paymentReceivedBy?: { id: string; username: string; name: string; role: string; createdAt: Date } | null;
+}): QueueEntry {
   return {
     id: entry.id,
     patientName: entry.patientName,
@@ -33,6 +38,20 @@ function mapPrismaToDomain(entry: PrismaQueueEntry & { assignedVet?: { id: strin
     patientId: entry.patientId,
     simplesVetId: entry.simplesVetId || null,
     paymentMethod: entry.paymentMethod || null,
+    paymentStatus: (entry.paymentStatus as PaymentStatus) || PaymentStatus.PENDING,
+    paymentAmount: entry.paymentAmount ? entry.paymentAmount.toString() : null,
+    paymentReceivedById: entry.paymentReceivedById || null,
+    paymentReceivedBy: entry.paymentReceivedBy
+      ? {
+          id: entry.paymentReceivedBy.id,
+          username: entry.paymentReceivedBy.username,
+          name: entry.paymentReceivedBy.name,
+          role: entry.paymentReceivedBy.role as Role,
+          createdAt: entry.paymentReceivedBy.createdAt,
+        }
+      : null,
+    paymentReceivedAt: entry.paymentReceivedAt || null,
+    paymentNotes: entry.paymentNotes || null,
     patient: entry.patient ? {
       id: entry.patient.id,
       name: entry.patient.name,
@@ -62,6 +81,11 @@ export class QueueRepository {
     patientId?: string;
     simplesVetId?: string;
     paymentMethod?: string;
+    paymentStatus?: PaymentStatus;
+    paymentAmount?: string;
+    paymentReceivedById?: string;
+    paymentReceivedAt?: Date;
+    paymentNotes?: string;
   }): Promise<QueueEntry> {
     let patientName = data.patientName;
     let tutorName = data.tutorName;
@@ -89,8 +113,13 @@ export class QueueRepository {
         patientId: data.patientId,
         simplesVetId: data.simplesVetId,
         paymentMethod: data.paymentMethod,
+        paymentStatus: data.paymentStatus ?? PaymentStatus.PENDING,
+        paymentAmount: data.paymentAmount !== undefined ? new Prisma.Decimal(data.paymentAmount) : undefined,
+        paymentReceivedById: data.paymentReceivedById,
+        paymentReceivedAt: data.paymentReceivedAt,
+        paymentNotes: data.paymentNotes,
       },
-      include: { assignedVet: true, room: true, patient: true },
+      include: { assignedVet: true, room: true, patient: true, paymentReceivedBy: true },
     });
     return mapPrismaToDomain(entry);
   }
@@ -98,7 +127,7 @@ export class QueueRepository {
   async findById(id: string): Promise<QueueEntry | null> {
     const entry = await prisma.queueEntry.findUnique({
       where: { id },
-      include: { assignedVet: true, room: true, patient: true },
+      include: { assignedVet: true, room: true, patient: true, paymentReceivedBy: true },
     });
     return entry ? mapPrismaToDomain(entry) : null;
   }
@@ -119,7 +148,7 @@ export class QueueRepository {
 
     const entry = await prisma.queueEntry.findFirst({
       where: whereClause,
-      include: { assignedVet: true, room: true, patient: true },
+      include: { assignedVet: true, room: true, patient: true, paymentReceivedBy: true },
       orderBy: [
         { priority: "asc" },
         { createdAt: "asc" },
@@ -134,7 +163,7 @@ export class QueueRepository {
         status: Status.WAITING,
         assignedVetId: null,
       },
-      include: { assignedVet: true, room: true, patient: true },
+      include: { assignedVet: true, room: true, patient: true, paymentReceivedBy: true },
       orderBy: [
         { priority: "asc" },
         { createdAt: "asc" },
@@ -163,7 +192,7 @@ export class QueueRepository {
     const entry = await prisma.queueEntry.update({
       where: { id },
       data,
-      include: { assignedVet: true, room: true, patient: true },
+      include: { assignedVet: true, room: true, patient: true, paymentReceivedBy: true },
     });
     return mapPrismaToDomain(entry);
   }
@@ -175,7 +204,7 @@ export class QueueRepository {
     const entry = await prisma.queueEntry.update({
       where: { id },
       data: { assignedVetId },
-      include: { assignedVet: true, room: true, patient: true },
+      include: { assignedVet: true, room: true, patient: true, paymentReceivedBy: true },
     });
     return mapPrismaToDomain(entry);
   }
@@ -201,7 +230,7 @@ export class QueueRepository {
 
       const entry = await tx.queueEntry.findFirst({
         where: whereClause,
-        include: { assignedVet: true, room: true, patient: true },
+        include: { assignedVet: true, room: true, patient: true, paymentReceivedBy: true },
         orderBy: [
           { priority: "asc" },
           { createdAt: "asc" },
@@ -224,14 +253,14 @@ export class QueueRepository {
       const updated = await tx.queueEntry.update({
         where: { id: entry.id },
         data: updateData,
-        include: { assignedVet: true, room: true, patient: true },
+        include: { assignedVet: true, room: true, patient: true, paymentReceivedBy: true },
       });
 
       if (vetId && !entry.assignedVetId) {
         const withVet = await tx.queueEntry.update({
           where: { id: entry.id },
           data: { assignedVetId: vetId },
-          include: { assignedVet: true, room: true, patient: true },
+          include: { assignedVet: true, room: true, patient: true, paymentReceivedBy: true },
         });
         return mapPrismaToDomain(withVet);
       }
@@ -249,7 +278,7 @@ export class QueueRepository {
     return await prisma.$transaction(async (tx) => {
       const entry = await tx.queueEntry.findUnique({
         where: { id },
-        include: { assignedVet: true, room: true, patient: true },
+        include: { assignedVet: true, room: true, patient: true, paymentReceivedBy: true },
       });
 
       if (!entry) {
@@ -272,14 +301,14 @@ export class QueueRepository {
       const updated = await tx.queueEntry.update({
         where: { id },
         data: updateData,
-        include: { assignedVet: true, room: true, patient: true },
+        include: { assignedVet: true, room: true, patient: true, paymentReceivedBy: true },
       });
 
       if (vetId && !entry.assignedVetId) {
         const withVet = await tx.queueEntry.update({
           where: { id },
           data: { assignedVetId: vetId },
-          include: { assignedVet: true, room: true, patient: true },
+          include: { assignedVet: true, room: true, patient: true, paymentReceivedBy: true },
         });
         return mapPrismaToDomain(withVet);
       }
@@ -295,7 +324,7 @@ export class QueueRepository {
           in: [Status.WAITING, Status.CALLED, Status.IN_PROGRESS],
         },
       },
-      include: { assignedVet: true, room: true, patient: true },
+      include: { assignedVet: true, room: true, patient: true, paymentReceivedBy: true },
       orderBy: [
         { priority: "asc" },
         { createdAt: "asc" },
@@ -315,7 +344,7 @@ export class QueueRepository {
           { assignedVetId: null }
         ]
       },
-      include: { assignedVet: true, room: true, patient: true },
+      include: { assignedVet: true, room: true, patient: true, paymentReceivedBy: true },
       orderBy: [
         { priority: "asc" },
         { createdAt: "asc" },
@@ -332,7 +361,7 @@ export class QueueRepository {
         },
         assignedVetId: null,
       },
-      include: { assignedVet: true, room: true, patient: true },
+      include: { assignedVet: true, room: true, patient: true, paymentReceivedBy: true },
       orderBy: [
         { priority: "asc" },
         { createdAt: "asc" },
@@ -377,12 +406,12 @@ export class QueueRepository {
     }
 
     if (filters?.serviceType) {
-      where.serviceType = filters.serviceType;
+      where.serviceType = { contains: filters.serviceType, mode: "insensitive" };
     }
 
     const entries = await prisma.queueEntry.findMany({
       where,
-      include: { assignedVet: true, room: true, patient: true },
+      include: { assignedVet: true, room: true, patient: true, paymentReceivedBy: true },
       orderBy: { completedAt: "desc" },
     });
     return entries.map(mapPrismaToDomain);
@@ -430,13 +459,13 @@ export class QueueRepository {
     }
 
     if (filters?.serviceType) {
-      where.serviceType = filters.serviceType;
+      where.serviceType = { contains: filters.serviceType, mode: "insensitive" };
     }
 
     const [entries, total] = await Promise.all([
       prisma.queueEntry.findMany({
         where,
-        include: { assignedVet: true, room: true, patient: true },
+        include: { assignedVet: true, room: true, patient: true, paymentReceivedBy: true },
         orderBy: { completedAt: "desc" },
         skip,
         take: limit,
@@ -460,6 +489,11 @@ export class QueueRepository {
     tutorName?: string;
     patientName?: string;
     paymentMethod?: string;
+    paymentStatus?: PaymentStatus;
+    paymentReceivedById?: string;
+    serviceType?: string;
+    minAmount?: string;
+    maxAmount?: string;
     page?: number;
     limit?: number;
   }): Promise<{ entries: QueueEntry[]; total: number; page: number; totalPages: number }> {
@@ -499,10 +533,33 @@ export class QueueRepository {
       where.paymentMethod = filters.paymentMethod;
     }
 
+    if (filters?.paymentStatus) {
+      where.paymentStatus = filters.paymentStatus;
+    }
+
+    if (filters?.paymentReceivedById) {
+      where.paymentReceivedById = filters.paymentReceivedById;
+    }
+
+    if (filters?.serviceType) {
+      where.serviceType = { contains: filters.serviceType, mode: "insensitive" };
+    }
+
+    if (filters?.minAmount || filters?.maxAmount) {
+      const amountFilter: Prisma.DecimalNullableFilter = {};
+      if (filters.minAmount) {
+        amountFilter.gte = new Prisma.Decimal(filters.minAmount);
+      }
+      if (filters.maxAmount) {
+        amountFilter.lte = new Prisma.Decimal(filters.maxAmount);
+      }
+      where.paymentAmount = amountFilter;
+    }
+
     const [entries, total] = await Promise.all([
       prisma.queueEntry.findMany({
         where,
-        include: { assignedVet: true, room: true, patient: true },
+        include: { assignedVet: true, room: true, patient: true, paymentReceivedBy: true },
         orderBy: { completedAt: "desc" },
         skip,
         take: limit,
@@ -520,31 +577,342 @@ export class QueueRepository {
     };
   }
 
-  async getFinancialSummary(startDate: Date, endDate: Date) {
-    const entries = await prisma.queueEntry.findMany({
-      where: {
-        status: Status.COMPLETED,
-        completedAt: {
-          gte: startDate,
-          lte: endDate,
-        },
+  async getFinancialSummary(
+    startDate: Date,
+    endDate: Date,
+    filters?: {
+      tutorName?: string;
+      patientName?: string;
+      paymentMethod?: string;
+      paymentStatus?: PaymentStatus;
+      paymentReceivedById?: string;
+      serviceType?: string;
+      minAmount?: string;
+      maxAmount?: string;
+    }
+  ) {
+    const where: Prisma.QueueEntryWhereInput = {
+      status: Status.COMPLETED,
+      completedAt: {
+        gte: startDate,
+        lte: endDate,
       },
+    };
+
+    if (filters?.tutorName) {
+      where.tutorName = { contains: filters.tutorName, mode: "insensitive" };
+    }
+
+    if (filters?.patientName) {
+      where.patientName = { contains: filters.patientName, mode: "insensitive" };
+    }
+
+    if (filters?.paymentMethod) {
+      where.paymentMethod = filters.paymentMethod;
+    }
+
+    if (filters?.paymentStatus) {
+      where.paymentStatus = filters.paymentStatus;
+    }
+
+    if (filters?.paymentReceivedById) {
+      where.paymentReceivedById = filters.paymentReceivedById;
+    }
+
+    if (filters?.serviceType) {
+      where.serviceType = { contains: filters.serviceType, mode: "insensitive" };
+    }
+
+    if (filters?.minAmount || filters?.maxAmount) {
+      const amountFilter: Prisma.DecimalNullableFilter = {};
+      if (filters.minAmount) {
+        amountFilter.gte = new Prisma.Decimal(filters.minAmount);
+      }
+      if (filters.maxAmount) {
+        amountFilter.lte = new Prisma.Decimal(filters.maxAmount);
+      }
+      where.paymentAmount = amountFilter;
+    }
+
+    const entries = await prisma.queueEntry.findMany({
+      where,
       select: {
         paymentMethod: true,
+        paymentStatus: true,
+        paymentAmount: true,
+        hasScheduledAppointment: true,
+        paymentReceivedById: true,
       },
     });
 
-    const total = entries.length;
-    const byPaymentMethod: Record<string, number> = {};
+    const zero = new Prisma.Decimal(0);
+    const byPaymentMethod: Record<string, { count: number; amount: Prisma.Decimal }> = {};
+    const byStatus: Record<PaymentStatus, { count: number; amount: Prisma.Decimal }> = {
+      PENDING: { count: 0, amount: zero },
+      PARTIAL: { count: 0, amount: zero },
+      PAID: { count: 0, amount: zero },
+      CANCELLED: { count: 0, amount: zero },
+    };
+
+    let totalAmount = zero;
+    let totalPending = zero;
+    let totalPartial = zero;
+    let totalPaid = zero;
+    let scheduledCount = 0;
+    let walkInCount = 0;
 
     entries.forEach((entry) => {
       const method = entry.paymentMethod || "NÃO_INFORMADO";
-      byPaymentMethod[method] = (byPaymentMethod[method] || 0) + 1;
+      const status = entry.paymentStatus as PaymentStatus;
+      const amount = entry.paymentAmount ?? zero;
+
+      if (!byPaymentMethod[method]) {
+        byPaymentMethod[method] = { count: 0, amount: zero };
+      }
+      byPaymentMethod[method] = {
+        count: byPaymentMethod[method].count + 1,
+        amount: byPaymentMethod[method].amount.plus(amount),
+      };
+
+      if (byStatus[status]) {
+        byStatus[status] = {
+          count: byStatus[status].count + 1,
+          amount: byStatus[status].amount.plus(amount),
+        };
+      }
+
+      if (status === PaymentStatus.PAID) {
+        totalPaid = totalPaid.plus(amount);
+      } else if (status === PaymentStatus.PARTIAL) {
+        totalPartial = totalPartial.plus(amount);
+      } else if (status === PaymentStatus.PENDING) {
+        totalPending = totalPending.plus(amount);
+      }
+
+      totalAmount = totalAmount.plus(amount);
+
+      if (entry.hasScheduledAppointment) {
+        scheduledCount += 1;
+      } else {
+        walkInCount += 1;
+      }
+    });
+
+    const serializeDecimal = (value: Prisma.Decimal) => value.toFixed(2);
+
+    const serializedByPaymentMethod = Object.fromEntries(
+      Object.entries(byPaymentMethod).map(([method, data]) => [
+        method,
+        { count: data.count, amount: serializeDecimal(data.amount) },
+      ]),
+    );
+
+    const serializedByStatus = Object.fromEntries(
+      Object.entries(byStatus).map(([status, data]) => [
+        status,
+        { count: data.count, amount: serializeDecimal(data.amount) },
+      ]),
+    ) as Record<PaymentStatus, { count: number; amount: string }>;
+
+    return {
+      totalEntries: entries.length,
+      totals: {
+        amount: serializeDecimal(totalAmount),
+        paid: serializeDecimal(totalPaid),
+        partial: serializeDecimal(totalPartial),
+        pending: serializeDecimal(totalPending),
+      },
+      byPaymentMethod: serializedByPaymentMethod,
+      byStatus: serializedByStatus,
+      walkIns: walkInCount,
+      scheduled: scheduledCount,
+      receivedEntries: entries.filter((e) => e.paymentReceivedById).length,
+    };
+  }
+
+  async getFinancialReportData(
+    startDate: Date,
+    endDate: Date,
+    filters?: {
+      tutorName?: string;
+      patientName?: string;
+      paymentMethod?: string;
+      paymentStatus?: PaymentStatus;
+      paymentReceivedById?: string;
+      serviceType?: string;
+      minAmount?: string;
+      maxAmount?: string;
+    }
+  ) {
+    const where: Prisma.QueueEntryWhereInput = {
+      status: Status.COMPLETED,
+      completedAt: {
+        gte: startDate,
+        lte: endDate,
+      },
+    };
+
+    if (filters?.tutorName) {
+      where.tutorName = { contains: filters.tutorName, mode: "insensitive" };
+    }
+
+    if (filters?.patientName) {
+      where.patientName = { contains: filters.patientName, mode: "insensitive" };
+    }
+
+    if (filters?.paymentMethod) {
+      where.paymentMethod = filters.paymentMethod;
+    }
+
+    if (filters?.paymentStatus) {
+      where.paymentStatus = filters.paymentStatus;
+    }
+
+    if (filters?.paymentReceivedById) {
+      where.paymentReceivedById = filters.paymentReceivedById;
+    }
+
+    if (filters?.serviceType) {
+      where.serviceType = { contains: filters.serviceType, mode: "insensitive" };
+    }
+
+    if (filters?.minAmount || filters?.maxAmount) {
+      const amountFilter: Prisma.DecimalNullableFilter = {};
+      if (filters.minAmount) {
+        amountFilter.gte = new Prisma.Decimal(filters.minAmount);
+      }
+      if (filters.maxAmount) {
+        amountFilter.lte = new Prisma.Decimal(filters.maxAmount);
+      }
+      where.paymentAmount = amountFilter;
+    }
+
+    const entries = await prisma.queueEntry.findMany({
+      where,
+      select: {
+        id: true,
+        patientName: true,
+        tutorName: true,
+        serviceType: true,
+        paymentStatus: true,
+        paymentAmount: true,
+        paymentReceivedAt: true,
+        paymentReceivedBy: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        paymentNotes: true,
+        completedAt: true,
+      },
+      orderBy: { completedAt: "desc" },
+    });
+
+    const zero = new Prisma.Decimal(0);
+
+    const revenueByDayMap = new Map<string, { amount: Prisma.Decimal; count: number }>();
+    const revenueByServiceMap = new Map<string, { amount: Prisma.Decimal; count: number }>();
+    const revenueByReceiverMap = new Map<string | null, { id: string | null; name: string; amount: Prisma.Decimal; count: number }>();
+    const pendingPayments: Array<{
+      id: string;
+      patientName: string;
+      tutorName: string;
+      serviceType: string;
+      paymentStatus: PaymentStatus;
+      paymentAmount: string | null;
+      completedAt: Date | null;
+      paymentNotes: string | null;
+    }> = [];
+
+    entries.forEach((entry) => {
+      const amountDecimal = entry.paymentAmount ?? zero;
+      const status = entry.paymentStatus as PaymentStatus;
+      const amount = amountDecimal;
+
+      const serviceKey = entry.serviceType || "NÃO_INFORMADO";
+      const serviceAggregate = revenueByServiceMap.get(serviceKey) || { amount: zero, count: 0 };
+      revenueByServiceMap.set(serviceKey, {
+        amount: serviceAggregate.amount.plus(amount),
+        count: serviceAggregate.count + 1,
+      });
+
+      if (status === PaymentStatus.PAID || status === PaymentStatus.PARTIAL) {
+        if (entry.paymentReceivedAt) {
+          const dateKey = entry.paymentReceivedAt.toISOString().slice(0, 10);
+          const dayAggregate = revenueByDayMap.get(dateKey) || { amount: zero, count: 0 };
+          revenueByDayMap.set(dateKey, {
+            amount: dayAggregate.amount.plus(amount),
+            count: dayAggregate.count + 1,
+          });
+        }
+
+        const receiverId = entry.paymentReceivedBy?.id || null;
+        const receiverName = entry.paymentReceivedBy?.name || "Não informado";
+        const receiverAggregate = revenueByReceiverMap.get(receiverId) || {
+          id: receiverId,
+          name: receiverName,
+          amount: zero,
+          count: 0,
+        };
+        revenueByReceiverMap.set(receiverId, {
+          id: receiverId,
+          name: receiverName,
+          amount: receiverAggregate.amount.plus(amount),
+          count: receiverAggregate.count + 1,
+        });
+      } else {
+        pendingPayments.push({
+          id: entry.id,
+          patientName: entry.patientName,
+          tutorName: entry.tutorName,
+          serviceType: entry.serviceType,
+          paymentStatus: status,
+          paymentAmount: amountDecimal ? amountDecimal.toFixed(2) : null,
+          completedAt: entry.completedAt,
+          paymentNotes: entry.paymentNotes || null,
+        });
+      }
+    });
+
+    const serializeDecimal = (value: Prisma.Decimal) => value.toFixed(2);
+
+    const revenueByDay = Array.from(revenueByDayMap.entries())
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([date, data]) => ({
+        date,
+        amount: serializeDecimal(data.amount),
+        count: data.count,
+      }));
+
+    const revenueByService = Array.from(revenueByServiceMap.entries())
+      .sort((a, b) => b[1].amount.comparedTo(a[1].amount))
+      .map(([service, data]) => ({
+        service,
+        amount: serializeDecimal(data.amount),
+        count: data.count,
+      }));
+
+    const revenueByReceiver = Array.from(revenueByReceiverMap.values())
+      .sort((a, b) => b.amount.comparedTo(a.amount))
+      .map((data) => ({
+        receiverId: data.id,
+        receiverName: data.name,
+        amount: serializeDecimal(data.amount),
+        count: data.count,
+      }));
+
+    const sortedPending = pendingPayments.sort((a, b) => {
+      const dateA = a.completedAt ? a.completedAt.getTime() : 0;
+      const dateB = b.completedAt ? b.completedAt.getTime() : 0;
+      return dateA - dateB;
     });
 
     return {
-      total,
-      byPaymentMethod,
+      revenueByDay,
+      revenueByService,
+      revenueByReceiver,
+      pendingPayments: sortedPending,
     };
   }
 
@@ -844,7 +1212,7 @@ export class QueueRepository {
         priority: { not: Priority.HIGH },
         scheduledAt: { lte: cutoffTime },
       },
-      include: { assignedVet: true, room: true, patient: true },
+      include: { assignedVet: true, room: true, patient: true, paymentReceivedBy: true },
     });
 
     return entries.map(mapPrismaToDomain);
@@ -854,7 +1222,7 @@ export class QueueRepository {
     const entry = await prisma.queueEntry.update({
       where: { id: entryId },
       data: { priority },
-      include: { assignedVet: true, room: true, patient: true },
+      include: { assignedVet: true, room: true, patient: true, paymentReceivedBy: true },
     });
     return mapPrismaToDomain(entry);
   }
@@ -886,7 +1254,50 @@ export class QueueRepository {
     const entry = await prisma.queueEntry.update({
       where: { id: entryId },
       data: updateData,
-      include: { assignedVet: true, room: true, patient: true },
+      include: { assignedVet: true, room: true, patient: true, paymentReceivedBy: true },
+    });
+    return mapPrismaToDomain(entry);
+  }
+
+  async updatePayment(entryId: string, data: {
+    paymentMethod?: string | null;
+    paymentStatus?: PaymentStatus;
+    paymentAmount?: string | null;
+    paymentReceivedById?: string | null;
+    paymentReceivedAt?: Date | null;
+    paymentNotes?: string | null;
+  }): Promise<QueueEntry> {
+    const updateData: Prisma.QueueEntryUpdateInput = {};
+
+    if (data.paymentMethod !== undefined) {
+      updateData.paymentMethod = data.paymentMethod;
+    }
+    if (data.paymentStatus !== undefined) {
+      updateData.paymentStatus = data.paymentStatus;
+    }
+    if (data.paymentAmount !== undefined) {
+      updateData.paymentAmount = data.paymentAmount !== null ? new Prisma.Decimal(data.paymentAmount) : null;
+    }
+    if (data.paymentReceivedById !== undefined) {
+      updateData.paymentReceivedBy = data.paymentReceivedById
+        ? {
+            connect: { id: data.paymentReceivedById },
+          }
+        : {
+            disconnect: true,
+          };
+    }
+    if (data.paymentReceivedAt !== undefined) {
+      updateData.paymentReceivedAt = data.paymentReceivedAt;
+    }
+    if (data.paymentNotes !== undefined) {
+      updateData.paymentNotes = data.paymentNotes;
+    }
+
+    const entry = await prisma.queueEntry.update({
+      where: { id: entryId },
+      data: updateData,
+      include: { assignedVet: true, room: true, patient: true, paymentReceivedBy: true },
     });
     return mapPrismaToDomain(entry);
   }
@@ -894,7 +1305,7 @@ export class QueueRepository {
   async findByPatientId(patientId: string): Promise<QueueEntry[]> {
     const entries = await prisma.queueEntry.findMany({
       where: { patientId },
-      include: { assignedVet: true, room: true, patient: true },
+      include: { assignedVet: true, room: true, patient: true, paymentReceivedBy: true },
       orderBy: { createdAt: "desc" },
     });
     return entries.map(mapPrismaToDomain);

@@ -1,6 +1,6 @@
 import { QueueRepository } from "../repositories/queueRepository";
 import { UserRepository } from "../repositories/userRepository";
-import { QueueEntry, Priority, Status } from "../core/types";
+import { QueueEntry, Priority, Status, PaymentStatus, FinancialSummary, FinancialReportData } from "../core/types";
 import { logger } from "../lib/logger";
 
 export class QueueService {
@@ -464,14 +464,112 @@ export class QueueService {
     tutorName?: string;
     patientName?: string;
     paymentMethod?: string;
+    paymentStatus?: PaymentStatus;
+    paymentReceivedById?: string;
+    serviceType?: string;
+    minAmount?: string;
+    maxAmount?: string;
     page?: number;
     limit?: number;
   }): Promise<{ entries: QueueEntry[]; total: number; page: number; totalPages: number }> {
     return this.repository.listFinancialPaginated(filters);
   }
 
-  async getFinancialSummary(startDate: Date, endDate: Date) {
-    return this.repository.getFinancialSummary(startDate, endDate);
+  async getFinancialSummary(
+    startDate: Date,
+    endDate: Date,
+    filters?: {
+      tutorName?: string;
+      patientName?: string;
+      paymentMethod?: string;
+      paymentStatus?: PaymentStatus;
+      paymentReceivedById?: string;
+      serviceType?: string;
+      minAmount?: string;
+      maxAmount?: string;
+    }
+  ): Promise<FinancialSummary> {
+    return this.repository.getFinancialSummary(startDate, endDate, filters);
+  }
+
+  async getFinancialReports(
+    startDate: Date,
+    endDate: Date,
+    filters?: {
+      tutorName?: string;
+      patientName?: string;
+      paymentMethod?: string;
+      paymentStatus?: PaymentStatus;
+      paymentReceivedById?: string;
+      serviceType?: string;
+      minAmount?: string;
+      maxAmount?: string;
+    }
+  ): Promise<FinancialReportData> {
+    return this.repository.getFinancialReportData(startDate, endDate, filters);
+  }
+
+  async updatePayment(
+    id: string,
+    data: {
+      paymentMethod?: string | null;
+      paymentStatus?: PaymentStatus;
+      paymentAmount?: string | null;
+      paymentReceivedById?: string | null;
+      paymentReceivedAt?: Date | null;
+      paymentNotes?: string | null;
+    },
+    currentUserId?: string
+  ): Promise<QueueEntry> {
+    const payload: {
+      paymentMethod?: string | null;
+      paymentStatus?: PaymentStatus;
+      paymentAmount?: string | null;
+      paymentReceivedById?: string | null;
+      paymentReceivedAt?: Date | null;
+      paymentNotes?: string | null;
+    } = {};
+
+    if (data.paymentMethod !== undefined) {
+      payload.paymentMethod = data.paymentMethod;
+    }
+
+    let targetStatus = data.paymentStatus;
+    if (targetStatus !== undefined) {
+      payload.paymentStatus = targetStatus;
+    }
+
+    if (data.paymentAmount !== undefined) {
+      payload.paymentAmount = data.paymentAmount;
+    }
+
+    if (data.paymentNotes !== undefined) {
+      payload.paymentNotes = data.paymentNotes;
+    }
+
+    if (targetStatus === PaymentStatus.PAID || targetStatus === PaymentStatus.PARTIAL) {
+      payload.paymentReceivedById =
+        data.paymentReceivedById !== undefined ? data.paymentReceivedById : currentUserId ?? null;
+      payload.paymentReceivedAt =
+        data.paymentReceivedAt !== undefined ? data.paymentReceivedAt : new Date();
+    } else if (targetStatus === PaymentStatus.PENDING || targetStatus === PaymentStatus.CANCELLED) {
+      if (data.paymentReceivedById !== undefined) {
+        payload.paymentReceivedById = data.paymentReceivedById;
+      } else {
+        payload.paymentReceivedById = null;
+      }
+      payload.paymentReceivedAt =
+        data.paymentReceivedAt !== undefined ? data.paymentReceivedAt : null;
+    } else {
+      if (data.paymentReceivedById !== undefined) {
+        payload.paymentReceivedById = data.paymentReceivedById;
+      }
+      if (data.paymentReceivedAt !== undefined) {
+        payload.paymentReceivedAt = data.paymentReceivedAt;
+      }
+    }
+
+    return this.repository.updatePayment(id, payload);
   }
 
   async updateEntry(

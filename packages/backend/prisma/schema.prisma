@@ -7,6 +7,13 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum PaymentStatus {
+  PENDING
+  PARTIAL
+  PAID
+  CANCELLED
+}
+
 model User {
   id              String         @id @default(uuid())
   username        String         @unique
@@ -19,6 +26,7 @@ model User {
   roomCheckedInAt DateTime?
   lastActivityAt  DateTime?
   entries         QueueEntry[]
+  paymentsReceived QueueEntry[]  @relation("PaymentsReceived")
   auditLogs       AuditLog[]
   consultations   Consultation[]
   vaccinations    Vaccination[]
@@ -67,6 +75,12 @@ model QueueEntry {
   patient                 Patient?       @relation(fields: [patientId], references: [id])
   simplesVetId            String?
   paymentMethod           String?
+  paymentStatus           PaymentStatus  @default(PENDING)
+  paymentAmount           Decimal?       @db.Decimal(10, 2)
+  paymentReceivedById     String?
+  paymentReceivedBy       User?          @relation("PaymentsReceived", fields: [paymentReceivedById], references: [id])
+  paymentReceivedAt       DateTime?
+  paymentNotes            String?
   consultations           Consultation[]
 
   @@index([status])
@@ -75,6 +89,8 @@ model QueueEntry {
   @@index([assignedVetId])
   @@index([roomId])
   @@index([patientId])
+  @@index([paymentStatus])
+  @@index([paymentReceivedById])
   @@map("queue_entries")
 }
 

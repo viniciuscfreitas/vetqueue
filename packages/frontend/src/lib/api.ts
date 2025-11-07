@@ -83,6 +83,13 @@ export enum Role {
   RECEPCAO = "RECEPCAO",
 }
 
+export enum PaymentStatus {
+  PENDING = "PENDING",
+  PARTIAL = "PARTIAL",
+  PAID = "PAID",
+  CANCELLED = "CANCELLED",
+}
+
 export interface Service {
   id: string;
   name: string;
@@ -110,11 +117,43 @@ export interface QueueEntry {
   patient?: Patient | null;
   simplesVetId?: string | null;
   paymentMethod?: string | null;
+  paymentStatus?: PaymentStatus;
+  paymentAmount?: string | null;
+  paymentReceivedById?: string | null;
+  paymentReceivedBy?: User | null;
+  paymentReceivedAt?: string | null;
+  paymentNotes?: string | null;
 }
 
 export interface FinancialSummary {
-  total: number;
-  byPaymentMethod: Record<string, number>;
+  totalEntries: number;
+  totals: {
+    amount: string;
+    paid: string;
+    partial: string;
+    pending: string;
+  };
+  byPaymentMethod: Record<string, { count: number; amount: string }>;
+  byStatus: Record<PaymentStatus, { count: number; amount: string }>;
+  walkIns: number;
+  scheduled: number;
+  receivedEntries: number;
+}
+
+export interface FinancialReportData {
+  revenueByDay: Array<{ date: string; amount: string; count: number }>;
+  revenueByService: Array<{ service: string; amount: string; count: number }>;
+  revenueByReceiver: Array<{ receiverId: string | null; receiverName: string; amount: string; count: number }>;
+  pendingPayments: Array<{
+    id: string;
+    patientName: string;
+    tutorName: string;
+    serviceType: string;
+    paymentStatus: PaymentStatus;
+    paymentAmount: string | null;
+    completedAt: string | null;
+    paymentNotes: string | null;
+  }>;
 }
 
 export interface User {
@@ -259,17 +298,34 @@ export const queueApi = {
     tutorName?: string;
     patientName?: string;
     paymentMethod?: string;
+    paymentStatus?: PaymentStatus;
+    paymentReceivedById?: string;
+    serviceType?: string;
+    minAmount?: string;
+    maxAmount?: string;
     page?: number;
     limit?: number;
   }) => api.get<PaginatedResult<QueueEntry>>("/api/queue/financial", { params: filters }),
 
-  updatePayment: (id: string, paymentMethod: string | null) =>
-    api.patch<QueueEntry>(`/api/queue/${id}/payment`, { paymentMethod }),
+  updatePayment: (id: string, data: {
+    paymentMethod?: string | null;
+    paymentStatus?: PaymentStatus;
+    paymentAmount?: string | null;
+    paymentReceivedAt?: string | null;
+    paymentNotes?: string | null;
+    paymentReceivedById?: string | null;
+  }) =>
+    api.patch<QueueEntry>(`/api/queue/${id}/payment`, data),
 
   getFinancialSummary: (filters?: {
     startDate?: string;
     endDate?: string;
   }) => api.get<FinancialSummary>("/api/queue/financial/summary", { params: filters }),
+
+  getFinancialReports: (filters?: {
+    startDate?: string;
+    endDate?: string;
+  }) => api.get<FinancialReportData>("/api/queue/financial/reports", { params: filters }),
 
   getHistory: (filters?: {
     startDate?: string;

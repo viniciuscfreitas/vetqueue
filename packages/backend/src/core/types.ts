@@ -25,6 +25,13 @@ export enum Role {
   RECEPCAO = "RECEPCAO",
 }
 
+export enum PaymentStatus {
+  PENDING = "PENDING",
+  PARTIAL = "PARTIAL",
+  PAID = "PAID",
+  CANCELLED = "CANCELLED",
+}
+
 export interface Service {
   id: string;
   name: string;
@@ -52,6 +59,43 @@ export interface QueueEntry {
   patient?: Patient | null;
   simplesVetId?: string | null;
   paymentMethod?: string | null;
+  paymentStatus?: PaymentStatus;
+  paymentAmount?: string | null;
+  paymentReceivedById?: string | null;
+  paymentReceivedBy?: User | null;
+  paymentReceivedAt?: Date | null;
+  paymentNotes?: string | null;
+}
+
+export interface FinancialSummary {
+  totalEntries: number;
+  totals: {
+    amount: string;
+    paid: string;
+    partial: string;
+    pending: string;
+  };
+  byPaymentMethod: Record<string, { count: number; amount: string }>;
+  byStatus: Record<PaymentStatus, { count: number; amount: string }>;
+  walkIns: number;
+  scheduled: number;
+  receivedEntries: number;
+}
+
+export interface FinancialReportData {
+  revenueByDay: Array<{ date: string; amount: string; count: number }>;
+  revenueByService: Array<{ service: string; amount: string; count: number }>;
+  revenueByReceiver: Array<{ receiverId: string | null; receiverName: string; amount: string; count: number }>;
+  pendingPayments: Array<{
+    id: string;
+    patientName: string;
+    tutorName: string;
+    serviceType: string;
+    paymentStatus: PaymentStatus;
+    paymentAmount: string | null;
+    completedAt: Date | null;
+    paymentNotes: string | null;
+  }>;
 }
 
 export interface User {

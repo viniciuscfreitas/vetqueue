@@ -1,12 +1,29 @@
 "use client";
 
-import { useEffect } from "react";
-import { Header } from "@/components/Header";
+import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
-import { FinancialTab } from "@/components/FinancialTab";
+import { Header } from "@/components/Header";
 import { Spinner } from "@/components/ui/spinner";
-import { Role } from "@/lib/api";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { FinancialFilters, FinancialFiltersState } from "@/components/FinancialFilters";
+import { FinancialOverviewTab } from "@/components/FinancialOverviewTab";
+import { FinancialPaymentsTab } from "@/components/FinancialPaymentsTab";
+import { FinancialReportsTab } from "@/components/FinancialReportsTab";
+import { Role, userApi } from "@/lib/api";
+import { useDateRange } from "@/hooks/useDateRange";
+import { useQuery } from "@tanstack/react-query";
+
+const DEFAULT_FILTERS = {
+  tutorName: "",
+  patientName: "",
+  serviceType: "",
+  paymentMethod: "ALL",
+  paymentStatus: "ALL" as FinancialFiltersState["paymentStatus"],
+  paymentReceivedById: "ALL" as FinancialFiltersState["paymentReceivedById"],
+  minAmount: "",
+  maxAmount: "",
+};
 
 export default function FinancialPage() {
   const router = useRouter();
@@ -23,6 +40,52 @@ export default function FinancialPage() {
     }
   }, [user, authLoading, router]);
 
+  const { startDate, endDate, setStartDate, setEndDate, reset: resetDateRange } = useDateRange();
+  const [filters, setFilters] = useState(DEFAULT_FILTERS);
+  const [tab, setTab] = useState<"overview" | "payments" | "reports">("overview");
+
+  const combinedFilters: FinancialFiltersState = useMemo(
+    () => ({
+      startDate,
+      endDate,
+      ...filters,
+    }),
+    [startDate, endDate, filters]
+  );
+
+  const { data: receptionistsData } = useQuery({
+    queryKey: ["users", "receptionists"],
+    queryFn: () => userApi.list().then((res) => res.data),
+  });
+
+  const receptionists =
+    receptionistsData?.filter((item) => item.role === Role.RECEPCAO).map((item) => ({
+      id: item.id,
+      name: item.name,
+    })) ?? [];
+
+  const handleFilterChange = (values: Partial<FinancialFiltersState>) => {
+    if (values.startDate !== undefined) {
+      setStartDate(values.startDate);
+    }
+    if (values.endDate !== undefined) {
+      setEndDate(values.endDate);
+    }
+
+    const { startDate: _start, endDate: _end, ...rest } = values;
+    if (Object.keys(rest).length) {
+      setFilters((prev) => ({
+        ...prev,
+        ...rest,
+      }));
+    }
+  };
+
+  const handleReset = () => {
+    resetDateRange();
+    setFilters(DEFAULT_FILTERS);
+  };
+
   if (authLoading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -38,8 +101,33 @@ export default function FinancialPage() {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <main className="container mx-auto px-4 py-6 md:px-6 md:py-8 lg:px-8 lg:py-10">
-        <FinancialTab authLoading={authLoading} />
+      <main className="container mx-auto px-4 py-6 md:px-6 md:py-8 lg:px-8 lg:py-10 space-y-6">
+        <FinancialFilters
+          filters={combinedFilters}
+          onChange={handleFilterChange}
+          onReset={handleReset}
+          receptionists={receptionistsData}
+        />
+
+        <Tabs value={tab} onValueChange={(value) => setTab(value as typeof tab)} className="space-y-6">
+          <TabsList className="grid w-full grid-cols-3 md:w-[400px]">
+            <TabsTrigger value="overview">Resumo</TabsTrigger>
+            <TabsTrigger value="payments">Pagamentos</TabsTrigger>
+            <TabsTrigger value="reports">Relatórios</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="overview">
+            <FinancialOverviewTab filters={combinedFilters} />
+          </TabsContent>
+
+          <TabsContent value="payments">
+            <FinancialPaymentsTab filters={combinedFilters} receptionists={receptionists} />
+          </TabsContent>
+
+          <TabsContent value="reports">
+            <FinancialReportsTab filters={combinedFilters} />
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );

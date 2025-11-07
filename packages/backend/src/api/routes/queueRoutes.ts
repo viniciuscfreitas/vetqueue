@@ -3,7 +3,7 @@ import { QueueService } from "../../services/queueService";
 import { QueueRepository } from "../../repositories/queueRepository";
 import { AuditService } from "../../services/auditService";
 import { AuditRepository } from "../../repositories/auditRepository";
-import { Priority } from "../../core/types";
+import { Priority, PaymentStatus } from "../../core/types";
 import { authMiddleware, AuthenticatedRequest, requireRole } from "../../middleware/authMiddleware";
 import { z } from "zod";
 import { parseDateRange } from "../../utils/dateParsing";
@@ -17,6 +17,7 @@ const auditRepository = new AuditRepository();
 const auditService = new AuditService(auditRepository);
 
 const paymentMethodEnum = z.enum(["CREDIT", "DEBIT", "CASH", "PIX"]);
+const paymentStatusEnum = z.enum(["PENDING", "PARTIAL", "PAID", "CANCELLED"]);
 
 const addQueueSchema = z.object({
   patientName: z.string().min(1, "Nome do paciente é obrigatório"),
@@ -52,6 +53,68 @@ const callNextSchema = z.object({
 const callPatientSchema = z.object({
   vetId: z.string().optional(),
   roomId: z.string().min(1, "Sala é obrigatória"),
+});
+
+function extractFinancialFilters(req: Request) {
+  const filters: {
+    tutorName?: string;
+    patientName?: string;
+    paymentMethod?: string;
+    paymentStatus?: PaymentStatus;
+    paymentReceivedById?: string;
+    serviceType?: string;
+    minAmount?: string;
+    maxAmount?: string;
+  } = {};
+
+  if (req.query.tutorName) {
+    filters.tutorName = req.query.tutorName as string;
+  }
+
+  if (req.query.patientName) {
+    filters.patientName = req.query.patientName as string;
+  }
+
+  if (req.query.paymentMethod) {
+    const parsedMethod = paymentMethodEnum.safeParse(req.query.paymentMethod);
+    if (parsedMethod.success) {
+      filters.paymentMethod = parsedMethod.data;
+    }
+  }
+
+  if (req.query.paymentStatus) {
+    const parsedStatus = paymentStatusEnum.safeParse(req.query.paymentStatus);
+    if (parsedStatus.success) {
+      filters.paymentStatus = parsedStatus.data as PaymentStatus;
+    }
+  }
+
+  if (req.query.paymentReceivedById) {
+    filters.paymentReceivedById = req.query.paymentReceivedById as string;
+  }
+
+  if (req.query.serviceType) {
+    filters.serviceType = req.query.serviceType as string;
+  }
+
+  if (req.query.minAmount) {
+    filters.minAmount = String(req.query.minAmount);
+  }
+
+  if (req.query.maxAmount) {
+    filters.maxAmount = String(req.query.maxAmount);
+  }
+
+  return filters;
+}
+
+const paymentSchema = z.object({
+  paymentMethod: paymentMethodEnum.nullable().optional(),
+  paymentStatus: paymentStatusEnum.optional(),
+  paymentAmount: z.union([z.string(), z.number()]).nullable().optional(),
+  paymentReceivedAt: z.string().datetime().nullable().optional(),
+  paymentNotes: z.string().nullable().optional(),
+  paymentReceivedById: z.string().nullable().optional(),
 });
 
 router.post("/", authMiddleware, async (req: AuthenticatedRequest, res: Response) => {
@@ -432,25 +495,13 @@ router.get("/financial", authMiddleware, asyncHandler(async (req: AuthenticatedR
   }
 
   const dateRange = parseDateRange(req.query);
-  const filters: any = {};
+  const filters: any = extractFinancialFilters(req);
 
   if (dateRange.start) {
     filters.startDate = dateRange.start;
   }
   if (dateRange.end) {
     filters.endDate = dateRange.end;
-  }
-
-  if (req.query.tutorName) {
-    filters.tutorName = req.query.tutorName as string;
-  }
-
-  if (req.query.patientName) {
-    filters.patientName = req.query.patientName as string;
-  }
-
-  if (req.query.paymentMethod) {
-    filters.paymentMethod = req.query.paymentMethod as string;
   }
 
   const page = req.query.page ? parseInt(req.query.page as string) : undefined;
@@ -471,17 +522,35 @@ router.patch("/:id/payment", authMiddleware, asyncHandler(async (req: Authentica
   }
 
   try {
-    const paymentSchema = z.object({
-      paymentMethod: paymentMethodEnum.nullable(),
-    });
-
     const validated = paymentSchema.parse(req.body);
-    const userRole = req.user?.role;
 
-    const updatedEntry = await queueService.updateEntry(
+    const paymentAmount =
+      validated.paymentAmount === undefined
+        ? undefined
+        : validated.paymentAmount === null || validated.paymentAmount === ""
+          ? null
+          : typeof validated.paymentAmount === "number"
+            ? validated.paymentAmount.toFixed(2)
+            : validated.paymentAmount;
+
+    const paymentReceivedAt =
+      validated.paymentReceivedAt === undefined
+        ? undefined
+        : validated.paymentReceivedAt === null
+          ? null
+          : new Date(validated.paymentReceivedAt);
+
+    const updatedEntry = await queueService.updatePayment(
       req.params.id,
-      { paymentMethod: validated.paymentMethod },
-      userRole
+      {
+        paymentMethod: validated.paymentMethod ?? undefined,
+        paymentStatus: validated.paymentStatus ? (validated.paymentStatus as PaymentStatus) : undefined,
+        paymentAmount,
+        paymentReceivedAt,
+        paymentNotes: validated.paymentNotes ?? undefined,
+        paymentReceivedById: validated.paymentReceivedById ?? undefined,
+      },
+      req.user?.id
     );
     
     if (req.user) {
@@ -490,7 +559,11 @@ router.patch("/:id/payment", authMiddleware, asyncHandler(async (req: Authentica
         action: "UPDATE_PAYMENT",
         entityType: "QueueEntry",
         entityId: updatedEntry.id,
-        metadata: { paymentMethod: validated.paymentMethod },
+        metadata: {
+          paymentMethod: validated.paymentMethod ?? null,
+          paymentStatus: validated.paymentStatus ?? null,
+          paymentAmount,
+        },
       }).catch((error) => {
         logger.error("Failed to log audit", { 
           error: error instanceof Error ? error.message : String(error) 
@@ -518,8 +591,26 @@ router.get("/financial/summary", authMiddleware, asyncHandler(async (req: Authen
   const startDate = dateRange.start || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
   const endDate = dateRange.end || new Date();
 
-  const summary = await queueService.getFinancialSummary(startDate, endDate);
+  const filters = extractFinancialFilters(req);
+
+  const summary = await queueService.getFinancialSummary(startDate, endDate, filters);
   res.json(summary);
+}));
+
+router.get("/financial/reports", authMiddleware, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  if (req.user?.role !== "RECEPCAO") {
+    res.status(403).json({ error: "Apenas recepção pode acessar relatórios financeiros" });
+    return;
+  }
+
+  const dateRange = parseDateRange(req.query);
+  const startDate = dateRange.start || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  const endDate = dateRange.end || new Date();
+
+  const filters = extractFinancialFilters(req);
+
+  const reports = await queueService.getFinancialReports(startDate, endDate, filters);
+  res.json(reports);
 }));
 
 export default router;

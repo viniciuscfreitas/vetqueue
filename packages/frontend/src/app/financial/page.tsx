@@ -122,7 +122,7 @@ export default function FinancialPage() {
           </TabsContent>
 
           <TabsContent value="payments" className="mt-6">
-            <FinancialPaymentsTab filters={combinedFilters} receptionists={receptionists} />
+            <FinancialPaymentsTab filters={combinedFilters} />
           </TabsContent>
 
           <TabsContent value="reports" className="mt-6">

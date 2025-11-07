@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { queueApi, FinancialReportData, FinancialSummary, PaymentStatus } from "@/lib/api";
+import { paymentMethodLabels, paymentStatusLabels } from "@/lib/financialUtils";
 import { Skeleton } from "./ui/skeleton";
 import type { FinancialFiltersState } from "./FinancialFilters";
 
@@ -138,7 +139,7 @@ export function FinancialOverviewTab({ filters }: FinancialOverviewTabProps) {
           <CardContent className="pt-0">
             <p className="text-xl font-semibold">{data.totalEntries}</p>
             <p className="text-xs text-muted-foreground mt-0.5">
-              {data.walkIns} walk-in · {data.scheduled} agendados
+              {data.walkIns} sem agendamento · {data.scheduled} agendados
             </p>
           </CardContent>
         </Card>
@@ -150,14 +151,17 @@ export function FinancialOverviewTab({ filters }: FinancialOverviewTabProps) {
             <CardTitle className="text-sm font-semibold">Por forma de pagamento</CardTitle>
           </CardHeader>
           <CardContent className="pt-0 space-y-1.5">
-            {Object.entries(data.byPaymentMethod).map(([method, stats]) => (
-              <div key={method} className="flex items-center justify-between text-sm py-1">
-                <span className="text-muted-foreground">{method}</span>
-                <span className="font-medium">
-                  {formatCurrency(stats.amount)} <span className="text-muted-foreground">·</span> {stats.count}
-                </span>
-              </div>
-            ))}
+            {Object.entries(data.byPaymentMethod).map(([method, stats]) => {
+              const label = paymentMethodLabels[method] ?? paymentMethodLabels["NÃO_INFORMADO"] ?? method;
+              return (
+                <div key={method} className="flex items-center justify-between text-sm py-1">
+                  <span className="text-muted-foreground">{label}</span>
+                  <span className="font-medium">
+                    {formatCurrency(stats.amount)} <span className="text-muted-foreground">·</span> {stats.count}
+                  </span>
+                </div>
+              );
+            })}
             {Object.keys(data.byPaymentMethod).length === 0 && (
               <div className="text-sm text-muted-foreground py-2">
                 Nenhum recebimento registrado.
@@ -171,14 +175,17 @@ export function FinancialOverviewTab({ filters }: FinancialOverviewTabProps) {
             <CardTitle className="text-sm font-semibold">Por status de pagamento</CardTitle>
           </CardHeader>
           <CardContent className="pt-0 space-y-1.5">
-            {Object.entries(data.byStatus).map(([status, stats]) => (
-              <div key={status} className="flex items-center justify-between text-sm py-1">
-                <span className="text-muted-foreground">{status}</span>
-                <span className="font-medium">
-                  {formatCurrency(stats.amount)} <span className="text-muted-foreground">·</span> {stats.count}
-                </span>
-              </div>
-            ))}
+            {Object.entries(data.byStatus).map(([status, stats]) => {
+              const label = paymentStatusLabels[status as PaymentStatus] ?? status;
+              return (
+                <div key={status} className="flex items-center justify-between text-sm py-1">
+                  <span className="text-muted-foreground">{label}</span>
+                  <span className="font-medium">
+                    {formatCurrency(stats.amount)} <span className="text-muted-foreground">·</span> {stats.count}
+                  </span>
+                </div>
+              );
+            })}
           </CardContent>
         </Card>
       </div>
@@ -190,14 +197,14 @@ export function FinancialOverviewTab({ filters }: FinancialOverviewTabProps) {
               <CardTitle className="text-sm font-semibold">Top serviços</CardTitle>
             </CardHeader>
             <CardContent className="pt-0 space-y-1.5">
-              {reportsData.revenueByService.slice(0, 3).map((service) => (
-                <div key={service.service || "NÃO_INFORMADO"} className="flex items-center justify-between text-sm py-1">
-                  <span className="text-muted-foreground">{service.service || "Não informado"}</span>
-                  <span className="font-medium">
-                    {formatCurrency(service.amount)} <span className="text-muted-foreground">·</span> {service.count}
-                  </span>
-                </div>
-              ))}
+            {reportsData.revenueByService.slice(0, 3).map((service) => (
+              <div key={service.service || "NÃO_INFORMADO"} className="flex items-center justify-between text-sm py-1">
+                <span className="text-muted-foreground">{service.service || "Não informado"}</span>
+                <span className="font-medium">
+                  {formatCurrency(service.amount)} <span className="text-muted-foreground">·</span> {service.count}
+                </span>
+              </div>
+            ))}
               {reportsData.revenueByService.length === 0 && (
                 <div className="text-sm text-muted-foreground py-2">
                   Nenhum serviço faturado no período.
@@ -218,7 +225,7 @@ export function FinancialOverviewTab({ filters }: FinancialOverviewTabProps) {
                     <span className="font-semibold text-xs">{formatCurrency(pending.paymentAmount ?? "0")}</span>
                   </div>
                   <span className="text-xs text-muted-foreground mt-0.5">
-                    {pending.tutorName} · {pending.paymentStatus} ·{" "}
+                    {pending.tutorName} · {paymentStatusLabels[pending.paymentStatus as PaymentStatus] ?? pending.paymentStatus} ·{" "}
                     {pending.completedAt ? new Date(pending.completedAt).toLocaleDateString("pt-BR") : "sem data"}
                   </span>
                 </div>

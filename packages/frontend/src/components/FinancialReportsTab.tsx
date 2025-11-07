@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { queueApi, FinancialReportData } from "@/lib/api";
+import { queueApi, FinancialReportData, PaymentStatus } from "@/lib/api";
+import { paymentStatusLabels } from "@/lib/financialUtils";
 import { Card, CardHeader, CardTitle, CardContent } from "./ui/card";
 import { Skeleton } from "./ui/skeleton";
 import type { FinancialFiltersState } from "./FinancialFilters";
@@ -100,11 +101,17 @@ export function FinancialReportsTab({ filters }: FinancialReportsTabProps) {
     </div>
   );
 
-  const revenueByDayItems = data.revenueByDay.map((item) => ({
-    label: item.date,
+  const revenueByDayItems = data.revenueByDay.map((item) => {
+    const parsedDate = new Date(item.date);
+    const label = Number.isNaN(parsedDate.getTime())
+      ? item.date
+      : parsedDate.toLocaleDateString("pt-BR");
+    return {
+      label,
     amount: item.amount,
-    count: item.count,
-  }));
+      count: item.count,
+    };
+  });
 
   const revenueByServiceItems = data.revenueByService.map((item) => ({
     label: item.service || "Não informado",
@@ -113,7 +120,7 @@ export function FinancialReportsTab({ filters }: FinancialReportsTabProps) {
   }));
 
   const revenueByReceiverItems = data.revenueByReceiver.map((item) => ({
-    label: item.receiverName,
+    label: item.receiverName || "Não informado",
     amount: item.amount,
     count: item.count,
   }));
@@ -121,7 +128,7 @@ export function FinancialReportsTab({ filters }: FinancialReportsTabProps) {
   const pendingItems = data.pendingPayments.map((item) => ({
     label: `${item.patientName} · ${item.tutorName}`,
     amount: item.paymentAmount ?? "0",
-    subtitle: `${item.paymentStatus} · ${item.serviceType}${
+    subtitle: `${paymentStatusLabels[item.paymentStatus as PaymentStatus] ?? item.paymentStatus} · ${item.serviceType || "Serviço não informado"}${
       item.completedAt ? ` · ${new Date(item.completedAt).toLocaleString("pt-BR")}` : ""
     }`,
   }));

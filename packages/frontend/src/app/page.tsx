@@ -8,6 +8,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
 import { Clock, UserCircle2, Users, DollarSign, FileText, Settings } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { ModuleKey } from "@/lib/api";
 
 export default function Home() {
@@ -28,7 +29,15 @@ export default function Home() {
     );
   }
 
-  const moduleCards = [
+  type DashboardModule = {
+    title: string;
+    ariaLabel: string;
+    href: string;
+    icon: LucideIcon;
+    requiredModule?: ModuleKey;
+  };
+
+  const moduleCards: DashboardModule[] = [
     {
       title: "Fila",
       ariaLabel: "Gerenciar fila de atendimento e chamar pacientes",

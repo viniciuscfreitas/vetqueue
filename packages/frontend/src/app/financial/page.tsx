@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { Header } from "@/components/Header";
@@ -44,14 +44,11 @@ export default function FinancialPage() {
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
   const [tab, setTab] = useState<"overview" | "payments" | "reports">("overview");
 
-  const combinedFilters: FinancialFiltersState = useMemo(
-    () => ({
-      startDate,
-      endDate,
-      ...filters,
-    }),
-    [startDate, endDate, filters]
-  );
+  const combinedFilters: FinancialFiltersState = {
+    startDate,
+    endDate,
+    ...filters,
+  };
 
   const { data: receptionistsData } = useQuery({
     queryKey: ["users", "receptionists"],
@@ -101,7 +98,11 @@ export default function FinancialPage() {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <main className="container mx-auto px-4 py-4 md:px-6 md:py-5 lg:px-8 lg:py-6 space-y-4">
+      <main className="container mx-auto px-4 py-6">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-semibold">Financeiro</h1>
+        </div>
+
         <FinancialFilters
           filters={combinedFilters}
           onChange={handleFilterChange}
@@ -109,22 +110,22 @@ export default function FinancialPage() {
           receptionists={receptionistsData}
         />
 
-        <Tabs value={tab} onValueChange={(value) => setTab(value as typeof tab)} className="space-y-4">
-          <TabsList className="grid w-full grid-cols-3 md:w-[400px] h-9">
-            <TabsTrigger value="overview" className="text-sm">Resumo</TabsTrigger>
-            <TabsTrigger value="payments" className="text-sm">Pagamentos</TabsTrigger>
-            <TabsTrigger value="reports" className="text-sm">Relatórios</TabsTrigger>
+        <Tabs value={tab} onValueChange={(value) => setTab(value as typeof tab)} className="mt-6">
+          <TabsList className="grid w-full grid-cols-3 md:w-[400px]">
+            <TabsTrigger value="overview">Resumo</TabsTrigger>
+            <TabsTrigger value="payments">Pagamentos</TabsTrigger>
+            <TabsTrigger value="reports">Relatórios</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="overview" className="mt-4">
+          <TabsContent value="overview" className="mt-6">
             <FinancialOverviewTab filters={combinedFilters} />
           </TabsContent>
 
-          <TabsContent value="payments" className="mt-4">
+          <TabsContent value="payments" className="mt-6">
             <FinancialPaymentsTab filters={combinedFilters} receptionists={receptionists} />
           </TabsContent>
 
-          <TabsContent value="reports" className="mt-4">
+          <TabsContent value="reports" className="mt-6">
             <FinancialReportsTab filters={combinedFilters} />
           </TabsContent>
         </Tabs>

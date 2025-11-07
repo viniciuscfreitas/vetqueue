@@ -6,37 +6,12 @@ import {
   DialogTitle,
 } from "./ui/dialog";
 import { StatusBadge } from "./StatusBadge";
+import { paymentMethodLabels, formatCurrency, formatDate } from "@/lib/financialUtils";
 
 interface PaymentDetailsModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   entry: QueueEntry | null;
-}
-
-const paymentMethodLabels: Record<string, string> = {
-  CREDIT: "Crédito",
-  DEBIT: "Débito",
-  CASH: "Dinheiro",
-  PIX: "PIX",
-  "": "Não informado",
-  NÃO_INFORMADO: "Não informado",
-};
-
-const currencyFormatter = new Intl.NumberFormat("pt-BR", {
-  style: "currency",
-  currency: "BRL",
-});
-
-function formatCurrency(value?: string | null) {
-  if (!value) return "R$ 0,00";
-  const parsed = Number(value);
-  if (Number.isNaN(parsed)) return "R$ 0,00";
-  return currencyFormatter.format(parsed);
-}
-
-function formatDate(value?: string | null) {
-  if (!value) return "—";
-  return new Date(value).toLocaleString("pt-BR");
 }
 
 export function PaymentDetailsModal({

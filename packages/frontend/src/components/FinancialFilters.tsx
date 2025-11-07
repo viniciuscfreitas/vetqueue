@@ -79,26 +79,26 @@ export function FinancialFilters({
   }, [filters]);
 
   return (
-    <Card className="border">
-      <CardContent className="p-3">
+    <Card className="border shadow-sm">
+      <CardContent className="p-4">
         <div className="space-y-3">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2 flex-1 min-w-0">
-              <Filter className="h-4 w-4 text-muted-foreground shrink-0" />
-              <div className="flex items-center gap-2 flex-wrap flex-1">
+          <div className="flex items-start gap-3">
+            <Filter className="h-4 w-4 text-muted-foreground shrink-0 mt-2" />
+            <div className="flex-1 min-w-0 space-y-3">
+              <div className="flex flex-wrap items-center gap-3">
                 <div className="flex items-center gap-2">
                   <Input
                     type="date"
                     value={filters.startDate}
                     onChange={(event) => onChange({ startDate: event.target.value })}
-                    className="h-8 w-[140px] text-xs"
+                    className="h-9 w-[150px]"
                   />
-                  <span className="text-xs text-muted-foreground">até</span>
+                  <span className="text-sm text-muted-foreground whitespace-nowrap">até</span>
                   <Input
                     type="date"
                     value={filters.endDate}
                     onChange={(event) => onChange({ endDate: event.target.value })}
-                    className="h-8 w-[140px] text-xs"
+                    className="h-9 w-[150px]"
                   />
                 </div>
                 <Select
@@ -107,7 +107,7 @@ export function FinancialFilters({
                     onChange({ paymentStatus: value as PaymentStatus | "ALL" })
                   }
                 >
-                  <SelectTrigger className="h-8 w-[130px] text-xs">
+                  <SelectTrigger className="h-9 w-[140px]">
                     <SelectValue placeholder="Status" />
                   </SelectTrigger>
                   <SelectContent>
@@ -122,8 +122,8 @@ export function FinancialFilters({
                   value={filters.paymentMethod}
                   onValueChange={(value) => onChange({ paymentMethod: value })}
                 >
-                  <SelectTrigger className="h-8 w-[130px] text-xs">
-                    <SelectValue placeholder="Forma" />
+                  <SelectTrigger className="h-9 w-[140px]">
+                    <SelectValue placeholder="Forma de pagamento" />
                   </SelectTrigger>
                   <SelectContent>
                     {paymentMethodOptions.map((option) => (
@@ -135,122 +135,122 @@ export function FinancialFilters({
                 </Select>
                 {hasActiveFilters && (
                   <Button
-                    variant="ghost"
+                    variant="outline"
                     size="sm"
                     onClick={onReset}
-                    className="h-8 text-xs"
+                    className="h-9"
                   >
-                    Limpar
+                    Limpar filtros
                   </Button>
                 )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsExpanded(!isExpanded)}
+                  className="h-9 w-9 p-0 shrink-0"
+                >
+                  {isExpanded ? (
+                    <ChevronUp className="h-4 w-4" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4" />
+                  )}
+                </Button>
               </div>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsExpanded(!isExpanded)}
-              className="h-8 w-8 p-0 shrink-0"
-            >
-              {isExpanded ? (
-                <ChevronUp className="h-4 w-4" />
-              ) : (
-                <ChevronDown className="h-4 w-4" />
-              )}
-            </Button>
-          </div>
 
-          {isExpanded && (
-            <div className="pt-2 border-t space-y-2">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                <div className="space-y-1">
-                  <Label htmlFor="financial-tutor" className="text-xs">
-                    Tutor
-                  </Label>
-                  <Input
-                    id="financial-tutor"
-                    placeholder="Nome..."
-                    value={filters.tutorName}
-                    onChange={(event) => onChange({ tutorName: event.target.value })}
-                    className="h-8 text-xs"
-                  />
+              {isExpanded && (
+                <div className="pt-3 border-t space-y-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="financial-tutor" className="text-sm font-medium">
+                        Tutor
+                      </Label>
+                      <Input
+                        id="financial-tutor"
+                        placeholder="Nome do tutor..."
+                        value={filters.tutorName}
+                        onChange={(event) => onChange({ tutorName: event.target.value })}
+                        className="h-9"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="financial-patient" className="text-sm font-medium">
+                        Paciente
+                      </Label>
+                      <Input
+                        id="financial-patient"
+                        placeholder="Nome do paciente..."
+                        value={filters.patientName}
+                        onChange={(event) => onChange({ patientName: event.target.value })}
+                        className="h-9"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="financial-service" className="text-sm font-medium">
+                        Serviço
+                      </Label>
+                      <Input
+                        id="financial-service"
+                        placeholder="Tipo de serviço..."
+                        value={filters.serviceType}
+                        onChange={(event) => onChange({ serviceType: event.target.value })}
+                        className="h-9"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-sm font-medium">Recebido por</Label>
+                      <Select
+                        value={filters.paymentReceivedById}
+                        onValueChange={(value) =>
+                          onChange({ paymentReceivedById: value as string | "ALL" })
+                        }
+                      >
+                        <SelectTrigger className="h-9">
+                          <SelectValue placeholder="Todos" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {receptionistOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="financial-min-amount" className="text-sm font-medium">
+                        Valor mínimo
+                      </Label>
+                      <Input
+                        id="financial-min-amount"
+                        type="number"
+                        step="0.01"
+                        placeholder="0,00"
+                        value={filters.minAmount}
+                        onChange={(event) => onChange({ minAmount: event.target.value })}
+                        className="h-9"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="financial-max-amount" className="text-sm font-medium">
+                        Valor máximo
+                      </Label>
+                      <Input
+                        id="financial-max-amount"
+                        type="number"
+                        step="0.01"
+                        placeholder="0,00"
+                        value={filters.maxAmount}
+                        onChange={(event) => onChange({ maxAmount: event.target.value })}
+                        className="h-9"
+                      />
+                    </div>
+                  </div>
                 </div>
-                <div className="space-y-1">
-                  <Label htmlFor="financial-patient" className="text-xs">
-                    Paciente
-                  </Label>
-                  <Input
-                    id="financial-patient"
-                    placeholder="Nome..."
-                    value={filters.patientName}
-                    onChange={(event) => onChange({ patientName: event.target.value })}
-                    className="h-8 text-xs"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label htmlFor="financial-service" className="text-xs">
-                    Serviço
-                  </Label>
-                  <Input
-                    id="financial-service"
-                    placeholder="Tipo..."
-                    value={filters.serviceType}
-                    onChange={(event) => onChange({ serviceType: event.target.value })}
-                    className="h-8 text-xs"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">Recebido por</Label>
-                  <Select
-                    value={filters.paymentReceivedById}
-                    onValueChange={(value) =>
-                      onChange({ paymentReceivedById: value as string | "ALL" })
-                    }
-                  >
-                    <SelectTrigger className="h-8 text-xs">
-                      <SelectValue placeholder="Todos" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {receptionistOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div className="space-y-1">
-                  <Label htmlFor="financial-min-amount" className="text-xs">
-                    Valor mínimo
-                  </Label>
-                  <Input
-                    id="financial-min-amount"
-                    type="number"
-                    step="0.01"
-                    placeholder="0,00"
-                    value={filters.minAmount}
-                    onChange={(event) => onChange({ minAmount: event.target.value })}
-                    className="h-8 text-xs"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label htmlFor="financial-max-amount" className="text-xs">
-                    Valor máximo
-                  </Label>
-                  <Input
-                    id="financial-max-amount"
-                    type="number"
-                    step="0.01"
-                    placeholder="0,00"
-                    value={filters.maxAmount}
-                    onChange={(event) => onChange({ maxAmount: event.target.value })}
-                    className="h-8 text-xs"
-                  />
-                </div>
-              </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
       </CardContent>
     </Card>

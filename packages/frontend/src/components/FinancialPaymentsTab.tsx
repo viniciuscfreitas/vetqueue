@@ -158,18 +158,24 @@ export function FinancialPaymentsTab({
       return (
         <>
           {[...Array(5)].map((_, i) => (
-            <tr key={i} className="border-b">
-              <td className="px-3 py-2.5">
-                <Skeleton className="h-4 w-32" />
+            <tr key={i}>
+              <td className="px-4 py-3">
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-3 w-24" />
+                </div>
               </td>
-              <td className="px-3 py-2.5">
-                <Skeleton className="h-4 w-24" />
+              <td className="px-4 py-3">
+                <Skeleton className="h-4 w-20" />
               </td>
-              <td className="px-3 py-2.5">
-                <Skeleton className="h-6 w-20" />
+              <td className="px-4 py-3">
+                <Skeleton className="h-6 w-20 rounded-full" />
               </td>
-              <td className="px-3 py-2.5">
-                <Skeleton className="h-4 w-16" />
+              <td className="px-4 py-3">
+                <div className="flex justify-end gap-1">
+                  <Skeleton className="h-8 w-8 rounded" />
+                  <Skeleton className="h-8 w-8 rounded" />
+                </div>
               </td>
             </tr>
           ))}
@@ -180,8 +186,15 @@ export function FinancialPaymentsTab({
     if (entries.length === 0) {
       return (
         <tr>
-          <td colSpan={4} className="py-8 text-center text-sm text-muted-foreground">
-            Nenhum atendimento encontrado com os filtros selecionados.
+          <td colSpan={4} className="px-4 py-12 text-center">
+            <div className="flex flex-col items-center gap-2">
+              <p className="text-sm font-medium text-muted-foreground">
+                Nenhum atendimento encontrado
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Tente ajustar os filtros para encontrar resultados
+              </p>
+            </div>
           </td>
         </tr>
       );
@@ -191,34 +204,35 @@ export function FinancialPaymentsTab({
       return (
         <tr
           key={entry.id}
-          className="border-b hover:bg-muted/50 transition-colors cursor-pointer"
+          className="hover:bg-muted/30 transition-colors cursor-pointer group"
           onClick={() => handleViewDetails(entry)}
         >
-          <td className="px-3 py-2.5">
-            <div className="flex flex-col">
-              <span className="text-sm font-medium">{entry.patientName}</span>
+          <td className="px-4 py-3">
+            <div className="flex flex-col gap-0.5">
+              <span className="text-sm font-medium text-foreground">{entry.patientName}</span>
               <span className="text-xs text-muted-foreground">
                 {entry.tutorName} · {entry.serviceType}
               </span>
             </div>
           </td>
-          <td className="px-3 py-2.5">
-            <span className="text-sm font-semibold">
+          <td className="px-4 py-3">
+            <span className="text-sm font-semibold text-foreground">
               {formatCurrency(entry.paymentAmount)}
             </span>
           </td>
-          <td className="px-3 py-2.5">
+          <td className="px-4 py-3">
             <StatusBadge status={entry.paymentStatus ?? PaymentStatus.PENDING} />
           </td>
-          <td className="px-3 py-2.5">
-            <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+          <td className="px-4 py-3">
+            <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={(e) => handleEditClick(entry, e)}
-                className="h-7 px-2"
+                className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                title="Editar"
               >
-                <Edit2 className="h-3.5 w-3.5" />
+                <Edit2 className="h-4 w-4" />
               </Button>
               <Button
                 variant="ghost"
@@ -227,9 +241,10 @@ export function FinancialPaymentsTab({
                   e.stopPropagation();
                   handleViewDetails(entry);
                 }}
-                className="h-7 px-2"
+                className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                title="Ver detalhes"
               >
-                <Eye className="h-3.5 w-3.5" />
+                <Eye className="h-4 w-4" />
               </Button>
             </div>
           </td>
@@ -240,27 +255,27 @@ export function FinancialPaymentsTab({
 
   return (
     <>
-      <div className="space-y-3">
-        <div className="border rounded-lg overflow-hidden bg-card">
+      <div className="space-y-4">
+        <div className="border rounded-lg overflow-hidden bg-card shadow-sm">
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-muted/50 sticky top-0 z-10">
-                <tr className="text-left">
-                  <th className="px-3 py-2.5 font-semibold text-xs uppercase tracking-wider">
+            <table className="w-full">
+              <thead className="bg-muted/50 border-b">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                     Paciente
                   </th>
-                  <th className="px-3 py-2.5 font-semibold text-xs uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                     Valor
                   </th>
-                  <th className="px-3 py-2.5 font-semibold text-xs uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-3 py-2.5 font-semibold text-xs uppercase tracking-wider w-24">
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wider w-24">
                     Ações
                   </th>
                 </tr>
               </thead>
-              <tbody>{renderTableBody()}</tbody>
+              <tbody className="divide-y">{renderTableBody()}</tbody>
             </table>
           </div>
         </div>

@@ -18,12 +18,6 @@ export type AdminNavItem = {
 
 export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
   {
-    href: "/admin",
-    label: "Visão geral",
-    icon: LayoutDashboard,
-    description: "Atalhos e destaques para gestão do sistema.",
-  },
-  {
     href: "/admin/users",
     label: "Usuários",
     icon: Users,

@@ -19,7 +19,6 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Header } from "@/components/Header";
 import { Spinner } from "@/components/ui/spinner";
 
 export default function UsersPage() {
@@ -89,14 +88,18 @@ export default function UsersPage() {
 
   if (authLoading || !user) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="flex min-h-[200px] items-center justify-center">
         <Spinner size="lg" />
       </div>
     );
   }
 
   if (!canManageUsers) {
-    return null;
+    return (
+      <div className="rounded-lg border border-dashed bg-muted/30 px-6 py-10 text-center text-sm text-muted-foreground">
+        Você não possui acesso ao módulo de usuários.
+      </div>
+    );
   }
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -155,137 +158,135 @@ export default function UsersPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      <main className="container mx-auto px-4 py-6">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-semibold">Usuários</h1>
-          {!showForm && (
-            <Button onClick={() => setShowForm(true)}>
-              Novo Usuário
-            </Button>
-          )}
+    <section className="space-y-6">
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Usuários</h1>
+          <p className="text-sm text-muted-foreground">
+            Gerencie contas, perfis e credenciais da equipe.
+          </p>
         </div>
+        {!showForm && (
+          <Button onClick={() => setShowForm(true)} className="w-full sm:w-auto">
+            Novo Usuário
+          </Button>
+        )}
+      </header>
 
-        {showForm && (
-          <Card className="mb-6 border-2 transition-all">
-            <CardHeader className="bg-muted/50">
-              <div className="flex items-center justify-between">
-                <CardTitle>{editingUser ? "Editar Usuário" : "Novo Usuário"}</CardTitle>
+      {showForm && (
+        <Card className="border border-muted-foreground/30 shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 border-b pb-4">
+            <CardTitle>{editingUser ? "Editar Usuário" : "Novo Usuário"}</CardTitle>
+            <Button variant="ghost" size="sm" onClick={handleCancel} className="h-8 w-8 p-0">
+              ×
+            </Button>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>Nome</Label>
+                  <Input
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    required
+                  />
+                </div>
+                {!editingUser && (
+                  <div className="space-y-2">
+                    <Label>Username</Label>
+                    <Input
+                      value={formData.username}
+                      onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                      required
+                      disabled={!!editingUser}
+                    />
+                  </div>
+                )}
+                {editingUser && (
+                  <div className="space-y-2">
+                    <Label>Username</Label>
+                    <Input value={editingUser.username} disabled />
+                  </div>
+                )}
+                <div className="space-y-2">
+                  <Label>{editingUser ? "Nova Senha (opcional)" : "Senha"}</Label>
+                  <Input
+                    type="password"
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    required={!editingUser}
+                    placeholder={editingUser ? "Deixe em branco para não alterar" : ""}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Tipo</Label>
+                  <Select
+                    value={formData.role}
+                    onValueChange={(value) => setFormData({ ...formData, role: value as Role })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o tipo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={Role.VET}>Veterinário</SelectItem>
+                      <SelectItem value={Role.RECEPCAO}>Recepção</SelectItem>
+                      <SelectItem value={Role.ADMIN}>Admin</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="flex flex-col gap-2 sm:flex-row">
                 <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleCancel}
-                  className="h-8 w-8 p-0"
+                  type="submit"
+                  disabled={createMutation.isPending || updateMutation.isPending}
+                  className="sm:min-w-[160px]"
                 >
-                  ×
+                  {createMutation.isPending || updateMutation.isPending
+                    ? "Salvando..."
+                    : editingUser
+                    ? "Salvar alterações"
+                    : "Criar usuário"}
+                </Button>
+                <Button type="button" variant="outline" onClick={handleCancel}>
+                  Cancelar
                 </Button>
               </div>
-            </CardHeader>
-            <CardContent className="pt-6">
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label>Nome</Label>
-                    <Input
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      required
-                    />
-                  </div>
-                  {!editingUser && (
-                    <div>
-                      <Label>Username</Label>
-                      <Input
-                        value={formData.username}
-                        onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                        required
-                        disabled={!!editingUser}
-                      />
-                    </div>
-                  )}
-                  {editingUser && (
-                    <div>
-                      <Label>Username</Label>
-                      <Input value={editingUser.username} disabled />
-                    </div>
-                  )}
-                  <div>
-                    <Label>{editingUser ? "Nova Senha (deixe em branco para não alterar)" : "Senha"}</Label>
-                    <Input
-                      type="password"
-                      value={formData.password}
-                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                      required={!editingUser}
-                      placeholder={editingUser ? "Deixe em branco para não alterar" : ""}
-                    />
-                  </div>
-                  <div>
-                    <Label>Tipo</Label>
-                    <Select
-                      value={formData.role}
-                      onValueChange={(value) => setFormData({ ...formData, role: value as Role })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value={Role.VET}>Veterinário</SelectItem>
-                        <SelectItem value={Role.RECEPCAO}>Recepção</SelectItem>
-                        <SelectItem value={Role.ADMIN}>Admin</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
-                    {createMutation.isPending || updateMutation.isPending
-                      ? "Salvando..."
-                      : editingUser
-                      ? "Salvar Alterações"
-                      : "Criar Usuário"}
-                  </Button>
-                  <Button type="button" variant="outline" onClick={handleCancel}>
-                    Cancelar
-                  </Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
-        )}
+            </form>
+          </CardContent>
+        </Card>
+      )}
 
-        {isLoading ? (
-          <div className="space-y-4">
-            {[1, 2, 3].map((i) => (
-              <Card key={i}>
-                <CardContent className="pt-6">
-                  <Skeleton className="h-20 w-full" />
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {users.map((usr) => (
-              <Card key={usr.id}>
-                <CardContent className="pt-6">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <p className="font-semibold">{usr.name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        @{usr.username} • {usr.role === Role.VET ? "Veterinário" : "Recepção"}
-                      </p>
-                    </div>
-                    <Button variant="outline" size="sm" onClick={() => handleEdit(usr)}>
-                      Editar
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-      </main>
-    </div>
+      {isLoading ? (
+        <div className="grid gap-4 md:grid-cols-2">
+          {[1, 2, 3, 4].map((i) => (
+            <Card key={i} className="border border-muted-foreground/20">
+              <CardContent className="pt-6">
+                <Skeleton className="h-20 w-full" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2">
+          {users.map((usr) => (
+            <Card key={usr.id} className="border border-muted-foreground/30 transition hover:border-muted-foreground/50">
+              <CardContent className="flex items-start justify-between gap-4 pt-6">
+                <div>
+                  <p className="font-semibold text-base">{usr.name}</p>
+                  <p className="text-sm text-muted-foreground">@{usr.username}</p>
+                  <p className="mt-1 text-xs uppercase tracking-wide text-muted-foreground">
+                    {usr.role === Role.VET ? "Veterinário" : usr.role === Role.RECEPCAO ? "Recepção" : "Admin"}
+                  </p>
+                </div>
+                <Button variant="outline" size="sm" onClick={() => handleEdit(usr)}>
+                  Editar
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+    </section>
   );
 }

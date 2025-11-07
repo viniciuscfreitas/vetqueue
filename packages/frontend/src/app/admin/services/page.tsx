@@ -1,6 +1,5 @@
 "use client";
 
-import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -90,14 +89,18 @@ export default function ServicesPage() {
 
   if (authLoading || !user) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="flex min-h-[200px] items-center justify-center">
         <Spinner size="lg" />
       </div>
     );
   }
 
   if (!canManageServices) {
-    return null;
+    return (
+      <div className="rounded-lg border border-dashed bg-muted/30 px-6 py-10 text-center text-sm text-muted-foreground">
+        Você não possui acesso ao módulo de serviços.
+      </div>
+    );
   }
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -122,115 +125,111 @@ export default function ServicesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      <main className="container mx-auto px-4 py-6">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-semibold">Serviços</h1>
-          {!showForm && (
-            <Button onClick={() => setShowForm(true)}>
-              Novo Serviço
-            </Button>
-          )}
+    <section className="space-y-6">
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Serviços</h1>
+          <p className="text-sm text-muted-foreground">
+            Estruture os serviços oferecidos e mantenha o catálogo atualizado.
+          </p>
         </div>
+        {!showForm && (
+          <Button onClick={() => setShowForm(true)} className="w-full sm:w-auto">
+            Novo serviço
+          </Button>
+        )}
+      </header>
 
-        {showForm && (
-          <Card className="mb-6 border-2 transition-all">
-            <CardHeader className="bg-muted/50">
-              <div className="flex items-center justify-between">
-                <CardTitle>{editingService ? "Editar Serviço" : "Novo Serviço"}</CardTitle>
+      {showForm && (
+        <Card className="border border-muted-foreground/30 shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 border-b pb-4">
+            <CardTitle>{editingService ? "Editar serviço" : "Novo serviço"}</CardTitle>
+            <Button variant="ghost" size="sm" onClick={handleCancel} className="h-8 w-8 p-0">
+              ×
+            </Button>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label>Nome do serviço</Label>
+                <Input
+                  value={serviceName}
+                  onChange={(e) => setServiceName(e.target.value)}
+                  placeholder="Ex: Consulta"
+                  required
+                />
+              </div>
+              <div className="flex flex-col gap-2 sm:flex-row">
                 <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleCancel}
-                  className="h-8 w-8 p-0"
+                  type="submit"
+                  disabled={createMutation.isPending || updateMutation.isPending}
+                  className="sm:min-w-[160px]"
                 >
-                  ×
+                  {createMutation.isPending || updateMutation.isPending
+                    ? "Salvando..."
+                    : editingService
+                    ? "Salvar alterações"
+                    : "Criar serviço"}
+                </Button>
+                <Button type="button" variant="outline" onClick={handleCancel}>
+                  Cancelar
                 </Button>
               </div>
-            </CardHeader>
-            <CardContent className="pt-6">
-              <form onSubmit={handleSubmit} className="space-y-4">
+            </form>
+          </CardContent>
+        </Card>
+      )}
+
+      {isLoading ? (
+        <div className="grid gap-4 md:grid-cols-2">
+          {[1, 2, 3, 4].map((i) => (
+            <Card key={i} className="border border-muted-foreground/20">
+              <CardContent className="pt-6">
+                <Skeleton className="h-20 w-full" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2">
+          {services.map((service) => (
+            <Card
+              key={service.id}
+              className="border border-muted-foreground/30 transition hover:border-muted-foreground/50"
+            >
+              <CardContent className="flex items-start justify-between gap-4 pt-6">
                 <div>
-                  <Label>Nome do Serviço</Label>
-                  <Input
-                    value={serviceName}
-                    onChange={(e) => setServiceName(e.target.value)}
-                    placeholder="Ex: Consulta"
-                    required
-                  />
+                  <p className="font-semibold text-base">{service.name}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {service.isActive ? "Ativo" : "Desativado"}
+                  </p>
                 </div>
                 <div className="flex gap-2">
-                  <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
-                    {createMutation.isPending || updateMutation.isPending
-                      ? "Salvando..."
-                      : editingService
-                      ? "Salvar Alterações"
-                      : "Criar Serviço"}
-                  </Button>
-                  <Button type="button" variant="outline" onClick={handleCancel}>
-                    Cancelar
-                  </Button>
+                  {service.isActive && (
+                    <>
+                      <Button variant="outline" size="sm" onClick={() => handleEdit(service)}>
+                        Editar
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => {
+                          if (confirm(`Deseja desativar o serviço ${service.name}?`)) {
+                            deleteMutation.mutate(service.id);
+                          }
+                        }}
+                      >
+                        Desativar
+                      </Button>
+                    </>
+                  )}
                 </div>
-              </form>
-            </CardContent>
-          </Card>
-        )}
-
-        {isLoading ? (
-          <div className="space-y-4">
-            {[1, 2, 3].map((i) => (
-              <Card key={i}>
-                <CardContent className="pt-6">
-                  <Skeleton className="h-20 w-full" />
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {services.map((service) => (
-              <Card key={service.id}>
-                <CardContent className="pt-6">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <p className="font-semibold">{service.name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {service.isActive ? "Ativo" : "Desativado"}
-                      </p>
-                    </div>
-                    <div className="flex gap-2">
-                      {service.isActive && (
-                        <>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleEdit(service)}
-                          >
-                            Editar
-                          </Button>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => {
-                              if (confirm(`Deseja desativar o serviço ${service.name}?`)) {
-                                deleteMutation.mutate(service.id);
-                              }
-                            }}
-                          >
-                            Desativar
-                          </Button>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-      </main>
-    </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+    </section>
   );
 }
 

@@ -12,7 +12,6 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Header } from "@/components/Header";
 import { Spinner } from "@/components/ui/spinner";
 import {
   AlertDialog,
@@ -122,14 +121,18 @@ export default function RoomsPage() {
 
   if (authLoading || !user) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="flex min-h-[200px] items-center justify-center">
         <Spinner size="lg" />
       </div>
     );
   }
 
   if (!canManageRooms) {
-    return null;
+    return (
+      <div className="rounded-lg border border-dashed bg-muted/30 px-6 py-10 text-center text-sm text-muted-foreground">
+        Você não possui acesso ao módulo de salas.
+      </div>
+    );
   }
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -154,188 +157,180 @@ export default function RoomsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      <main className="container mx-auto px-4 py-6">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-semibold">Salas</h1>
-          {!showForm && (
-            <Button onClick={() => setShowForm(true)}>
-              Nova Sala
-            </Button>
-          )}
+    <section className="space-y-6">
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Salas</h1>
+          <p className="text-sm text-muted-foreground">
+            Cadastre novas salas e acompanhe ocupações em tempo real.
+          </p>
         </div>
+        {!showForm && (
+          <Button onClick={() => setShowForm(true)} className="w-full sm:w-auto">
+            Nova sala
+          </Button>
+        )}
+      </header>
 
-        {showForm && (
-          <Card className="mb-6 border-2 transition-all">
-            <CardHeader className="bg-muted/50">
-              <div className="flex items-center justify-between">
-                <CardTitle>{editingRoom ? "Editar Sala" : "Nova Sala"}</CardTitle>
+      {showForm && (
+        <Card className="border border-muted-foreground/30 shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 border-b pb-4">
+            <CardTitle>{editingRoom ? "Editar sala" : "Nova sala"}</CardTitle>
+            <Button variant="ghost" size="sm" onClick={handleCancel} className="h-8 w-8 p-0">
+              ×
+            </Button>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label>Nome da sala</Label>
+                <Input
+                  value={roomName}
+                  onChange={(e) => setRoomName(e.target.value)}
+                  placeholder="Ex: Consultório 1"
+                  required
+                />
+              </div>
+              <div className="flex flex-col gap-2 sm:flex-row">
                 <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleCancel}
-                  className="h-8 w-8 p-0"
+                  type="submit"
+                  disabled={createMutation.isPending || updateMutation.isPending}
+                  className="sm:min-w-[160px]"
                 >
-                  ×
+                  {createMutation.isPending || updateMutation.isPending
+                    ? "Salvando..."
+                    : editingRoom
+                    ? "Salvar alterações"
+                    : "Criar sala"}
+                </Button>
+                <Button type="button" variant="outline" onClick={handleCancel}>
+                  Cancelar
                 </Button>
               </div>
-            </CardHeader>
-            <CardContent className="pt-6">
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <Label>Nome da Sala</Label>
-                  <Input
-                    value={roomName}
-                    onChange={(e) => setRoomName(e.target.value)}
-                    placeholder="Ex: Consultório 1"
-                    required
-                  />
-                </div>
-                <div className="flex gap-2">
-                  <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
-                    {createMutation.isPending || updateMutation.isPending
-                      ? "Salvando..."
-                      : editingRoom
-                      ? "Salvar Alterações"
-                      : "Criar Sala"}
-                  </Button>
-                  <Button type="button" variant="outline" onClick={handleCancel}>
-                    Cancelar
-                  </Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
-        )}
-
-        {isLoading ? (
-          <div className="space-y-4">
-            {[1, 2, 3].map((i) => (
-              <Card key={i}>
-                <CardContent className="pt-6">
-                  <Skeleton className="h-20 w-full" />
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {rooms.map((room) => (
-              <Card key={room.id}>
-                <CardContent className="pt-6">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <p className="font-semibold">{room.name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {room.isActive ? "Ativa" : "Desativada"}
-                      </p>
-                    </div>
-                    <div className="flex gap-2">
-                      {room.isActive && (
-                        <>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleEdit(room)}
-                          >
-                            Editar
-                          </Button>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => {
-                              if (confirm(`Deseja desativar a sala ${room.name}?`)) {
-                                deleteMutation.mutate(room.id);
-                              }
-                            }}
-                          >
-                            Desativar
-                          </Button>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-
-        <Card className="mt-8">
-          <CardHeader>
-            <CardTitle>Veterinários Ativos</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isLoadingVets ? (
-              <div className="space-y-4">
-                {[1, 2].map((i) => (
-                  <Skeleton key={i} className="h-16 w-full" />
-                ))}
-              </div>
-            ) : activeVets.length === 0 ? (
-              <p className="text-muted-foreground">Nenhum veterinário em sala no momento</p>
-            ) : (
-              <div className="space-y-4">
-                {activeVets.map((vet) => (
-                  <div
-                    key={vet.vetId}
-                    className="flex justify-between items-center p-4 border rounded-lg"
-                  >
-                    <div>
-                      <p className="font-semibold">{vet.vetName}</p>
-                      <p className="text-sm text-muted-foreground">
-                        Sala: {vet.roomName}
-                      </p>
-                    </div>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => {
-                        setVetToRelease(vet);
-                        setShowReleaseDialog(true);
-                      }}
-                    >
-                      Liberar Sala
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            )}
+            </form>
           </CardContent>
         </Card>
+      )}
 
-        <AlertDialog open={showReleaseDialog} onOpenChange={setShowReleaseDialog}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Liberar Veterinário?</AlertDialogTitle>
-              <AlertDialogDescription>
-                {vetToRelease && (
-                  <>
-                    Deseja liberar <strong>{vetToRelease.vetName}</strong> da sala{" "}
-                    <strong>{vetToRelease.roomName}</strong>?
-                  </>
-                )}
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => setVetToRelease(null)}>
-                Cancelar
-              </AlertDialogCancel>
-              <AlertDialogAction
-                onClick={() => {
-                  if (vetToRelease) {
-                    releaseVetMutation.mutate(vetToRelease.vetId);
-                  }
-                }}
-                disabled={releaseVetMutation.isPending}
-              >
-                {releaseVetMutation.isPending ? "Processando..." : "Liberar"}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      </main>
-    </div>
+      {isLoading ? (
+        <div className="grid gap-4 md:grid-cols-2">
+          {[1, 2, 3, 4].map((i) => (
+            <Card key={i} className="border border-muted-foreground/20">
+              <CardContent className="pt-6">
+                <Skeleton className="h-20 w-full" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2">
+          {rooms.map((room) => (
+            <Card
+              key={room.id}
+              className="border border-muted-foreground/30 transition hover:border-muted-foreground/50"
+            >
+              <CardContent className="flex items-start justify-between gap-4 pt-6">
+                <div>
+                  <p className="font-semibold text-base">{room.name}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {room.isActive ? "Ativa" : "Desativada"}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  {room.isActive && (
+                    <>
+                      <Button variant="outline" size="sm" onClick={() => handleEdit(room)}>
+                        Editar
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => {
+                          if (confirm(`Deseja desativar a sala ${room.name}?`)) {
+                            deleteMutation.mutate(room.id);
+                          }
+                        }}
+                      >
+                        Desativar
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      <Card className="border border-muted-foreground/30">
+        <CardHeader>
+          <CardTitle>Veterinários ativos</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {isLoadingVets ? (
+            <div className="space-y-4">
+              {[1, 2].map((i) => (
+                <Skeleton key={i} className="h-16 w-full" />
+              ))}
+            </div>
+          ) : activeVets.length === 0 ? (
+            <p className="text-muted-foreground">Nenhum veterinário em sala no momento.</p>
+          ) : (
+            <div className="space-y-4">
+              {activeVets.map((vet) => (
+                <div
+                  key={vet.vetId}
+                  className="flex items-center justify-between rounded-lg border border-muted-foreground/30 p-4"
+                >
+                  <div>
+                    <p className="font-semibold">{vet.vetName}</p>
+                    <p className="text-sm text-muted-foreground">Sala: {vet.roomName}</p>
+                  </div>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => {
+                      setVetToRelease(vet);
+                      setShowReleaseDialog(true);
+                    }}
+                  >
+                    Liberar sala
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <AlertDialog open={showReleaseDialog} onOpenChange={setShowReleaseDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Liberar veterinário?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {vetToRelease && (
+                <>
+                  Deseja liberar <strong>{vetToRelease.vetName}</strong> da sala{" "}
+                  <strong>{vetToRelease.roomName}</strong>?
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setVetToRelease(null)}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (vetToRelease) {
+                  releaseVetMutation.mutate(vetToRelease.vetId);
+                }
+              }}
+              disabled={releaseVetMutation.isPending}
+            >
+              {releaseVetMutation.isPending ? "Processando..." : "Liberar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </section>
   );
 }

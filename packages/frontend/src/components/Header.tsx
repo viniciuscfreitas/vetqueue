@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { ModuleKey } from "@/lib/api";
 import { RoomSelector } from "./RoomSelector";
-import { User, Settings, Monitor, LogOut, ChevronDown, Users, Shield } from "lucide-react";
+import { User, Settings, Monitor, LogOut, Users } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -45,29 +45,13 @@ export function Header() {
             <RoomSelector />
 
             {(() => {
-              const adminMenuItems = [
-                canAccess(ModuleKey.ADMIN_USERS) && {
-                  href: "/admin/users",
-                  label: "Usuários",
-                  icon: User,
-                },
-                canAccess(ModuleKey.ADMIN_ROOMS) && {
-                  href: "/admin/rooms",
-                  label: "Salas",
-                  icon: Settings,
-                },
-                canAccess(ModuleKey.ADMIN_SERVICES) && {
-                  href: "/admin/services",
-                  label: "Serviços",
-                  icon: Settings,
-                },
-                canAccess(ModuleKey.PERMISSIONS) && {
-                  href: "/admin/permissions",
-                  label: "Permissões",
-                  icon: Shield,
-                },
-              ].filter(Boolean) as Array<{ href: string; label: string; icon: typeof User }>;
-
+              const adminModules = [
+                ModuleKey.ADMIN_USERS,
+                ModuleKey.ADMIN_ROOMS,
+                ModuleKey.ADMIN_SERVICES,
+                ModuleKey.PERMISSIONS,
+              ];
+              const hasAdminAccess = adminModules.some((module) => canAccess(module));
               const supportingLinks = [
                 canAccess(ModuleKey.TUTORS) && {
                   href: "/tutors",
@@ -76,48 +60,41 @@ export function Header() {
                 },
               ].filter(Boolean) as Array<{ href: string; label: string; icon: typeof Users }>;
 
-              if (adminMenuItems.length === 0 && supportingLinks.length === 0) {
-                return null;
-              }
-
-              const isAdminRole = user.role === "ADMIN";
-              const adminItems = adminMenuItems.filter(Boolean);
-
-              if (!isAdminRole || adminItems.length === 0) {
-                return null;
-              }
-
               return (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm" className="text-xs sm:text-sm">
-                      <Settings className="h-4 w-4 mr-1" />
-                      Admin
-                      <ChevronDown className="h-3 w-3 ml-1" />
+                <>
+                  {hasAdminAccess && (
+                    <Button variant="outline" size="sm" asChild className="hidden sm:inline-flex">
+                      <Link href="/admin" className="flex items-center gap-2">
+                        <Settings className="h-4 w-4" />
+                        Administração
+                      </Link>
                     </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48">
-                    <DropdownMenuLabel>Administração</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    {adminMenuItems.map((item) => (
-                      <DropdownMenuItem key={item.href} asChild>
-                        <Link href={item.href} className="flex items-center cursor-pointer">
-                          <item.icon className="mr-2 h-4 w-4" />
-                          {item.label}
-                        </Link>
-                      </DropdownMenuItem>
-                    ))}
-                    {supportingLinks.length > 0 && <DropdownMenuSeparator />}
-                    {supportingLinks.map((item) => (
-                      <DropdownMenuItem key={item.href} asChild>
-                        <Link href={item.href} className="flex items-center cursor-pointer">
-                          <item.icon className="mr-2 h-4 w-4" />
-                          {item.label}
-                        </Link>
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                  )}
+                  {hasAdminAccess && (
+                    <Button variant="outline" size="icon" asChild className="sm:hidden">
+                      <Link href="/admin" className="flex items-center justify-center">
+                        <Settings className="h-4 w-4" />
+                        <span className="sr-only">Administração</span>
+                      </Link>
+                    </Button>
+                  )}
+                  {supportingLinks.map((item) => (
+                    <Button key={item.href} variant="ghost" size="sm" asChild className="hidden sm:inline-flex">
+                      <Link href={item.href} className="flex items-center gap-2">
+                        <item.icon className="h-4 w-4" />
+                        {item.label}
+                      </Link>
+                    </Button>
+                  ))}
+                  {supportingLinks.map((item) => (
+                    <Button key={`${item.href}-mobile`} variant="ghost" size="icon" asChild className="sm:hidden">
+                      <Link href={item.href} className="flex items-center justify-center">
+                        <item.icon className="h-4 w-4" />
+                        <span className="sr-only">{item.label}</span>
+                      </Link>
+                    </Button>
+                  ))}
+                </>
               );
             })()}
 
@@ -127,9 +104,8 @@ export function Header() {
                   <div className="text-right hidden sm:block">
                     <p className="text-xs font-medium truncate max-w-[100px]">{user.name}</p>
                     <p className="text-xs text-muted-foreground capitalize">{user.role.toLowerCase()}</p>
-            </div>
+                  </div>
                   <User className="h-4 w-4 sm:hidden" />
-                  <ChevronDown className="h-3 w-3 hidden sm:block" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
@@ -137,19 +113,22 @@ export function Header() {
                   <div className="flex flex-col">
                     <span className="font-medium">{user.name}</span>
                     <span className="text-xs text-muted-foreground capitalize">{user.role.toLowerCase()}</span>
-            </div>
+                  </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
                   <Link href="/display" className="flex items-center cursor-pointer">
                     <Monitor className="mr-2 h-4 w-4" />
                     Display
-            </Link>
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout} className="flex items-center cursor-pointer text-red-600 focus:text-red-600">
+                <DropdownMenuItem
+                  onClick={handleLogout}
+                  className="flex items-center cursor-pointer text-red-600 focus:text-red-600"
+                >
                   <LogOut className="mr-2 h-4 w-4" />
-              Sair
+                  Sair
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

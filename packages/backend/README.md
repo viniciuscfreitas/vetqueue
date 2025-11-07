@@ -6,8 +6,6 @@
 ```
 DATABASE_URL="postgresql://user:password@localhost:5432/vetqueue?schema=public"
 PORT=3001
-CLIENT_LOG_RATE_LIMIT_MAX=30
-CLIENT_LOG_RATE_LIMIT_WINDOW_MS=60000
 ```
 
 2. Instale dependências:

@@ -1,3 +1,4 @@
+import { useAuth } from "@/contexts/AuthContext";
 import { PaymentStatus, QueueEntry } from "@/lib/api";
 import { fromDateTimeLocal, paymentStatusLabels, toDateTimeLocal } from "@/lib/financialUtils";
 import { useEffect, useState } from "react";
@@ -62,6 +63,8 @@ export function PaymentEditModal({
   onSave,
   isLoading = false,
 }: PaymentEditModalProps) {
+  const { user } = useAuth();
+  const currentUserId = user?.id ?? null;
   const [formData, setFormData] = useState({
     paymentMethod: NONE_VALUE,
     paymentStatus: PaymentStatus.PENDING,
@@ -73,16 +76,17 @@ export function PaymentEditModal({
 
   useEffect(() => {
     if (entry) {
+      const defaultReceivedById = entry.paymentReceivedById ?? currentUserId ?? NONE_VALUE;
       setFormData({
         paymentMethod: entry.paymentMethod ?? NONE_VALUE,
         paymentStatus: entry.paymentStatus ?? PaymentStatus.PENDING,
         paymentAmount: entry.paymentAmount ?? "",
         paymentReceivedAt: toDateTimeLocal(entry.paymentReceivedAt),
         paymentNotes: entry.paymentNotes ?? "",
-        paymentReceivedById: entry.paymentReceivedById ?? NONE_VALUE,
+        paymentReceivedById: defaultReceivedById,
       });
     }
-  }, [entry, open]);
+  }, [entry, open, currentUserId]);
 
   if (!entry) return null;
 

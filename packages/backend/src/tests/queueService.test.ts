@@ -135,7 +135,7 @@ describe("QueueService critical flows", () => {
       scheduledAt,
     });
 
-    expect(entry.hasScheduledAppointment).toBe(true);
+    expect(entry.hasScheduledApepointment).toBe(true);
     expect(entry.scheduledAt?.toISOString()).toBe(scheduledAt.toISOString());
   });
 

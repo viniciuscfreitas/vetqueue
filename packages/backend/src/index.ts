@@ -9,7 +9,6 @@ import patientRoutes from "./api/routes/patientRoutes";
 import tutorRoutes from "./api/routes/tutorRoutes";
 import consultationRoutes from "./api/routes/consultationRoutes";
 import vaccinationRoutes from "./api/routes/vaccinationRoutes";
-import clientLogRoutes from "./api/routes/clientLogRoutes";
 import { checkAndCleanupInactiveRooms } from "./jobs/inactivityCheck";
 import { prisma } from "./lib/prisma";
 import { requestIdMiddleware } from "./middleware/requestId";
@@ -49,33 +48,33 @@ app.use(requestLoggerMiddleware);
 const healthCheck = async (req: Request, res: Response) => {
   const requestId = req.requestId || "unknown";
   const startTime = Date.now();
-  
+
   try {
     const dbStartTime = Date.now();
     await prisma.$queryRaw`SELECT 1`;
     const dbDuration = Date.now() - dbStartTime;
-    
+
     const totalDuration = Date.now() - startTime;
-    
-    logger.debug("Health check passed", { 
+
+    logger.debug("Health check passed", {
       requestId,
       dbDuration: `${dbDuration}ms`,
       totalDuration: `${totalDuration}ms`
     });
-    
-    res.json({ 
+
+    res.json({
       status: "ok",
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
       dbLatency: `${dbDuration}ms`,
     });
   } catch (error) {
-    logger.error("Health check failed", { 
+    logger.error("Health check failed", {
       requestId,
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
     });
-    res.status(503).json({ 
+    res.status(503).json({
       status: "error",
       message: "Database connection failed",
     });
@@ -98,7 +97,6 @@ app.use("/api/patients", patientRoutes);
 app.use("/api/tutors", tutorRoutes);
 app.use("/api/consultations", consultationRoutes);
 app.use("/api/vaccinations", vaccinationRoutes);
-app.use("/api/client-logs", clientLogRoutes);
 
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   const requestId = req.requestId || "unknown";
@@ -121,16 +119,16 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
       userAgent: req.headers['user-agent'],
     },
   });
-  
+
   if (err.name === 'ZodError') {
     res.status(400).json({ error: err.errors });
     return;
   }
-  
-  res.status(500).json({ 
-    error: process.env.NODE_ENV === 'production' 
+
+  res.status(500).json({
+    error: process.env.NODE_ENV === 'production'
       ? 'Erro interno do servidor'
-      : err.message 
+      : err.message
   });
 });
 
@@ -156,7 +154,7 @@ process.on("uncaughtException", (error) => {
     error: error.message,
     stack: error.stack,
   });
-  
+
   process.exit(1);
 });
 

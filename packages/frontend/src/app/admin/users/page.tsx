@@ -159,13 +159,10 @@ export default function UsersPage() {
 
   return (
     <section className="space-y-6">
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Usuários</h1>
-          <p className="text-sm text-muted-foreground">
-            Gerencie contas, perfis e credenciais da equipe.
-          </p>
-        </div>
+      <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <p className="max-w-xl text-sm text-muted-foreground">
+          Gerencie contas, perfis e credenciais da equipe.
+        </p>
         {!showForm && (
           <Button onClick={() => setShowForm(true)} className="w-full sm:w-auto">
             Novo Usuário

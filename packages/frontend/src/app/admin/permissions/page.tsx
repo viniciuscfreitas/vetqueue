@@ -174,9 +174,8 @@ export default function PermissionsPage() {
 
   return (
     <section className="space-y-6">
-      <header>
-        <h1 className="text-2xl font-semibold tracking-tight">Permissões por perfil</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
+      <header className="space-y-2">
+        <p className="text-sm text-muted-foreground">
           Defina quais módulos cada perfil pode acessar. Alterações são aplicadas imediatamente.
         </p>
       </header>

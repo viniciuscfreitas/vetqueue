@@ -138,13 +138,10 @@ export default function ServicesPage() {
 
   return (
     <section className="space-y-6">
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Serviços</h1>
-          <p className="text-sm text-muted-foreground">
-            Estruture os serviços oferecidos e mantenha o catálogo atualizado.
-          </p>
-        </div>
+      <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <p className="max-w-xl text-sm text-muted-foreground">
+          Estruture os serviços oferecidos e mantenha o catálogo atualizado.
+        </p>
         {!showForm && (
           <Button onClick={() => setShowForm(true)} className="w-full sm:w-auto">
             Novo serviço

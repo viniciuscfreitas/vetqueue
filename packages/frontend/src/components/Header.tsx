@@ -37,7 +37,7 @@ interface HeaderProps {
 export function Header({
   title,
   subtitle,
-  searchPlaceholder = "Buscar por pet, tutor ou atendimento...",
+  searchPlaceholder = "Buscar…",
   defaultSearchValue = "",
   onSearch,
   isSearching,
@@ -53,10 +53,9 @@ export function Header({
   }, [defaultSearchValue]);
 
   const greeting = useMemo(() => {
-    if (!user?.name) return "Olá!";
+    if (!user?.name) return "Olá";
     const firstName = user.name.split(" ")[0];
-    const honorific = user.role === "VET" ? "Dr(a)." : "";
-    return `Olá, ${honorific} ${firstName}!`.replace("  ", " ");
+    return `Olá, ${firstName}`;
   }, [user]);
 
   const effectiveTitle = title ?? greeting;
@@ -72,73 +71,64 @@ export function Header({
 
   return (
     <div className="w-full">
-      <div className="flex flex-wrap items-center gap-3 py-3 sm:gap-4">
+      <div className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex min-w-[220px] flex-1 flex-col gap-1">
-          <h1 className="truncate text-left text-2xl font-semibold tracking-tight text-slate-900">
+          <h1 className="truncate text-left text-xl font-semibold text-foreground">
             {effectiveTitle}
           </h1>
-          <p className="text-left text-sm text-muted-foreground lg:max-w-xl">{effectiveSubtitle}</p>
+          <p className="text-left text-sm text-muted-foreground">{effectiveSubtitle}</p>
         </div>
 
         {(alerts.length > 0 || onSearch || actions.length > 0) && (
-          <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
-            {alerts.length > 0 &&
-              alerts.map((alert, index) => (
-                <span
-                  key={`${alert.label}-${index}`}
-                  className={cn(
-                    "inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium uppercase tracking-wide",
-                    alert.tone === "critical"
-                      ? "bg-rose-100 text-rose-700"
-                      : alert.tone === "warning"
-                        ? "bg-amber-100 text-amber-700"
-                        : "bg-primary/10 text-primary",
-                  )}
-                >
-                  {alert.icon ?? <PawPrint className="h-3.5 w-3.5" />}
-                  {alert.label}
-                </span>
-              ))}
-
-            {onSearch && (
-              <form
-                onSubmit={handleSubmit}
-                className="flex h-11 w-full max-w-[320px] items-center gap-2 rounded-full border border-slate-200 bg-white px-4 shadow transition focus-within:border-primary/40 focus-within:shadow-md sm:w-auto"
-              >
-                <Search className="h-4 w-4 text-muted-foreground" />
-                <Input
-                  value={searchTerm}
-                  onChange={(event) => setSearchTerm(event.target.value)}
-                  placeholder={searchPlaceholder}
-                  className="h-auto w-full border-none bg-transparent px-0 text-sm focus-visible:ring-0 focus-visible:ring-offset-0"
-                />
-                <Button type="submit" size="sm" className="whitespace-nowrap">
-                  {isSearching ? "Buscando..." : "Buscar"}
-                </Button>
-              </form>
+          <div className="flex flex-col gap-2 sm:max-w-md sm:flex-none">
+            {alerts.length > 0 && (
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                {alerts.map((alert, index) => (
+                  <span key={`${alert.label}-${index}`} className="inline-flex items-center gap-1">
+                    {alert.icon ?? <PawPrint className="h-3 w-3 text-muted-foreground/80" />}
+                    {alert.label}
+                  </span>
+                ))}
+              </div>
             )}
 
-            {actions.length > 0 && (
-              <div className="flex flex-wrap items-center justify-end gap-2">
-                {actions.map((action) => (
-                  <Button
-                    key={action.label}
-                    onClick={action.onClick}
-                    size="sm"
-                    variant={action.variant === "outline" ? "outline" : "default"}
-                    className="gap-2"
-                  >
-                    {action.icon}
-                    {action.label}
-                  </Button>
-                ))}
+            {(onSearch || actions.length > 0) && (
+              <div className="flex flex-wrap items-center gap-1 sm:justify-end">
+                {onSearch && (
+                  <form onSubmit={handleSubmit} className="flex items-center gap-2 border-b border-border pb-1">
+                    <Input
+                      value={searchTerm}
+                      onChange={(event) => setSearchTerm(event.target.value)}
+                      placeholder={searchPlaceholder}
+                      className="h-8 w-28 border-none bg-transparent p-0 text-sm focus-visible:ring-0 focus-visible:ring-offset-0 sm:w-44"
+                    />
+                    <Button type="submit" size="sm" variant="ghost" className="px-2">
+                      <Search className="h-4 w-4" />
+                      <span className="sr-only">Buscar</span>
+                    </Button>
+                  </form>
+                )}
+
+                {actions.length > 0 &&
+                  actions.map((action) => (
+                    <Button
+                      key={action.label}
+                      onClick={action.onClick}
+                      size="sm"
+                      variant={action.variant === "outline" ? "secondary" : "ghost"}
+                      className="gap-1 px-2 text-sm"
+                    >
+                      {action.icon}
+                      {action.label}
+                    </Button>
+                  ))}
               </div>
             )}
           </div>
         )}
       </div>
 
-      {children && <div className="mt-4">{children}</div>}
+      {children && <div className="mt-2">{children}</div>}
     </div>
   );
 }

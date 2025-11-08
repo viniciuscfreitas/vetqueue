@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -48,6 +48,10 @@ export function Header({
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState(defaultSearchValue);
 
+  useEffect(() => {
+    setSearchTerm(defaultSearchValue);
+  }, [defaultSearchValue]);
+
   const greeting = useMemo(() => {
     if (!user?.name) return "Olá!";
     const firstName = user.name.split(" ")[0];
@@ -67,7 +71,7 @@ export function Header({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="mx-auto w-full max-w-6xl space-y-4 px-2 sm:px-0">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold tracking-tight text-slate-900">{effectiveTitle}</h1>
@@ -95,41 +99,43 @@ export function Header({
         )}
       </div>
 
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-        <form
-          onSubmit={handleSubmit}
-          className="flex flex-1 items-center gap-2 rounded-xl border border-transparent bg-white px-3 py-2 shadow-sm transition focus-within:border-primary/40 focus-within:shadow-md"
-        >
-          <Search className="h-4 w-4 text-muted-foreground" />
-          <Input
-            value={searchTerm}
-            onChange={(event) => setSearchTerm(event.target.value)}
-            placeholder={searchPlaceholder}
-            className="border-none bg-transparent px-0 text-sm focus-visible:ring-0 focus-visible:ring-offset-0"
-          />
+      {(onSearch || actions.length > 0) && (
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
           {onSearch && (
-            <Button type="submit" size="sm" className="whitespace-nowrap">
-              {isSearching ? "Buscando..." : "Buscar"}
-            </Button>
-          )}
-        </form>
-        {actions.length > 0 && (
-          <div className="flex flex-wrap items-center gap-2">
-            {actions.map((action) => (
-              <Button
-                key={action.label}
-                onClick={action.onClick}
-                size="sm"
-                variant={action.variant === "outline" ? "outline" : "default"}
-                className="gap-2"
-              >
-                {action.icon}
-                {action.label}
+            <form
+              onSubmit={handleSubmit}
+              className="flex flex-1 items-center gap-2 rounded-xl border border-transparent bg-white px-3 py-2 shadow-sm transition focus-within:border-primary/40 focus-within:shadow-md"
+            >
+              <Search className="h-4 w-4 text-muted-foreground" />
+              <Input
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+                placeholder={searchPlaceholder}
+                className="border-none bg-transparent px-0 text-sm focus-visible:ring-0 focus-visible:ring-offset-0"
+              />
+              <Button type="submit" size="sm" className="whitespace-nowrap">
+                {isSearching ? "Buscando..." : "Buscar"}
               </Button>
-            ))}
-          </div>
-        )}
-      </div>
+            </form>
+          )}
+          {actions.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2">
+              {actions.map((action) => (
+                <Button
+                  key={action.label}
+                  onClick={action.onClick}
+                  size="sm"
+                  variant={action.variant === "outline" ? "outline" : "default"}
+                  className="gap-2"
+                >
+                  {action.icon}
+                  {action.label}
+                </Button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {children && (
         <div className="rounded-xl border border-dashed border-slate-200 bg-white/70 p-4">{children}</div>

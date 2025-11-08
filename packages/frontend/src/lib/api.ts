@@ -143,6 +143,7 @@ export interface QueueEntry {
   paymentReceivedBy?: User | null;
   paymentReceivedAt?: string | null;
   paymentNotes?: string | null;
+  systemMessage?: string | null;
 }
 
 export interface FinancialSummary {
@@ -582,7 +583,7 @@ export interface UpdatePatientData {
 }
 
 export const tutorApi = {
-  list: (filters?: { name?: string; phone?: string; cpfCnpj?: string }) =>
+  list: (filters?: { name?: string; phone?: string; cpfCnpj?: string; search?: string; limit?: number }) =>
     api.get<Tutor[]>("/api/tutors", { params: filters }),
 
   getById: (id: string) => api.get<Tutor>(`/api/tutors/${id}`),
@@ -598,7 +599,7 @@ export const tutorApi = {
 };
 
 export const patientApi = {
-  list: (filters?: { name?: string; tutorName?: string; tutorId?: string }) =>
+  list: (filters?: { name?: string; tutorName?: string; tutorId?: string; limit?: number }) =>
     api.get<Patient[]>("/api/patients", { params: filters }),
 
   getById: (id: string) => api.get<Patient>(`/api/patients/${id}`),

@@ -57,12 +57,21 @@ const updatePatientSchema = z.object({
 });
 
 router.get("/", authMiddleware, asyncHandler(async (req: Request, res: Response) => {
-  const filters: { name?: string; tutorName?: string } = {};
+  const filters: { name?: string; tutorName?: string; tutorId?: string; limit?: number } = {};
   if (req.query.name) {
     filters.name = req.query.name as string;
   }
   if (req.query.tutorName) {
     filters.tutorName = req.query.tutorName as string;
+  }
+  if (req.query.tutorId) {
+    filters.tutorId = req.query.tutorId as string;
+  }
+  if (req.query.limit) {
+    const parsedLimit = parseInt(req.query.limit as string, 10);
+    if (!Number.isNaN(parsedLimit) && parsedLimit > 0) {
+      filters.limit = Math.min(parsedLimit, 25);
+    }
   }
   const patients = await patientService.listPatients(filters);
   res.json(patients);

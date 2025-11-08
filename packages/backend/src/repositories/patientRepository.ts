@@ -1,5 +1,5 @@
 import { Patient as PrismaPatient } from "@prisma/client";
-import { Patient, Tutor } from "../core/types";
+import { Patient } from "../core/types";
 import { prisma } from "../lib/prisma";
 
 function mapPrismaToDomain(patient: PrismaPatient & { tutor?: { id: string; name: string; phone: string | null; email: string | null; cpfCnpj: string | null; address: string | null; createdAt: Date; updatedAt: Date } | null }): Patient {
@@ -40,22 +40,30 @@ function mapPrismaToDomain(patient: PrismaPatient & { tutor?: { id: string; name
   };
 }
 
+interface PatientFilters {
+  name?: string;
+  tutorName?: string;
+  tutorId?: string;
+  limit?: number;
+}
+
 export class PatientRepository {
-  async findAll(filters?: { name?: string; tutorName?: string; tutorId?: string }): Promise<Patient[]> {
+  async findAll(filters?: PatientFilters): Promise<Patient[]> {
     const where: any = {};
-    
-    if (filters?.name) {
+    const { limit, ...rest } = filters ?? {};
+
+    if (rest.name) {
       where.name = {
-        contains: filters.name,
+        contains: rest.name,
         mode: "insensitive",
       };
     }
-    
-    if (filters?.tutorId) {
-      where.tutorId = filters.tutorId;
-    } else if (filters?.tutorName) {
+
+    if (rest.tutorId) {
+      where.tutorId = rest.tutorId;
+    } else if (rest.tutorName) {
       where.tutorName = {
-        contains: filters.tutorName,
+        contains: rest.tutorName,
         mode: "insensitive",
       };
     }
@@ -63,6 +71,7 @@ export class PatientRepository {
     const patients = await prisma.patient.findMany({
       where,
       orderBy: { name: "asc" },
+      take: limit,
     });
     return patients.map(mapPrismaToDomain);
   }

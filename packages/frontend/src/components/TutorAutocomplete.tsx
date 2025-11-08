@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { Tutor, tutorApi } from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
-import { tutorApi, Tutor } from "@/lib/api";
+import { useEffect, useRef, useState } from "react";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 
@@ -14,6 +14,9 @@ interface TutorAutocompleteProps {
   required?: boolean;
   id?: string;
 }
+
+const MAX_RESULTS = 8;
+const MIN_SEARCH_LENGTH = 2;
 
 export function TutorAutocomplete({
   value,
@@ -30,6 +33,9 @@ export function TutorAutocomplete({
   const inputRef = useRef<HTMLInputElement>(null);
   const [debouncedSearch, setDebouncedSearch] = useState("");
 
+  const trimmedDebouncedSearch = debouncedSearch.trim();
+  const canFetch = trimmedDebouncedSearch.length >= MIN_SEARCH_LENGTH;
+
   useEffect(() => {
     if (value !== undefined && value !== searchTerm) {
       setSearchTerm(value);
@@ -40,23 +46,28 @@ export function TutorAutocomplete({
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(searchTerm);
-    }, 300);
+    }, 250);
 
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  const { data: allTutors = [], isLoading } = useQuery({
-    queryKey: ["tutors"],
-    queryFn: () => tutorApi.list().then((res) => res.data),
+  const { data: tutors = [], isFetching } = useQuery({
+    queryKey: ["tutors", "search", canFetch ? trimmedDebouncedSearch : ""],
+    queryFn: async () => {
+      try {
+        const response = await tutorApi.list({
+          search: trimmedDebouncedSearch.replace(/\s+/g, " "),
+          limit: MAX_RESULTS,
+        });
+        return response.data;
+      } catch (error) {
+        console.error("Erro ao buscar tutores", error);
+        return [];
+      }
+    },
+    enabled: canFetch,
+    staleTime: 30_000,
   });
-
-  const filteredTutors = debouncedSearch.trim()
-    ? allTutors.filter(tutor =>
-        tutor.name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-        tutor.phone?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-        tutor.cpfCnpj?.toLowerCase().includes(debouncedSearch.toLowerCase())
-      ).slice(0, 8)
-    : [];
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -84,10 +95,15 @@ export function TutorAutocomplete({
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     setSearchTerm(newValue);
-    setShowDropdown(newValue.length > 0);
+    setShowDropdown(newValue.trim().length > 0);
     setSelectedTutor(null);
     onChange(newValue, undefined);
   };
+
+  const trimmedSearchTerm = searchTerm.trim();
+  const shouldShowResults = showDropdown && trimmedSearchTerm.length > 0;
+  const hasEnoughCharacters = trimmedSearchTerm.length >= MIN_SEARCH_LENGTH;
+  const visibleTutors = hasEnoughCharacters ? tutors : [];
 
   return (
     <div className="relative space-y-2">
@@ -102,36 +118,43 @@ export function TutorAutocomplete({
         type="text"
         value={searchTerm}
         onChange={handleInputChange}
-        onFocus={() => setShowDropdown(searchTerm.length > 0 && filteredTutors.length > 0)}
+        onFocus={() => setShowDropdown(searchTerm.trim().length > 0)}
         placeholder={placeholder}
         required={required}
         className="w-full"
+        autoComplete="off"
       />
-      {showDropdown && (
+      {shouldShowResults && (
         <div
           ref={dropdownRef}
           className="absolute z-50 w-full mt-1 bg-background border rounded-md shadow-lg max-h-60 overflow-auto"
         >
-          {isLoading ? (
+          {!hasEnoughCharacters ? (
+            <div className="p-2 text-sm text-muted-foreground">
+              Digite pelo menos {MIN_SEARCH_LENGTH} caracteres para buscar
+            </div>
+          ) : isFetching ? (
             <div className="p-2 text-sm text-muted-foreground">Buscando...</div>
-          ) : filteredTutors.length === 0 ? (
+          ) : visibleTutors.length === 0 ? (
             <div className="p-2 text-sm text-muted-foreground">
               Nenhum tutor encontrado
             </div>
           ) : (
-            filteredTutors.map((tutor) => (
+            visibleTutors.map((tutor) => (
               <button
                 key={tutor.id}
                 type="button"
                 onClick={() => handleSelect(tutor)}
                 className="w-full text-left px-4 py-2 hover:bg-accent hover:text-accent-foreground text-sm"
               >
-                {tutor.name}
-                {tutor.phone && (
-                  <span className="text-xs text-muted-foreground ml-2">
-                    {tutor.phone}
-                  </span>
-                )}
+                <div className="flex flex-col">
+                  <span className="font-medium">{tutor.name}</span>
+                  {(tutor.phone || tutor.cpfCnpj) && (
+                    <span className="text-xs text-muted-foreground">
+                      {[tutor.phone, tutor.cpfCnpj].filter(Boolean).join(" • ")}
+                    </span>
+                  )}
+                </div>
               </button>
             ))
           )}

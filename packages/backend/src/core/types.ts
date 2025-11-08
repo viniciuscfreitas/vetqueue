@@ -92,6 +92,7 @@ export interface QueueEntry {
   paymentReceivedBy?: User | null;
   paymentReceivedAt?: Date | null;
   paymentNotes?: string | null;
+  systemMessage?: string;
 }
 
 export interface FinancialSummary {

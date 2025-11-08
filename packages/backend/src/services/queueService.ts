@@ -86,12 +86,15 @@ export class QueueService {
       data.scheduledAt
     );
 
+    let systemMessage: string | undefined;
+
     if (data.hasScheduledAppointment && !processed.hasScheduledAppointment) {
       log.info("Scheduled appointment converted to walk-in (late >15min)", {
         eventType: "AppointmentConversion",
         patientName: data.patientName,
         patientId: data.patientId || null,
       });
+      systemMessage = "Entrada convertida para encaixe por atraso maior que 15 minutos.";
     }
 
     if (processed.hasScheduledAppointment && processed.scheduledAt) {
@@ -139,17 +142,21 @@ export class QueueService {
       });
       const dbDuration = Date.now() - startTime;
 
+      if (systemMessage) {
+        entry.systemMessage = systemMessage;
+      }
+
       log.debug("Queue entry created", {
         entryId: entry.id,
         patientId: entry.patientId || null,
         patientName: entry.patientName,
-        dbDuration: `${dbDuration}ms`,
+        dbDurationMs: dbDuration,
       });
 
       if (dbDuration > 500) {
         log.warn("Slow database operation", {
           operation: "create queue entry",
-          duration: `${dbDuration}ms`,
+          durationMs: dbDuration,
           entryId: entry.id,
         });
       }
@@ -602,6 +609,7 @@ export class QueueService {
 
     const wasScheduled = entry.hasScheduledAppointment;
     const becomesWalkIn = wasScheduled && !processed.hasScheduledAppointment;
+    let systemMessage: string | undefined;
 
     if (becomesWalkIn) {
       log.info("Scheduled appointment converted to walk-in (late >15min) on update", {
@@ -610,11 +618,13 @@ export class QueueService {
         patientId: entry.patientId || null,
         patientName: entry.patientName,
       });
+      systemMessage = "Entrada convertida para encaixe por atraso maior que 15 minutos.";
     }
 
     log.debug("Updating queue entry", { entryId: id, data });
 
     try {
+      const startTime = Date.now();
       const oldStatus = entry.status;
       const updated = await this.repository.update(id, {
         ...data,
@@ -622,6 +632,11 @@ export class QueueService {
         hasScheduledAppointment: processed.hasScheduledAppointment,
         scheduledAt: processed.scheduledAt || undefined,
       });
+      const operationDuration = Date.now() - startTime;
+
+      if (systemMessage) {
+        updated.systemMessage = systemMessage;
+      }
 
       const updateMeta: any = {
         eventType: "QueueEntryUpdated",
@@ -629,6 +644,7 @@ export class QueueService {
         patientId: updated.patientId || null,
         patientName: updated.patientName,
         priority: processed.priority,
+        operationDurationMs: operationDuration,
       };
 
       if (updated.status !== oldStatus) {
@@ -638,6 +654,14 @@ export class QueueService {
       }
 
       log.info("Queue entry updated", updateMeta);
+
+      if (operationDuration > 500) {
+        log.warn("Slow queue entry update", {
+          entryId: id,
+          durationMs: operationDuration,
+        });
+      }
+
       return updated;
     } catch (error) {
       log.error("Failed to update queue entry", {

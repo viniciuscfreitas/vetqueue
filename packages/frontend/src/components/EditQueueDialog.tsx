@@ -98,7 +98,7 @@ export function EditQueueDialog({
             )
           : undefined;
 
-      await queueApi.updateEntry(entry.id, {
+      const response = await queueApi.updateEntry(entry.id, {
         patientName: formData.patientName,
         tutorName: formData.tutorName,
         serviceType: formData.serviceType,
@@ -110,7 +110,9 @@ export function EditQueueDialog({
 
       toast({
         title: "Sucesso",
-        description: "Atendimento atualizado com sucesso",
+        description: response.data.systemMessage
+          ? `Atendimento atualizado. ${response.data.systemMessage}`
+          : "Atendimento atualizado com sucesso",
       });
       onSuccess?.();
       onOpenChange(false);

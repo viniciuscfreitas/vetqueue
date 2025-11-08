@@ -29,7 +29,12 @@ const updateTutorSchema = z.object({
 });
 
 router.get("/", authMiddleware, asyncHandler(async (req: Request, res: Response) => {
-  const filters: { name?: string; phone?: string; cpfCnpj?: string } = {};
+  const filters: { name?: string; phone?: string; cpfCnpj?: string; search?: string; limit?: number } = {};
+
+  if (req.query.search) {
+    filters.search = (req.query.search as string).trim();
+  }
+
   if (req.query.name) {
     filters.name = req.query.name as string;
   }
@@ -38,6 +43,12 @@ router.get("/", authMiddleware, asyncHandler(async (req: Request, res: Response)
   }
   if (req.query.cpfCnpj) {
     filters.cpfCnpj = req.query.cpfCnpj as string;
+  }
+  if (req.query.limit) {
+    const parsedLimit = parseInt(req.query.limit as string, 10);
+    if (!Number.isNaN(parsedLimit) && parsedLimit > 0) {
+      filters.limit = Math.min(parsedLimit, 25);
+    }
   }
   const tutors = await tutorService.listTutors(filters);
   res.json(tutors);

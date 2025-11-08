@@ -3,6 +3,13 @@ import { TutorRepository } from "../repositories/tutorRepository";
 import { Patient } from "../core/types";
 import { logger } from "../lib/logger";
 
+interface ListPatientFilters {
+  name?: string;
+  tutorName?: string;
+  tutorId?: string;
+  limit?: number;
+}
+
 export class PatientService {
   private tutorRepository: TutorRepository;
 
@@ -10,7 +17,7 @@ export class PatientService {
     this.tutorRepository = new TutorRepository();
   }
 
-  async listPatients(filters?: { name?: string; tutorName?: string; tutorId?: string }): Promise<Patient[]> {
+  async listPatients(filters?: ListPatientFilters): Promise<Patient[]> {
     return this.repository.findAll(filters);
   }
 

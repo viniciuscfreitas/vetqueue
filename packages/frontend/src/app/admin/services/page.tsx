@@ -7,6 +7,16 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
 import { useToast } from "@/components/ui/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { ModuleKey, Service, serviceApi } from "@/lib/api";
 import { createErrorHandler } from "@/lib/errors";
@@ -23,6 +33,7 @@ export default function ServicesPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingService, setEditingService] = useState<Service | null>(null);
   const [serviceName, setServiceName] = useState("");
+  const [serviceToDeactivate, setServiceToDeactivate] = useState<Service | null>(null);
 
   const canManageServices = canAccess(ModuleKey.ADMIN_SERVICES);
 
@@ -79,6 +90,7 @@ export default function ServicesPage() {
     mutationFn: (id: string) => serviceApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["services"] });
+      setServiceToDeactivate(null);
       toast({
         title: "Sucesso",
         description: "Serviço desativado com sucesso",
@@ -219,11 +231,8 @@ export default function ServicesPage() {
                       <Button
                         variant="destructive"
                         size="sm"
-                        onClick={() => {
-                          if (confirm(`Deseja desativar o serviço ${service.name}?`)) {
-                            deleteMutation.mutate(service.id);
-                          }
-                        }}
+                        onClick={() => setServiceToDeactivate(service)}
+                        disabled={deleteMutation.isPending}
                       >
                         Desativar
                       </Button>
@@ -235,6 +244,36 @@ export default function ServicesPage() {
           ))}
         </div>
       )}
+
+      <AlertDialog open={!!serviceToDeactivate} onOpenChange={(open) => {
+        if (!open) {
+          setServiceToDeactivate(null);
+        }
+      }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Desativar serviço?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {serviceToDeactivate && (
+                <>Esta ação desativará <strong>{serviceToDeactivate.name}</strong>. Você poderá reativá-lo depois.</>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteMutation.isPending}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (serviceToDeactivate) {
+                  deleteMutation.mutate(serviceToDeactivate.id);
+                }
+              }}
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? "Desativando..." : "Desativar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </section>
   );
 }

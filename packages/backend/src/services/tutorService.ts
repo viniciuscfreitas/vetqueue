@@ -2,10 +2,18 @@ import { TutorRepository } from "../repositories/tutorRepository";
 import { Tutor } from "../core/types";
 import { logger } from "../lib/logger";
 
+interface ListTutorFilters {
+  name?: string;
+  phone?: string;
+  cpfCnpj?: string;
+  search?: string;
+  limit?: number;
+}
+
 export class TutorService {
   constructor(private repository: TutorRepository) {}
 
-  async listTutors(filters?: { name?: string; phone?: string; cpfCnpj?: string }): Promise<Tutor[]> {
+  async listTutors(filters?: ListTutorFilters): Promise<Tutor[]> {
     return this.repository.findAll(filters);
   }
 

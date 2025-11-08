@@ -1,6 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useToast } from "@/components/ui/use-toast";
+import { Patient, Priority, queueApi, ServiceType } from "@/lib/api";
+import { SERVICE_TYPE_OPTIONS } from "@/lib/constants";
+import { createErrorHandler } from "@/lib/errors";
+import { loadQueueFormPreferences, saveQueueFormPreferences } from "@/lib/utils";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { PatientAutocomplete } from "./PatientAutocomplete";
+import { TutorAutocomplete } from "./TutorAutocomplete";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
@@ -11,29 +19,38 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
-import { ServiceType, Priority, queueApi, Patient } from "@/lib/api";
-import { useRouter } from "next/navigation";
-import { useToast } from "@/components/ui/use-toast";
-import { createErrorHandler } from "@/lib/errors";
-import { SERVICE_TYPE_OPTIONS } from "@/lib/constants";
-import { PatientAutocomplete } from "./PatientAutocomplete";
-import { TutorAutocomplete } from "./TutorAutocomplete";
 
 export function AddQueueForm() {
   const router = useRouter();
   const { toast } = useToast();
   const handleError = createErrorHandler(toast);
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    patientName: "",
-    tutorName: "",
-    tutorId: undefined as string | undefined,
-    serviceType: "" as ServiceType | "",
-    priority: Priority.NORMAL as Priority,
-    hasScheduledAppointment: false,
-    scheduledAt: "",
-    patientId: undefined as string | undefined,
-  });
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const buildInitialFormData = () => {
+    const preferences = loadQueueFormPreferences();
+
+    return {
+      patientName: "",
+      tutorName: "",
+      tutorId: undefined as string | undefined,
+      serviceType: (preferences.serviceType as ServiceType | "") || "",
+      priority: preferences.priority ?? Priority.NORMAL,
+      hasScheduledAppointment: false,
+      scheduledAt: "",
+      patientId: undefined as string | undefined,
+    };
+  };
+
+  const [formData, setFormData] = useState(buildInitialFormData);
+
+  useEffect(() => {
+    if (!formData.serviceType && SERVICE_TYPE_OPTIONS.length > 0) {
+      setFormData((prev) => ({
+        ...prev,
+        serviceType: SERVICE_TYPE_OPTIONS[0].value as ServiceType,
+      }));
+    }
+  }, [formData.serviceType]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,12 +58,22 @@ export function AddQueueForm() {
 
     try {
       const today = new Date();
-      const [hours, minutes] = formData.hasScheduledAppointment && formData.scheduledAt ? formData.scheduledAt.split(':') : ['00', '00'];
-      const scheduledDateTime = formData.hasScheduledAppointment && formData.scheduledAt
-        ? new Date(today.getFullYear(), today.getMonth(), today.getDate(), parseInt(hours), parseInt(minutes))
-        : undefined;
+      const [hours, minutes] =
+        formData.hasScheduledAppointment && formData.scheduledAt
+          ? formData.scheduledAt.split(":")
+          : ["00", "00"];
+      const scheduledDateTime =
+        formData.hasScheduledAppointment && formData.scheduledAt
+          ? new Date(
+              today.getFullYear(),
+              today.getMonth(),
+              today.getDate(),
+              parseInt(hours),
+              parseInt(minutes)
+            )
+          : undefined;
 
-      await queueApi.add({
+      const response = await queueApi.add({
         patientName: formData.patientName,
         tutorName: formData.tutorName,
         serviceType: formData.serviceType as ServiceType,
@@ -54,6 +81,21 @@ export function AddQueueForm() {
         hasScheduledAppointment: formData.hasScheduledAppointment,
         scheduledAt: scheduledDateTime?.toISOString(),
         patientId: formData.patientId,
+      });
+      const createdEntry = response.data;
+
+      saveQueueFormPreferences({
+        serviceType: formData.serviceType,
+        priority: formData.priority,
+      });
+
+      setFormData(buildInitialFormData());
+      setShowAdvanced(false);
+      toast({
+        title: "Sucesso",
+        description: createdEntry.systemMessage
+          ? `Entrada adicionada à fila. ${createdEntry.systemMessage}`
+          : "Entrada adicionada à fila",
       });
       router.push("/");
       router.refresh();
@@ -64,18 +106,32 @@ export function AddQueueForm() {
     }
   };
 
+  const resetForm = () => {
+    setFormData((prev) => ({
+      ...prev,
+      patientName: "",
+      tutorName: "",
+      tutorId: undefined,
+      patientId: undefined,
+      serviceType: (loadQueueFormPreferences()?.serviceType as ServiceType | "") || "",
+      priority: loadQueueFormPreferences()?.priority ?? Priority.NORMAL,
+      hasScheduledAppointment: false,
+      scheduledAt: "",
+    }));
+  };
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 max-w-md">
+    <form onSubmit={handleSubmit} className="space-y-5 max-w-md">
       <TutorAutocomplete
         value={formData.tutorName}
         onChange={(tutorName, tutorId) => {
-          setFormData({
-            ...formData,
+          setFormData((prev) => ({
+            ...prev,
             tutorName,
             tutorId,
             patientName: "",
             patientId: undefined,
-          });
+          }));
         }}
         label="Tutor"
         placeholder="Buscar tutor ou digite..."
@@ -86,30 +142,34 @@ export function AddQueueForm() {
         tutorName={formData.tutorName}
         value={formData.patientName}
         onChange={(patient: Patient | null) => {
-          setFormData({
-            ...formData,
+          setFormData((prev) => ({
+            ...prev,
             patientId: patient?.id,
-            patientName: patient?.name || formData.patientName,
-          });
+            patientName: patient?.name || prev.patientName,
+          }));
         }}
         onPatientNameChange={(name) => {
-          setFormData({
-            ...formData,
+          setFormData((prev) => ({
+            ...prev,
             patientName: name,
             patientId: undefined,
-          });
+          }));
         }}
         label="Pet"
-        placeholder={formData.tutorName ? "Buscar pet ou digite..." : "Digite o tutor primeiro"}
+        placeholder={
+          formData.tutorName ? "Buscar pet ou digite..." : "Digite o tutor primeiro"
+        }
         required
       />
 
-      <div>
-        <Label htmlFor="serviceType">Tipo de Serviço</Label>
+      <div className="space-y-2">
+        <Label htmlFor="serviceType" className="text-sm font-medium">
+          Tipo de Serviço
+        </Label>
         <Select
           value={formData.serviceType}
           onValueChange={(value) =>
-            setFormData({ ...formData, serviceType: value as ServiceType })
+            setFormData((prev) => ({ ...prev, serviceType: value as ServiceType }))
           }
           required
         >
@@ -126,60 +186,83 @@ export function AddQueueForm() {
         </Select>
       </div>
 
-      <div>
-        <Label htmlFor="priority">Prioridade</Label>
-        <Select
-          value={formData.priority.toString()}
-          onValueChange={(value) =>
-            setFormData({ ...formData, priority: parseInt(value) as Priority })
-          }
+      <div className="border-t pt-4">
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={() => setShowAdvanced((prev) => !prev)}
+          className="w-full justify-between"
         >
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={Priority.NORMAL.toString()}>Normal</SelectItem>
-            <SelectItem value={Priority.HIGH.toString()}>Alta</SelectItem>
-            <SelectItem value={Priority.EMERGENCY.toString()}>
-              Emergência
-            </SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+          <span className="text-sm font-medium">Opções avançadas</span>
+          <span>{showAdvanced ? "▲" : "▼"}</span>
+        </Button>
 
-      <div className="flex items-center space-x-2">
-        <input
-          type="checkbox"
-          id="hasScheduledAppointment"
-          checked={formData.hasScheduledAppointment}
-          onChange={(e) =>
-            setFormData({
-              ...formData,
-              hasScheduledAppointment: e.target.checked,
-              scheduledAt: e.target.checked ? formData.scheduledAt : "",
-            })
-          }
-          className="h-4 w-4 rounded border-gray-300"
-        />
-        <Label htmlFor="hasScheduledAppointment" className="font-normal cursor-pointer">
-          Tem hora marcada
-        </Label>
-      </div>
+        {showAdvanced && (
+          <div className="mt-4 space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="priority" className="text-sm font-medium">
+                Prioridade
+              </Label>
+              <Select
+                value={formData.priority.toString()}
+                onValueChange={(value) =>
+                  setFormData((prev) => ({ ...prev, priority: parseInt(value) as Priority }))
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={Priority.NORMAL.toString()}>Normal</SelectItem>
+                  <SelectItem value={Priority.HIGH.toString()}>Alta</SelectItem>
+                  <SelectItem value={Priority.EMERGENCY.toString()}>
+                    Emergência
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-      {formData.hasScheduledAppointment && (
-        <div>
-          <Label htmlFor="scheduledAt">Hora Agendada</Label>
-          <Input
-            id="scheduledAt"
-            type="time"
-            value={formData.scheduledAt}
-            onChange={(e) =>
-              setFormData({ ...formData, scheduledAt: e.target.value })
-            }
-            required={formData.hasScheduledAppointment}
-          />
-        </div>
-      )}
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="hasScheduledAppointment"
+                checked={formData.hasScheduledAppointment}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    hasScheduledAppointment: e.target.checked,
+                    scheduledAt: e.target.checked ? prev.scheduledAt : "",
+                  }))
+                }
+                className="h-4 w-4 rounded border-gray-300"
+              />
+              <Label
+                htmlFor="hasScheduledAppointment"
+                className="text-sm font-normal cursor-pointer"
+              >
+                Tem hora marcada
+              </Label>
+            </div>
+
+            {formData.hasScheduledAppointment && (
+              <div className="space-y-2">
+                <Label htmlFor="scheduledAt" className="text-sm font-medium">
+                  Hora Agendada
+                </Label>
+                <Input
+                  id="scheduledAt"
+                  type="time"
+                  value={formData.scheduledAt}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, scheduledAt: e.target.value }))
+                  }
+                  required={formData.hasScheduledAppointment}
+                />
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
       <Button type="submit" disabled={loading} className="w-full">
         {loading ? "Adicionando..." : "Adicionar à Fila"}

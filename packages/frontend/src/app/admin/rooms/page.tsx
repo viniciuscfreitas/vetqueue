@@ -1,14 +1,14 @@
 "use client";
 
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -35,6 +35,7 @@ export default function RoomsPage() {
   const [roomName, setRoomName] = useState("");
   const [vetToRelease, setVetToRelease] = useState<ActiveVet | null>(null);
   const [showReleaseDialog, setShowReleaseDialog] = useState(false);
+  const [roomToDeactivate, setRoomToDeactivate] = useState<Room | null>(null);
 
   const canManageRooms = canAccess(ModuleKey.ADMIN_ROOMS);
 
@@ -251,11 +252,8 @@ export default function RoomsPage() {
                       <Button
                         variant="destructive"
                         size="sm"
-                        onClick={() => {
-                          if (confirm(`Deseja desativar a sala ${room.name}?`)) {
-                            deleteMutation.mutate(room.id);
-                          }
-                        }}
+                        onClick={() => setRoomToDeactivate(room)}
+                        disabled={deleteMutation.isPending}
                       >
                         Desativar
                       </Button>
@@ -308,6 +306,37 @@ export default function RoomsPage() {
           )}
         </CardContent>
       </Card>
+
+      <AlertDialog open={!!roomToDeactivate} onOpenChange={(open) => {
+        if (!open) {
+          setRoomToDeactivate(null);
+        }
+      }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Desativar sala?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {roomToDeactivate && (
+                <>Essa ação irá desativar <strong>{roomToDeactivate.name}</strong>. Você pode reativá-la mais tarde.</>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteMutation.isPending}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (roomToDeactivate) {
+                  deleteMutation.mutate(roomToDeactivate.id);
+                  setRoomToDeactivate(null);
+                }
+              }}
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? "Desativando..." : "Desativar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog open={showReleaseDialog} onOpenChange={setShowReleaseDialog}>
         <AlertDialogContent>

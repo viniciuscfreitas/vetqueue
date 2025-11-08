@@ -15,34 +15,53 @@ function mapPrismaToDomain(tutor: PrismaTutor): Tutor {
   };
 }
 
+interface TutorFilters {
+  name?: string;
+  phone?: string;
+  cpfCnpj?: string;
+  search?: string;
+  limit?: number;
+}
+
 export class TutorRepository {
-  async findAll(filters?: { name?: string; phone?: string; cpfCnpj?: string }): Promise<Tutor[]> {
+  async findAll(filters?: TutorFilters): Promise<Tutor[]> {
     const where: any = {};
-    
-    if (filters?.name) {
-      where.name = {
-        contains: filters.name,
-        mode: "insensitive",
-      };
-    }
-    
-    if (filters?.phone) {
-      where.phone = {
-        contains: filters.phone,
-        mode: "insensitive",
-      };
-    }
-    
-    if (filters?.cpfCnpj) {
-      where.cpfCnpj = {
-        contains: filters.cpfCnpj,
-        mode: "insensitive",
-      };
+    const { limit, search, ...directFilters } = filters ?? {};
+
+    if (search && search.trim().length > 0) {
+      const sanitized = search.trim();
+      where.OR = [
+        { name: { contains: sanitized, mode: "insensitive" } },
+        { phone: { contains: sanitized, mode: "insensitive" } },
+        { cpfCnpj: { contains: sanitized, mode: "insensitive" } },
+      ];
+    } else {
+      if (directFilters.name) {
+        where.name = {
+          contains: directFilters.name,
+          mode: "insensitive",
+        };
+      }
+
+      if (directFilters.phone) {
+        where.phone = {
+          contains: directFilters.phone,
+          mode: "insensitive",
+        };
+      }
+
+      if (directFilters.cpfCnpj) {
+        where.cpfCnpj = {
+          contains: directFilters.cpfCnpj,
+          mode: "insensitive",
+        };
+      }
     }
 
     const tutors = await prisma.tutor.findMany({
       where,
       orderBy: { name: "asc" },
+      take: limit,
     });
     return tutors.map(mapPrismaToDomain);
   }

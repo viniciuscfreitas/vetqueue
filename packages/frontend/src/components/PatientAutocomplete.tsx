@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { Patient, patientApi } from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
-import { patientApi, Patient } from "@/lib/api";
+import { useEffect, useRef, useState } from "react";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 
@@ -16,6 +16,9 @@ interface PatientAutocompleteProps {
   required?: boolean;
   id?: string;
 }
+
+const MAX_RESULTS = 8;
+const MIN_SEARCH_LENGTH = 2;
 
 export function PatientAutocomplete({
   tutorName,
@@ -33,16 +36,19 @@ export function PatientAutocomplete({
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const trimmedTutorName = tutorName.trim();
+  const trimmedDebouncedSearch = debouncedSearch.trim();
+  const canFetch = trimmedTutorName.length > 0 && trimmedDebouncedSearch.length >= MIN_SEARCH_LENGTH;
 
   useEffect(() => {
     if (value !== undefined && value !== searchTerm) {
       setSearchTerm(value);
     }
-    if (!tutorName.trim()) {
+    if (!trimmedTutorName) {
       setSelectedPatient(null);
       setSearchTerm("");
     }
-  }, [value, tutorName]);
+  }, [value, tutorName, trimmedTutorName]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -52,18 +58,18 @@ export function PatientAutocomplete({
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  const { data: patients = [], isLoading } = useQuery({
-    queryKey: ["patients", "search", tutorName, debouncedSearch],
-    queryFn: () => {
-      if (!debouncedSearch.trim() || !tutorName.trim()) {
-        return Promise.resolve([]);
-      }
-      return patientApi.list({ 
-        tutorName: tutorName.trim(),
-        name: debouncedSearch.trim()
-      }).then((res) => res.data);
-    },
-    enabled: debouncedSearch.trim().length > 0 && tutorName.trim().length > 0,
+  const { data: patients = [], isFetching } = useQuery({
+    queryKey: ["patients", "search", trimmedTutorName, canFetch ? trimmedDebouncedSearch : ""],
+    queryFn: () =>
+      patientApi
+        .list({
+          tutorName: trimmedTutorName,
+          name: trimmedDebouncedSearch,
+          limit: MAX_RESULTS,
+        })
+        .then((res) => res.data),
+    enabled: canFetch,
+    staleTime: 30_000,
   });
 
   useEffect(() => {
@@ -92,8 +98,8 @@ export function PatientAutocomplete({
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     setSearchTerm(newValue);
-    setShowDropdown(newValue.length > 0 && tutorName.trim().length > 0);
-    
+    setShowDropdown(newValue.trim().length > 0 && trimmedTutorName.length > 0);
+
     if (selectedPatient && newValue !== selectedPatient.name) {
       setSelectedPatient(null);
       onChange(null);
@@ -104,6 +110,8 @@ export function PatientAutocomplete({
   };
 
   const displayValue = selectedPatient ? selectedPatient.name : searchTerm;
+  const trimmedSearchTerm = searchTerm.trim();
+  const visiblePatients = trimmedSearchTerm.length >= MIN_SEARCH_LENGTH ? patients : [];
 
   return (
     <div className="relative space-y-2">
@@ -118,25 +126,34 @@ export function PatientAutocomplete({
         type="text"
         value={displayValue}
         onChange={handleInputChange}
-        onFocus={() => setShowDropdown(searchTerm.length > 0 && patients.length > 0 && tutorName.trim().length > 0)}
-        disabled={!tutorName.trim()}
+        onFocus={() => setShowDropdown(searchTerm.trim().length > 0 && trimmedTutorName.length > 0)}
+        disabled={!trimmedTutorName}
         placeholder={placeholder}
         required={required}
         className="w-full"
+        autoComplete="off"
       />
       {showDropdown && (
         <div
           ref={dropdownRef}
           className="absolute z-50 w-full mt-1 bg-background border rounded-md shadow-lg max-h-60 overflow-auto"
         >
-          {isLoading ? (
+          {!trimmedTutorName ? (
+            <div className="p-2 text-sm text-muted-foreground">
+              Informe o tutor para buscar pacientes
+            </div>
+          ) : trimmedSearchTerm.length < MIN_SEARCH_LENGTH ? (
+            <div className="p-2 text-sm text-muted-foreground">
+              Digite pelo menos {MIN_SEARCH_LENGTH} caracteres para buscar
+            </div>
+          ) : isFetching ? (
             <div className="p-2 text-sm text-muted-foreground">Buscando...</div>
-          ) : patients.length === 0 ? (
+          ) : visiblePatients.length === 0 ? (
             <div className="p-2 text-sm text-muted-foreground">
               Nenhum paciente encontrado
             </div>
           ) : (
-            patients.map((patient) => (
+            visiblePatients.map((patient) => (
               <button
                 key={patient.id}
                 type="button"

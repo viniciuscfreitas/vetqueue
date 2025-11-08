@@ -9,6 +9,7 @@ import { Menu, X, LogOut } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { shellModules } from "@/app/modules-config";
 import { Button } from "@/components/ui/button";
+import { MobileBottomNav } from "@/components/MobileBottomNav";
 import { cn } from "@/lib/utils";
 
 interface AppShellProps {
@@ -22,6 +23,7 @@ interface NavigationItem {
   href: string;
   icon: React.ComponentType<{ className?: string }>;
   description?: string;
+  group?: "core" | "admin";
 }
 
 function AppShellInner({ header, children }: AppShellProps) {
@@ -47,8 +49,33 @@ function AppShellInner({ header, children }: AppShellProps) {
         href: item.href,
         icon: item.icon,
         description: item.description,
+        group: item.group,
       }));
   }, [canAccess]);
+
+  const urlSearchParams = searchParams?.toString() ?? "";
+
+  const isItemActive = (item: NavigationItem) => {
+    const [pathOnly, queryString] = item.href.split("?");
+    return (
+      pathname === pathOnly ||
+      (pathname.startsWith(pathOnly) && pathOnly !== "/") ||
+      (queryString !== undefined && pathname === pathOnly && urlSearchParams === queryString)
+    );
+  };
+
+  const activeItemId = useMemo(
+    () => navigation.find((item) => isItemActive(item))?.id,
+    [navigation, pathname, urlSearchParams],
+  );
+
+  const mobileNavigation = useMemo(
+    () =>
+      navigation
+        .filter((item) => item.group !== "admin")
+        .slice(0, 4),
+    [navigation],
+  );
 
   const handleLogout = async () => {
     await logout();
@@ -87,13 +114,7 @@ function AppShellInner({ header, children }: AppShellProps) {
 
           <nav className="mt-6 flex-1 space-y-1 overflow-y-auto pr-1">
             {navigation.map((item) => {
-              const pathOnly = item.href.split("?")[0];
-              const isActive =
-                pathname === pathOnly ||
-                (pathname.startsWith(pathOnly) && pathOnly !== "/") ||
-                (item.href.includes("?") &&
-                  pathname === pathOnly &&
-                  searchParams?.toString() === item.href.split("?")[1]);
+              const isActive = isItemActive(item);
 
               const Icon = item.icon;
               return (
@@ -163,7 +184,8 @@ function AppShellInner({ header, children }: AppShellProps) {
               <div className="flex-1">{header}</div>
             </div>
           </div>
-          <main className="flex-1 px-4 py-6 sm:px-6 lg:px-10">{children}</main>
+          <main className="flex-1 px-4 pb-24 pt-6 sm:px-6 sm:pb-10 lg:px-10">{children}</main>
+          <MobileBottomNav items={mobileNavigation} activeItemId={activeItemId} />
         </div>
       </div>
     </div>

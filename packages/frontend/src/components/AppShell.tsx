@@ -165,11 +165,11 @@ function AppShellInner({ header, children }: AppShellProps) {
 
         <div className="flex min-h-screen flex-1 flex-col sm:pl-64">
           <div className="sticky top-0 z-20 border-b border-border/60 bg-white/90 backdrop-blur">
-            <div className="flex h-16 items-center gap-3 px-4">
+            <div className="flex items-start gap-3 px-4 py-3 sm:px-6 lg:px-10">
               <button
                 type="button"
                 aria-label="Abrir menu"
-                className="rounded-md p-2 text-muted-foreground hover:bg-muted sm:hidden"
+                className="mt-1 rounded-md p-2 text-muted-foreground hover:bg-muted sm:hidden"
                 onClick={() => setSidebarOpen(true)}
               >
                 <Menu className="h-5 w-5" />

@@ -33,6 +33,18 @@ const addQueueSchema = z.object({
   paymentMethod: paymentMethodEnum.optional(),
 });
 
+const preferenceSchema = z.object({
+  lastTutorId: z.string().nullable().optional(),
+  lastTutorName: z.string().nullable().optional(),
+  lastPatientId: z.string().nullable().optional(),
+  lastPatientName: z.string().nullable().optional(),
+  lastServiceType: z.string().nullable().optional(),
+  lastPriority: z.nativeEnum(Priority).nullable().optional(),
+  lastAssignedVetId: z.string().nullable().optional(),
+  lastHasAppointment: z.boolean().optional(),
+  lastSimplesVetId: z.string().nullable().optional(),
+});
+
 const updateQueueSchema = z.object({
   patientName: z.string().min(1, "Nome do paciente é obrigatório").optional(),
   tutorName: z.string().min(1, "Nome do tutor é obrigatório").optional(),
@@ -125,6 +137,7 @@ router.post("/", authMiddleware, async (req: AuthenticatedRequest, res: Response
       ...data,
       scheduledAt: data.scheduledAt ? new Date(data.scheduledAt) : undefined,
       patientId: data.patientId,
+      userId: req.user?.id,
     });
     if (req.user) {
       auditService.log({
@@ -148,6 +161,27 @@ router.post("/", authMiddleware, async (req: AuthenticatedRequest, res: Response
     res.status(400).json({ error: (error as Error).message });
   }
 });
+
+router.get("/preferences", authMiddleware, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  if (!req.user) {
+    res.status(401).json({ error: "Usuário não autenticado" });
+    return;
+  }
+
+  const preference = await queueService.getFormPreference(req.user.id);
+  res.json(preference ?? null);
+}));
+
+router.post("/preferences", authMiddleware, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  if (!req.user) {
+    res.status(401).json({ error: "Usuário não autenticado" });
+    return;
+  }
+
+  const payload = preferenceSchema.parse(req.body);
+  const saved = await queueService.saveFormPreference(req.user.id, payload);
+  res.json(saved);
+}));
 
 router.get("/active", authMiddleware, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const vetId = req.query.vetId as string | undefined;

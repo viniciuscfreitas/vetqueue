@@ -56,6 +56,13 @@ const updatePatientSchema = z.object({
   notes: z.string().optional(),
 });
 
+const quickCreatePatientSchema = z.object({
+  tutorId: z.string().min(1, "Tutor é obrigatório"),
+  name: z.string().min(1, "Nome do paciente é obrigatório"),
+  species: z.string().optional(),
+  notes: z.string().optional(),
+});
+
 router.get("/", authMiddleware, asyncHandler(async (req: Request, res: Response) => {
   const filters: { name?: string; tutorName?: string; tutorId?: string; limit?: number } = {};
   if (req.query.name) {
@@ -85,6 +92,17 @@ router.get("/:id/queue-entries", authMiddleware, asyncHandler(async (req: Reques
 router.get("/:id", authMiddleware, asyncHandler(async (req: Request, res: Response) => {
   const patient = await patientService.getPatientById(req.params.id);
   res.json(patient);
+}));
+
+router.post("/quick", authMiddleware, asyncHandler(async (req: Request, res: Response) => {
+  const data = quickCreatePatientSchema.parse(req.body);
+  const patient = await patientService.createPatient({
+    name: data.name,
+    species: data.species,
+    tutorId: data.tutorId,
+    notes: data.notes,
+  });
+  res.status(201).json(patient);
 }));
 
 router.post("/", authMiddleware, asyncHandler(async (req: Request, res: Response) => {

@@ -233,3 +233,18 @@ export interface Vaccination {
   notes?: string | null;
   createdAt: Date;
 }
+
+export interface QueueFormPreference {
+  userId: string;
+  lastTutorId?: string | null;
+  lastTutorName?: string | null;
+  lastPatientId?: string | null;
+  lastPatientName?: string | null;
+  lastServiceType?: string | null;
+  lastPriority?: Priority | null;
+  lastAssignedVetId?: string | null;
+  lastHasAppointment?: boolean;
+  lastSimplesVetId?: string | null;
+  updatedAt: Date;
+  createdAt: Date;
+}

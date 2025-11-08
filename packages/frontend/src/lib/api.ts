@@ -267,6 +267,21 @@ export interface RoomUtilizationStats {
   peakHours: Array<{ hour: number; count: number }>;
 }
 
+export interface QueueFormPreference {
+  userId: string;
+  lastTutorId?: string | null;
+  lastTutorName?: string | null;
+  lastPatientId?: string | null;
+  lastPatientName?: string | null;
+  lastServiceType?: string | null;
+  lastPriority?: Priority | null;
+  lastAssignedVetId?: string | null;
+  lastHasAppointment?: boolean;
+  lastSimplesVetId?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+
 export const queueApi = {
   add: (data: {
     patientName: string;
@@ -392,6 +407,20 @@ export const queueApi = {
     startDate?: string;
     endDate?: string;
   }) => api.get<RoomUtilizationStats>("/api/queue/reports/rooms", { params: filters }),
+
+  getFormPreference: () => api.get<QueueFormPreference | null>("/api/queue/preferences"),
+
+  saveFormPreference: (data: {
+    lastTutorId?: string | null;
+    lastTutorName?: string | null;
+    lastPatientId?: string | null;
+    lastPatientName?: string | null;
+    lastServiceType?: string | null;
+    lastPriority?: Priority | null;
+    lastAssignedVetId?: string | null;
+    lastHasAppointment?: boolean;
+    lastSimplesVetId?: string | null;
+  }) => api.post<QueueFormPreference>("/api/queue/preferences", data),
 };
 
 interface LoginResponse {
@@ -596,6 +625,8 @@ export const tutorApi = {
   delete: (id: string) => api.delete(`/api/tutors/${id}`),
 
   getPatients: (id: string) => api.get<Patient[]>(`/api/tutors/${id}/patients`),
+
+  quickCreate: (data: { name: string; phone?: string }) => api.post<Tutor>("/api/tutors/quick", data),
 };
 
 export const patientApi = {
@@ -612,6 +643,9 @@ export const patientApi = {
   delete: (id: string) => api.delete(`/api/patients/${id}`),
 
   getQueueEntries: (id: string) => api.get<QueueEntry[]>(`/api/patients/${id}/queue-entries`),
+
+  quickCreate: (data: { tutorId: string; name: string; species?: string; notes?: string }) =>
+    api.post<Patient>("/api/patients/quick", data),
 };
 
 export interface Consultation {

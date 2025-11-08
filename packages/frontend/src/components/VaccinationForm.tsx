@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
+import { Textarea } from "./ui/textarea";
 import { useToast } from "./ui/use-toast";
 import { createErrorHandler } from "@/lib/errors";
 import { useAuth } from "@/contexts/AuthContext";
@@ -100,7 +101,7 @@ export function VaccinationForm({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     const data = {
       patientId: patient.id,
       vaccineName: formData.vaccineName,
@@ -231,6 +232,15 @@ export function VaccinationForm({
                   type="button"
                   variant="outline"
                   size="sm"
+                  onClick={() => calculateNextDose(90)}
+                  title="+90 dias"
+                >
+                  +90d
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
                   onClick={() => calculateNextDose(365)}
                   title="+1 ano"
                 >
@@ -241,11 +251,12 @@ export function VaccinationForm({
           </div>
           <div>
             <Label htmlFor="notes">Observações</Label>
-            <Input
+            <Textarea
               id="notes"
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              placeholder="Observações adicionais"
+              placeholder="Reações, lembretes para retorno, orientações ao tutor..."
+              rows={3}
             />
           </div>
           <div className="flex gap-2">

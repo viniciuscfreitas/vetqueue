@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
+import { Textarea } from "./ui/textarea";
 import { useToast } from "./ui/use-toast";
 import { createErrorHandler } from "@/lib/errors";
 import { useAuth } from "@/contexts/AuthContext";
@@ -82,7 +83,7 @@ export function ConsultationForm({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     const data = {
       patientId: patient.id,
       queueEntryId: queueEntryId || consultation?.queueEntryId || undefined,
@@ -148,41 +149,50 @@ export function ConsultationForm({
               />
             </div>
           </div>
-          <div>
-            <Label htmlFor="diagnosis">Diagnóstico</Label>
-            <Input
-              id="diagnosis"
-              value={formData.diagnosis}
-              onChange={(e) => setFormData({ ...formData, diagnosis: e.target.value })}
-              placeholder="Diagnóstico do paciente"
-            />
+          <div className="grid gap-4 lg:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="diagnosis">Diagnóstico</Label>
+              <Textarea
+                id="diagnosis"
+                value={formData.diagnosis}
+                onChange={(e) => setFormData({ ...formData, diagnosis: e.target.value })}
+                placeholder="Resumo do diagnóstico principal"
+                rows={3}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="treatment">Plano terapêutico</Label>
+              <Textarea
+                id="treatment"
+                value={formData.treatment}
+                onChange={(e) => setFormData({ ...formData, treatment: e.target.value })}
+                placeholder="Condutas adotadas e orientações"
+                rows={3}
+              />
+            </div>
           </div>
-          <div>
-            <Label htmlFor="treatment">Tratamento</Label>
-            <Input
-              id="treatment"
-              value={formData.treatment}
-              onChange={(e) => setFormData({ ...formData, treatment: e.target.value })}
-              placeholder="Tratamento prescrito"
-            />
-          </div>
-          <div>
-            <Label htmlFor="prescription">Prescrição</Label>
-            <Input
-              id="prescription"
-              value={formData.prescription}
-              onChange={(e) => setFormData({ ...formData, prescription: e.target.value })}
-              placeholder="Medicamentos prescritos"
-            />
-          </div>
-          <div>
-            <Label htmlFor="notes">Observações</Label>
-            <Input
-              id="notes"
-              value={formData.notes}
-              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              placeholder="Observações adicionais"
-            />
+
+          <div className="grid gap-4 lg:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="prescription">Prescrição</Label>
+              <Textarea
+                id="prescription"
+                value={formData.prescription}
+                onChange={(e) => setFormData({ ...formData, prescription: e.target.value })}
+                placeholder="Medicamentos, dosagens e frequências"
+                rows={3}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="notes">Observações adicionais</Label>
+              <Textarea
+                id="notes"
+                value={formData.notes}
+                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                placeholder="Comportamento, retorno, orientações ao tutor..."
+                rows={3}
+              />
+            </div>
           </div>
           <div className="flex gap-2">
             <Button

@@ -28,6 +28,11 @@ const updateTutorSchema = z.object({
   address: z.string().optional(),
 });
 
+const quickCreateTutorSchema = z.object({
+  name: z.string().min(1, "Nome do tutor é obrigatório"),
+  phone: z.string().optional(),
+});
+
 router.get("/", authMiddleware, asyncHandler(async (req: Request, res: Response) => {
   const filters: { name?: string; phone?: string; cpfCnpj?: string; search?: string; limit?: number } = {};
 
@@ -62,6 +67,15 @@ router.get("/:id", authMiddleware, asyncHandler(async (req: Request, res: Respon
 router.get("/:id/patients", authMiddleware, asyncHandler(async (req: Request, res: Response) => {
   const patients = await patientRepository.findAll({ tutorId: req.params.id });
   res.json(patients);
+}));
+
+router.post("/quick", authMiddleware, asyncHandler(async (req: Request, res: Response) => {
+  const data = quickCreateTutorSchema.parse(req.body);
+  const tutor = await tutorService.createTutor({
+    name: data.name,
+    phone: data.phone,
+  });
+  res.status(201).json(tutor);
 }));
 
 router.post("/", authMiddleware, asyncHandler(async (req: Request, res: Response) => {

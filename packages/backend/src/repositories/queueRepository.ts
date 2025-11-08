@@ -2,10 +2,35 @@ import { Prisma, QueueEntry as PrismaQueueEntry } from "@prisma/client";
 import { QueueEntry, Priority, Status, User, Role, Patient, PaymentStatus } from "../core/types";
 import { prisma } from "../lib/prisma";
 
+const patientSelect = {
+  id: true,
+  tutorId: true,
+  name: true,
+  species: true,
+  breed: true,
+  birthDate: true,
+  gender: true,
+  tutorName: true,
+  tutorPhone: true,
+  tutorEmail: true,
+  notes: true,
+  createdAt: true,
+  updatedAt: true,
+};
+
+const defaultInclude = {
+  assignedVet: true,
+  room: true,
+  patient: {
+    select: patientSelect,
+  },
+  paymentReceivedBy: true,
+} as const;
+
 function mapPrismaToDomain(entry: PrismaQueueEntry & {
   assignedVet?: { id: string; username: string; name: string; role: string; createdAt: Date } | null;
   room?: { id: string; name: string; isActive: boolean; createdAt: Date } | null;
-  patient?: { id: string; name: string; species: string | null; breed: string | null; birthDate: Date | null; gender: string | null; tutorName: string; tutorPhone: string | null; tutorEmail: string | null; notes: string | null; createdAt: Date; updatedAt: Date } | null;
+  patient?: { id: string; tutorId: string | null; name: string; species: string | null; breed: string | null; birthDate: Date | null; gender: string | null; tutorName: string; tutorPhone: string | null; tutorEmail: string | null; notes: string | null; createdAt: Date; updatedAt: Date } | null;
   paymentReceivedBy?: { id: string; username: string; name: string; role: string; createdAt: Date } | null;
 }): QueueEntry {
   return {
@@ -54,6 +79,7 @@ function mapPrismaToDomain(entry: PrismaQueueEntry & {
     paymentNotes: entry.paymentNotes || null,
     patient: entry.patient ? {
       id: entry.patient.id,
+      tutorId: entry.patient.tutorId,
       name: entry.patient.name,
       species: entry.patient.species,
       breed: entry.patient.breed,
@@ -119,7 +145,7 @@ export class QueueRepository {
         paymentReceivedAt: data.paymentReceivedAt,
         paymentNotes: data.paymentNotes,
       },
-      include: { assignedVet: true, room: true, patient: true, paymentReceivedBy: true },
+      include: defaultInclude,
     });
     return mapPrismaToDomain(entry);
   }
@@ -127,7 +153,7 @@ export class QueueRepository {
   async findById(id: string): Promise<QueueEntry | null> {
     const entry = await prisma.queueEntry.findUnique({
       where: { id },
-      include: { assignedVet: true, room: true, patient: true, paymentReceivedBy: true },
+      include: defaultInclude,
     });
     return entry ? mapPrismaToDomain(entry) : null;
   }
@@ -148,7 +174,7 @@ export class QueueRepository {
 
     const entry = await prisma.queueEntry.findFirst({
       where: whereClause,
-      include: { assignedVet: true, room: true, patient: true, paymentReceivedBy: true },
+      include: defaultInclude,
       orderBy: [
         { priority: "asc" },
         { createdAt: "asc" },
@@ -163,7 +189,7 @@ export class QueueRepository {
         status: Status.WAITING,
         assignedVetId: null,
       },
-      include: { assignedVet: true, room: true, patient: true, paymentReceivedBy: true },
+      include: defaultInclude,
       orderBy: [
         { priority: "asc" },
         { createdAt: "asc" },
@@ -192,7 +218,7 @@ export class QueueRepository {
     const entry = await prisma.queueEntry.update({
       where: { id },
       data,
-      include: { assignedVet: true, room: true, patient: true, paymentReceivedBy: true },
+      include: defaultInclude,
     });
     return mapPrismaToDomain(entry);
   }
@@ -204,7 +230,7 @@ export class QueueRepository {
     const entry = await prisma.queueEntry.update({
       where: { id },
       data: { assignedVetId },
-      include: { assignedVet: true, room: true, patient: true, paymentReceivedBy: true },
+      include: defaultInclude,
     });
     return mapPrismaToDomain(entry);
   }
@@ -230,7 +256,7 @@ export class QueueRepository {
 
       const entry = await tx.queueEntry.findFirst({
         where: whereClause,
-        include: { assignedVet: true, room: true, patient: true, paymentReceivedBy: true },
+        include: defaultInclude,
         orderBy: [
           { priority: "asc" },
           { createdAt: "asc" },
@@ -253,7 +279,7 @@ export class QueueRepository {
       const updated = await tx.queueEntry.update({
         where: { id: entry.id },
         data: updateData,
-        include: { assignedVet: true, room: true, patient: true, paymentReceivedBy: true },
+        include: defaultInclude,
       });
 
       if (vetId && !entry.assignedVetId) {
@@ -278,7 +304,7 @@ export class QueueRepository {
     return await prisma.$transaction(async (tx) => {
       const entry = await tx.queueEntry.findUnique({
         where: { id },
-        include: { assignedVet: true, room: true, patient: true, paymentReceivedBy: true },
+        include: defaultInclude,
       });
 
       if (!entry) {
@@ -301,7 +327,7 @@ export class QueueRepository {
       const updated = await tx.queueEntry.update({
         where: { id },
         data: updateData,
-        include: { assignedVet: true, room: true, patient: true, paymentReceivedBy: true },
+        include: defaultInclude,
       });
 
       if (vetId && !entry.assignedVetId) {
@@ -324,7 +350,7 @@ export class QueueRepository {
           in: [Status.WAITING, Status.CALLED, Status.IN_PROGRESS],
         },
       },
-      include: { assignedVet: true, room: true, patient: true, paymentReceivedBy: true },
+      include: defaultInclude,
       orderBy: [
         { priority: "asc" },
         { createdAt: "asc" },
@@ -344,7 +370,7 @@ export class QueueRepository {
           { assignedVetId: null }
         ]
       },
-      include: { assignedVet: true, room: true, patient: true, paymentReceivedBy: true },
+      include: defaultInclude,
       orderBy: [
         { priority: "asc" },
         { createdAt: "asc" },
@@ -361,7 +387,7 @@ export class QueueRepository {
         },
         assignedVetId: null,
       },
-      include: { assignedVet: true, room: true, patient: true, paymentReceivedBy: true },
+      include: defaultInclude,
       orderBy: [
         { priority: "asc" },
         { createdAt: "asc" },
@@ -411,7 +437,7 @@ export class QueueRepository {
 
     const entries = await prisma.queueEntry.findMany({
       where,
-      include: { assignedVet: true, room: true, patient: true, paymentReceivedBy: true },
+      include: defaultInclude,
       orderBy: { completedAt: "desc" },
     });
     return entries.map(mapPrismaToDomain);
@@ -965,7 +991,7 @@ export class QueueRepository {
 
     let waitTimeSum = 0;
     let entriesWithCalledAt = 0;
-    
+
     completed.forEach((entry: PrismaQueueEntry) => {
       if (entry.calledAt && entry.createdAt) {
         const waitTime = entry.calledAt.getTime() - entry.createdAt.getTime();
@@ -974,13 +1000,13 @@ export class QueueRepository {
       }
     });
 
-    const avgWaitTime = entriesWithCalledAt > 0 
-      ? waitTimeSum / entriesWithCalledAt 
+    const avgWaitTime = entriesWithCalledAt > 0
+      ? waitTimeSum / entriesWithCalledAt
       : 0;
 
     let serviceTimeSum = 0;
     let entriesWithServiceTime = 0;
-    
+
     completed.forEach((entry: PrismaQueueEntry) => {
       if (entry.calledAt && entry.completedAt) {
         const serviceTime = entry.completedAt.getTime() - entry.calledAt.getTime();
@@ -989,12 +1015,12 @@ export class QueueRepository {
       }
     });
 
-    const avgServiceTime = entriesWithServiceTime > 0 
-      ? serviceTimeSum / entriesWithServiceTime 
+    const avgServiceTime = entriesWithServiceTime > 0
+      ? serviceTimeSum / entriesWithServiceTime
       : 0;
 
-    const cancellationRate = allCreated > 0 
-      ? (cancelled / allCreated) * 100 
+    const cancellationRate = allCreated > 0
+      ? (cancelled / allCreated) * 100
       : 0;
 
     const vetCounts = completed.reduce(
@@ -1056,7 +1082,7 @@ export class QueueRepository {
 
     let serviceTimeSum = 0;
     let entriesWithServiceTime = 0;
-    
+
     completed.forEach((entry: PrismaQueueEntry) => {
       if (entry.calledAt && entry.completedAt) {
         const serviceTime = entry.completedAt.getTime() - entry.calledAt.getTime();
@@ -1065,8 +1091,8 @@ export class QueueRepository {
       }
     });
 
-    const avgServiceTime = entriesWithServiceTime > 0 
-      ? serviceTimeSum / entriesWithServiceTime 
+    const avgServiceTime = entriesWithServiceTime > 0
+      ? serviceTimeSum / entriesWithServiceTime
       : 0;
 
     const days = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
@@ -1132,11 +1158,11 @@ export class QueueRepository {
         name: true,
       },
     });
-    
+
     if (!vet) {
       return null;
     }
-    
+
     return {
       vetId: vet.id,
       vetName: vet.name,
@@ -1212,7 +1238,7 @@ export class QueueRepository {
         priority: { not: Priority.HIGH },
         scheduledAt: { lte: cutoffTime },
       },
-      include: { assignedVet: true, room: true, patient: true, paymentReceivedBy: true },
+      include: defaultInclude,
     });
 
     return entries.map(mapPrismaToDomain);
@@ -1222,7 +1248,7 @@ export class QueueRepository {
     const entry = await prisma.queueEntry.update({
       where: { id: entryId },
       data: { priority },
-      include: { assignedVet: true, room: true, patient: true, paymentReceivedBy: true },
+      include: defaultInclude,
     });
     return mapPrismaToDomain(entry);
   }
@@ -1254,7 +1280,7 @@ export class QueueRepository {
     const entry = await prisma.queueEntry.update({
       where: { id: entryId },
       data: updateData,
-      include: { assignedVet: true, room: true, patient: true, paymentReceivedBy: true },
+      include: defaultInclude,
     });
     return mapPrismaToDomain(entry);
   }
@@ -1297,7 +1323,7 @@ export class QueueRepository {
     const entry = await prisma.queueEntry.update({
       where: { id: entryId },
       data: updateData,
-      include: { assignedVet: true, room: true, patient: true, paymentReceivedBy: true },
+      include: defaultInclude,
     });
     return mapPrismaToDomain(entry);
   }
@@ -1305,7 +1331,7 @@ export class QueueRepository {
   async findByPatientId(patientId: string): Promise<QueueEntry[]> {
     const entries = await prisma.queueEntry.findMany({
       where: { patientId },
-      include: { assignedVet: true, room: true, patient: true, paymentReceivedBy: true },
+      include: defaultInclude,
       orderBy: { createdAt: "desc" },
     });
     return entries.map(mapPrismaToDomain);

@@ -1,15 +1,27 @@
-import { FinancialReportData, FinancialSummary, PaymentStatus, Priority, QueueEntry, Role, Status } from "../core/types";
+import {
+  FinancialReportData,
+  FinancialSummary,
+  PaymentStatus,
+  Priority,
+  QueueEntry,
+  Role,
+  Status,
+  QueueFormPreference,
+} from "../core/types";
 import { logger } from "../lib/logger";
 import { QueueRepository } from "../repositories/queueRepository";
 import { UserRepository } from "../repositories/userRepository";
+import { QueueFormPreferenceRepository } from "../repositories/queueFormPreferenceRepository";
 
 const log = logger.withContext({ module: "Queue" });
 
 export class QueueService {
   private userRepository: UserRepository;
+  private preferenceRepository: QueueFormPreferenceRepository;
 
   constructor(private repository: QueueRepository) {
     this.userRepository = new UserRepository();
+    this.preferenceRepository = new QueueFormPreferenceRepository();
   }
 
   private updateActivityIfNeeded(vetId?: string | null): void {
@@ -68,6 +80,7 @@ export class QueueService {
     patientId?: string;
     simplesVetId?: string;
     paymentMethod?: string;
+    userId?: string;
   }): Promise<QueueEntry> {
     log.debug("addToQueue called", {
       patientName: data.patientName,
@@ -161,6 +174,27 @@ export class QueueService {
         });
       }
 
+      if (data.userId) {
+        this.preferenceRepository
+          .save(data.userId, {
+            lastTutorId: entry.patient?.tutorId ?? null,
+            lastTutorName: entry.tutorName,
+            lastPatientId: entry.patientId ?? null,
+            lastPatientName: entry.patientName,
+            lastServiceType: entry.serviceType,
+            lastPriority: entry.priority,
+            lastAssignedVetId: entry.assignedVetId ?? null,
+            lastHasAppointment: entry.hasScheduledAppointment ?? false,
+            lastSimplesVetId: entry.simplesVetId ?? null,
+          })
+          .catch((error) => {
+            log.warn("Failed to persist queue form preferences", {
+              error: error instanceof Error ? error.message : String(error),
+              userId: data.userId,
+            });
+          });
+      }
+
       return entry;
     } catch (error) {
       log.error("Failed to create queue entry", {
@@ -176,6 +210,34 @@ export class QueueService {
       });
       throw error;
     }
+  }
+
+  async getFormPreference(userId: string): Promise<QueueFormPreference | null> {
+    return this.preferenceRepository.findByUserId(userId);
+  }
+
+  async saveFormPreference(userId: string, data: {
+    lastTutorId?: string | null;
+    lastTutorName?: string | null;
+    lastPatientId?: string | null;
+    lastPatientName?: string | null;
+    lastServiceType?: string | null;
+    lastPriority?: Priority | null;
+    lastAssignedVetId?: string | null;
+    lastHasAppointment?: boolean;
+    lastSimplesVetId?: string | null;
+  }): Promise<QueueFormPreference> {
+    return this.preferenceRepository.save(userId, {
+      lastTutorId: data.lastTutorId ?? null,
+      lastTutorName: data.lastTutorName ?? null,
+      lastPatientId: data.lastPatientId ?? null,
+      lastPatientName: data.lastPatientName ?? null,
+      lastServiceType: data.lastServiceType ?? null,
+      lastPriority: data.lastPriority ?? null,
+      lastAssignedVetId: data.lastAssignedVetId ?? null,
+      lastHasAppointment: data.lastHasAppointment ?? false,
+      lastSimplesVetId: data.lastSimplesVetId ?? null,
+    });
   }
 
   async callNext(vetId?: string, roomId?: string): Promise<QueueEntry | null> {

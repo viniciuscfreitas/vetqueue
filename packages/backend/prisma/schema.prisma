@@ -30,6 +30,7 @@ model User {
   auditLogs       AuditLog[]
   consultations   Consultation[]
   vaccinations    Vaccination[]
+  queueFormPreference QueueFormPreference?
   @@index([currentRoomId])
   @@map("users")
 }
@@ -216,4 +217,22 @@ model RoleModulePermission {
   @@unique([role, module])
   @@index([role])
   @@map("role_module_permissions")
+}
+
+model QueueFormPreference {
+  userId            String      @id
+  user              User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lastTutorId       String?
+  lastTutorName     String?
+  lastPatientId     String?
+  lastPatientName   String?
+  lastServiceType   String?
+  lastPriority      Int?
+  lastAssignedVetId String?
+  lastHasAppointment Boolean?  @default(false)
+  lastSimplesVetId  String?
+  updatedAt         DateTime    @updatedAt
+  createdAt         DateTime    @default(now())
+
+  @@map("queue_form_preferences")
 }

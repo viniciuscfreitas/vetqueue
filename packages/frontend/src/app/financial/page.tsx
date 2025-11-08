@@ -3,7 +3,9 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
+import { AppShell } from "@/components/AppShell";
 import { Header } from "@/components/Header";
+import type { HeaderAction, HeaderAlert } from "@/components/Header";
 import { Spinner } from "@/components/ui/spinner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FinancialFilters, FinancialFiltersState } from "@/components/FinancialFilters";
@@ -13,6 +15,7 @@ import { FinancialReportsTab } from "@/components/FinancialReportsTab";
 import { ModuleKey, Role, userApi } from "@/lib/api";
 import { useDateRange } from "@/hooks/useDateRange";
 import { useQuery } from "@tanstack/react-query";
+import { PiggyBank, Receipt } from "lucide-react";
 
 const DEFAULT_FILTERS = {
   tutorName: "",
@@ -95,33 +98,57 @@ export default function FinancialPage() {
     return null;
   }
 
+  const headerAlerts: HeaderAlert[] = [
+    {
+      label: `Período ${startDate || "início"} → ${endDate || "hoje"}`,
+      icon: <PiggyBank className="h-3.5 w-3.5" />,
+    },
+  ];
+
+  const headerActions: HeaderAction[] = [
+    {
+      label: "Ver relatórios",
+      icon: <Receipt className="h-4 w-4" />,
+      variant: tab === "reports" ? "outline" : undefined,
+      onClick: () => setTab("reports"),
+    },
+  ];
+
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      <main className="container mx-auto px-4 py-8">
+    <AppShell
+      header={
+        <Header
+          title="Financeiro"
+          subtitle="Controle MRR, ARPU e pagamentos sem atrito entre recepção e faturamento."
+          actions={headerActions}
+          alerts={headerAlerts}
+        />
+      }
+    >
+      <div className="space-y-6">
         <Tabs value={tab} onValueChange={(value) => setTab(value as typeof tab)} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 h-auto">
+          <TabsList className="grid h-auto w-full grid-cols-3">
             <TabsTrigger
               value="overview"
-              className="data-[state=active]:font-semibold py-2.5 text-sm sm:text-base"
+              className="py-2.5 text-sm data-[state=active]:font-semibold sm:text-base"
             >
               Resumo
             </TabsTrigger>
             <TabsTrigger
               value="payments"
-              className="data-[state=active]:font-semibold py-2.5 text-sm sm:text-base"
+              className="py-2.5 text-sm data-[state=active]:font-semibold sm:text-base"
             >
               Pagamentos
             </TabsTrigger>
             <TabsTrigger
               value="reports"
-              className="data-[state=active]:font-semibold py-2.5 text-sm sm:text-base"
+              className="py-2.5 text-sm data-[state=active]:font-semibold sm:text-base"
             >
               Relatórios
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="overview" className="space-y-6 mt-6">
+          <TabsContent value="overview" className="mt-6 space-y-6">
             <FinancialFilters
               filters={combinedFilters}
               onChange={handleFilterChange}
@@ -131,7 +158,7 @@ export default function FinancialPage() {
             <FinancialOverviewTab filters={combinedFilters} />
           </TabsContent>
 
-          <TabsContent value="payments" className="space-y-6 mt-6">
+          <TabsContent value="payments" className="mt-6 space-y-6">
             <FinancialFilters
               filters={combinedFilters}
               onChange={handleFilterChange}
@@ -141,7 +168,7 @@ export default function FinancialPage() {
             <FinancialPaymentsTab filters={combinedFilters} />
           </TabsContent>
 
-          <TabsContent value="reports" className="space-y-6 mt-6">
+          <TabsContent value="reports" className="mt-6 space-y-6">
             <FinancialFilters
               filters={combinedFilters}
               onChange={handleFilterChange}
@@ -151,8 +178,8 @@ export default function FinancialPage() {
             <FinancialReportsTab filters={combinedFilters} />
           </TabsContent>
         </Tabs>
-      </main>
-    </div>
+      </div>
+    </AppShell>
   );
 }
 

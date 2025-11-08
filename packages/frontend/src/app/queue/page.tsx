@@ -1,6 +1,7 @@
 "use client";
 
 import { AddQueueFormInline } from "@/components/AddQueueFormInline";
+import { AppShell } from "@/components/AppShell";
 import { Header } from "@/components/Header";
 import { HistoryTab } from "@/components/HistoryTab";
 import { PatientRecordDialog } from "@/components/PatientRecordDialog";
@@ -24,12 +25,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Spinner } from "@/components/ui/spinner";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQueueMutations } from "@/hooks/useQueueMutations";
@@ -37,6 +33,8 @@ import { ModuleKey, patientApi, Priority, queueApi, Role, Status } from "@/lib/a
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { BellRing, ClipboardList, PawPrint } from "lucide-react";
+import type { HeaderAction, HeaderAlert } from "@/components/Header";
 
 export default function QueuePage() {
   const router = useRouter();
@@ -60,6 +58,16 @@ export default function QueuePage() {
   const canManageQueue = canAccess(ModuleKey.QUEUE);
   const canCallOrManageQueue = canManageQueue || isVet;
   const canViewReports = canAccess(ModuleKey.REPORTS);
+
+  const { data: headerEntries = [] } = useQuery({
+    queryKey: ["queue", "active", isVet ? user?.id : undefined],
+    queryFn: () =>
+      queueApi
+        .listActive(isVet ? user?.id : undefined)
+        .then((res) => res.data),
+    refetchInterval: (query) => (query.state.error ? false : 3000),
+    enabled: !authLoading && !!user,
+  });
 
   const { data: entries = [] } = useQuery({
     queryKey: ["queue", "active", isVet ? user?.id : undefined],
@@ -240,61 +248,109 @@ export default function QueuePage() {
         ? "grid-cols-3"
         : "grid-cols-4";
 
+  const waitingCount = headerEntries.filter((entry) => entry.status === Status.WAITING).length;
+  const inProgressCount = headerEntries.filter(
+    (entry) => entry.status === Status.CALLED || entry.status === Status.IN_PROGRESS,
+  ).length;
+
+  const headerAlerts: HeaderAlert[] = [
+    waitingCount > 0
+      ? {
+          label: `${waitingCount} aguardando`,
+          tone: waitingCount > 3 ? "critical" : "warning",
+          icon: <PawPrint className="h-3.5 w-3.5" />,
+        }
+      : {
+          label: "Fila sob controle",
+          tone: "default",
+          icon: <PawPrint className="h-3.5 w-3.5" />,
+        },
+  ];
+
+  if (inProgressCount > 0) {
+    headerAlerts.push({
+      label: `${inProgressCount} em atendimento`,
+      tone: "default",
+      icon: <BellRing className="h-3.5 w-3.5" />,
+    });
+  }
+
+  const headerActions: HeaderAction[] = [
+    canManageQueue
+      ? {
+          label: "Adicionar paciente",
+          icon: <ClipboardList className="h-4 w-4" />,
+          onClick: () => setShowAddQueueModal(true),
+        }
+      : null,
+    canCallOrManageQueue
+      ? {
+          label: "Chamar próximo",
+          icon: <BellRing className="h-4 w-4" />,
+          onClick: handleCallNext,
+        }
+      : null,
+  ].filter(Boolean) as HeaderAction[];
+
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-
-      <main className="container mx-auto px-4 py-8">
-        <Tabs defaultValue="queue" className="space-y-8">
-          <TabsList className={`grid w-full h-auto ${tabLayoutClass}`}>
+    <AppShell
+      header={
+        <Header
+          title="Fila de atendimentos"
+          subtitle="Priorize emergências, acompanhe triagens e finalize altas sem ruído."
+          alerts={headerAlerts}
+          actions={headerActions}
+        />
+      }
+    >
+      <Tabs defaultValue="queue" className="space-y-8">
+        <TabsList className={`grid h-auto w-full ${tabLayoutClass}`}>
+          <TabsTrigger
+            value="queue"
+            className="py-2.5 text-sm data-[state=active]:font-semibold sm:text-base"
+          >
+            Fila
+          </TabsTrigger>
+          {secondaryTabs.map((tab) => (
             <TabsTrigger
-              value="queue"
-              className="data-[state=active]:font-semibold py-2.5 text-sm sm:text-base"
+              key={tab.value}
+              value={tab.value}
+              className="py-2.5 text-sm data-[state=active]:font-semibold sm:text-base"
             >
-              Fila
+              {tab.label}
             </TabsTrigger>
-            {secondaryTabs.map((tab) => (
-              <TabsTrigger
-                key={tab.value}
-                value={tab.value}
-                className="data-[state=active]:font-semibold py-2.5 text-sm sm:text-base"
-              >
-                {tab.label}
-              </TabsTrigger>
-            ))}
-          </TabsList>
+          ))}
+        </TabsList>
 
-          <TabsContent value="queue" className="space-y-6 mt-6">
-            <QueueTab
-              user={user}
-              authLoading={authLoading}
-              onShowAddQueueModal={canManageQueue ? handleShowAddQueueModal : undefined}
-              canManageQueue={canManageQueue}
-              onStart={isVet ? handleStart : undefined}
-              onComplete={handleComplete}
-              onCancel={canManageQueue ? handleCancel : undefined}
-              onCall={canCallOrManageQueue ? handleCall : undefined}
-              onViewRecord={handleViewRecord}
-              onRegisterConsultation={isVet ? handleRegisterConsultation : undefined}
-              onCallNext={canCallOrManageQueue ? handleCallNext : undefined}
-              callNextPending={queueMutations.callNextPending}
-            />
+        <TabsContent value="queue" className="mt-6 space-y-6">
+          <QueueTab
+            user={user}
+            authLoading={authLoading}
+            onShowAddQueueModal={canManageQueue ? handleShowAddQueueModal : undefined}
+            canManageQueue={canManageQueue}
+            onStart={isVet ? handleStart : undefined}
+            onComplete={handleComplete}
+            onCancel={canManageQueue ? handleCancel : undefined}
+            onCall={canCallOrManageQueue ? handleCall : undefined}
+            onViewRecord={handleViewRecord}
+            onRegisterConsultation={isVet ? handleRegisterConsultation : undefined}
+            onCallNext={canCallOrManageQueue ? handleCallNext : undefined}
+            callNextPending={queueMutations.callNextPending}
+          />
+        </TabsContent>
+
+        {canManageQueue && (
+          <TabsContent value="history" className="mt-6 space-y-6">
+            <HistoryTab authLoading={authLoading} />
           </TabsContent>
+        )}
 
-          {canManageQueue && (
-            <TabsContent value="history" className="space-y-6 mt-6">
-              <HistoryTab authLoading={authLoading} />
-            </TabsContent>
-          )}
-
-          {canViewReports && (
-            <TabsContent value="reports" className="space-y-6 mt-6">
-              <ReportsTab authLoading={authLoading} />
-            </TabsContent>
-          )}
-
-        </Tabs>
-      </main>
+        {canViewReports && (
+          <TabsContent value="reports" className="mt-6 space-y-6">
+            <ReportsTab authLoading={authLoading} />
+          </TabsContent>
+        )}
+      </Tabs>
 
       <AlertDialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
         <AlertDialogContent>
@@ -333,7 +389,7 @@ export default function QueuePage() {
       />
 
       <Dialog open={showAddQueueModal} onOpenChange={setShowAddQueueModal}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Adicionar à Fila</DialogTitle>
           </DialogHeader>
@@ -365,7 +421,7 @@ export default function QueuePage() {
           }}
         />
       )}
-    </div>
+    </AppShell>
   );
 }
 

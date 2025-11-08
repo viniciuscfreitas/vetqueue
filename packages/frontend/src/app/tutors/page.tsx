@@ -2,6 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { tutorApi, patientApi, Tutor, Patient, ModuleKey } from "@/lib/api";
+import { AppShell } from "@/components/AppShell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,8 +14,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Header } from "@/components/Header";
+import type { HeaderAction, HeaderAlert } from "@/components/Header";
 import { Spinner } from "@/components/ui/spinner";
-import { Search, Edit, Trash2, Users } from "lucide-react";
+import { Edit, Trash2, Users, Plus } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -195,33 +197,44 @@ export default function TutorsPage() {
     resetForm();
   };
 
-  return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      <main className="container mx-auto px-4 py-6">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-semibold">Tutores</h1>
-          {!showForm && (
-            <Button onClick={() => { setEditingTutor(null); resetForm(); setShowForm(true); }}>
-              Novo Tutor
-            </Button>
-          )}
-        </div>
+  const headerAlerts: HeaderAlert[] = [
+    {
+      label: `${tutors.length} tutores`,
+      icon: <Users className="h-3.5 w-3.5" />,
+    },
+  ];
 
-        {!showForm && (
-          <div className="mb-6">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder="Buscar por nome, telefone ou CPF/CNPJ..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-          </div>
-        )}
+  const headerActions: HeaderAction[] = [
+    {
+      label: showForm ? "Fechar formulário" : "Novo tutor",
+      icon: <Plus className="h-4 w-4" />,
+      variant: showForm ? "outline" : undefined,
+      onClick: () => {
+        if (showForm) {
+          handleCancel();
+        } else {
+          setEditingTutor(null);
+          resetForm();
+          setShowForm(true);
+        }
+      },
+    },
+  ];
+
+  return (
+    <AppShell
+      header={
+        <Header
+          title="Tutores"
+          subtitle="Gerencie responsáveis pelos pets e mantenha dados de contato atualizados para campanhas e retornos."
+          onSearch={(term) => setSearchTerm(term)}
+          defaultSearchValue={searchTerm}
+          actions={headerActions}
+          alerts={headerAlerts}
+        />
+      }
+    >
+      <div className="mx-auto max-w-5xl space-y-6">
 
         {showForm && (
           <Card className="mb-6 border-2 transition-all">
@@ -398,7 +411,7 @@ export default function TutorsPage() {
             )}
           </div>
         )}
-      </main>
+      </div>
 
       <Dialog open={!!viewingTutor} onOpenChange={(open) => !open && setViewingTutor(null)}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -463,7 +476,7 @@ export default function TutorsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </AppShell>
   );
 }
 

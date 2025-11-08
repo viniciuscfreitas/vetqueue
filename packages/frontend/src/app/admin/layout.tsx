@@ -2,12 +2,15 @@
 
 import { ReactNode, useEffect, useMemo } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { AppShell } from "@/components/AppShell";
 import { Header } from "@/components/Header";
+import type { HeaderAlert } from "@/components/Header";
 import { useAuth } from "@/contexts/AuthContext";
 import { Spinner } from "@/components/ui/spinner";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { ADMIN_NAV_ITEMS } from "./nav-items";
+import { Settings } from "lucide-react";
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   const { user, isLoading, canAccess } = useAuth();
@@ -60,10 +63,24 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 
   const currentValue = currentItem?.href ?? "/admin";
 
+  const headerAlerts: HeaderAlert[] = [
+    {
+      label: `${navItems.length} módulos`,
+      icon: <Settings className="h-3.5 w-3.5" />,
+    },
+  ];
+
   return (
-    <div className="min-h-screen bg-muted/30">
-      <Header />
-      <div className="container mx-auto px-4 py-6">
+    <AppShell
+      header={
+        <Header
+          title="Administração"
+          subtitle="Configure usuários, salas, serviços e permissões sem sair do fluxo."
+          alerts={headerAlerts}
+        />
+      }
+    >
+      <div className="mx-auto max-w-6xl px-0 py-4 sm:px-2 sm:py-6">
         <Tabs
           value={currentValue}
           onValueChange={(value) => {
@@ -97,7 +114,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           </div>
         </Tabs>
       </div>
-    </div>
+    </AppShell>
   );
 }
 

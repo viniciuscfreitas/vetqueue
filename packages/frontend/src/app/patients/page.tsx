@@ -2,6 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { patientApi, Patient } from "@/lib/api";
+import { AppShell } from "@/components/AppShell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,8 +14,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Header } from "@/components/Header";
+import type { HeaderAction, HeaderAlert } from "@/components/Header";
 import { Spinner } from "@/components/ui/spinner";
-import { Search, History, AlertCircle } from "lucide-react";
+import { History, AlertCircle, PawPrint, Plus } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { PatientRecordDialog } from "@/components/PatientRecordDialog";
@@ -277,33 +279,42 @@ export default function PatientsPage() {
     resetForm();
   };
 
-  return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      <main className="container mx-auto px-4 py-6">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-semibold">Pacientes</h1>
-          {!showForm && (
-            <Button onClick={() => setShowForm(true)}>
-              Novo Paciente
-            </Button>
-          )}
-        </div>
+  const headerAlerts: HeaderAlert[] = [
+    {
+      label: `${patients.length} pacientes`,
+      icon: <PawPrint className="h-3.5 w-3.5" />,
+    },
+  ];
 
-        {!showForm && (
-          <div className="mb-6">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder="Buscar por paciente ou tutor..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-          </div>
-        )}
+  const headerActions: HeaderAction[] = [
+    {
+      label: showForm ? "Fechar formulário" : "Novo paciente",
+      icon: <Plus className="h-4 w-4" />,
+      variant: showForm ? "outline" : undefined,
+      onClick: () => {
+        if (showForm) {
+          handleCancel();
+        } else {
+          setShowForm(true);
+        }
+      },
+    },
+  ];
+
+  return (
+    <AppShell
+      header={
+        <Header
+          title="Pacientes"
+          subtitle="Cadastre pets, mantenha dados atualizados e deixe o prontuário sempre pronto para o próximo atendimento."
+          onSearch={(term) => setSearchTerm(term)}
+          defaultSearchValue={searchTerm}
+          actions={headerActions}
+          alerts={headerAlerts}
+        />
+      }
+    >
+      <div className="mx-auto max-w-6xl space-y-6">
 
         {showForm && (
           <Card className="mb-6 border-2 transition-all">
@@ -655,7 +666,7 @@ export default function PatientsPage() {
             )}
           </div>
         )}
-      </main>
+      </div>
 
       {historyPatient && (
         <PatientRecordDialog
@@ -691,7 +702,7 @@ export default function PatientsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </AppShell>
   );
 }
 

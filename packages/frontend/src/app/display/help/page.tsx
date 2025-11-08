@@ -1,7 +1,10 @@
 "use client";
 
+import { AppShell } from "@/components/AppShell";
 import { Header } from "@/components/Header";
+import type { HeaderAlert } from "@/components/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Monitor } from "lucide-react";
 // Simple QR Code component - using canvas approach
 function QRCode({ value, size }: { value: string; size: number }) {
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(value)}`;
@@ -13,10 +16,24 @@ export default function DisplayHelpPage() {
     ? `${window.location.origin}/display`
     : "";
 
+  const headerAlerts: HeaderAlert[] = [
+    {
+      label: "Modo TV",
+      icon: <Monitor className="h-3.5 w-3.5" />,
+    },
+  ];
+
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      <main className="container mx-auto px-4 py-6 md:px-6 md:py-8 lg:px-8 lg:py-10">
+    <AppShell
+      header={
+        <Header
+          title="Tela de Exibição"
+          subtitle="Compartilhe o link ou escaneie o QR Code para ativar o painel da TV."
+          alerts={headerAlerts}
+        />
+      }
+    >
+      <div className="container mx-auto px-4 py-6 md:px-6 md:py-8 lg:px-8 lg:py-10">
         <div className="max-w-2xl mx-auto space-y-6">
           <Card>
             <CardHeader>
@@ -71,8 +88,8 @@ export default function DisplayHelpPage() {
             </CardContent>
           </Card>
         </div>
-      </main>
-    </div>
+      </div>
+    </AppShell>
   );
 }
 

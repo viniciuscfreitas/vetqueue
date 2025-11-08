@@ -1,10 +1,12 @@
 "use client";
 
 import { useToast } from "@/components/ui/use-toast";
-import { Patient, Priority, queueApi, ServiceType } from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
+import { ActiveVet, ModuleKey, Patient, Priority, queueApi, ServiceType, userApi } from "@/lib/api";
 import { SERVICE_TYPE_OPTIONS } from "@/lib/constants";
 import { createErrorHandler } from "@/lib/errors";
 import { loadQueueFormPreferences, saveQueueFormPreferences } from "@/lib/utils";
+import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { PatientAutocomplete } from "./PatientAutocomplete";
@@ -22,6 +24,7 @@ import {
 
 export function AddQueueForm() {
   const router = useRouter();
+  const { canAccess } = useAuth();
   const { toast } = useToast();
   const handleError = createErrorHandler(toast);
   const [loading, setLoading] = useState(false);
@@ -35,6 +38,7 @@ export function AddQueueForm() {
       tutorId: undefined as string | undefined,
       serviceType: (preferences.serviceType as ServiceType | "") || "",
       priority: preferences.priority ?? Priority.NORMAL,
+      assignedVetId: "NONE",
       hasScheduledAppointment: false,
       scheduledAt: "",
       patientId: undefined as string | undefined,
@@ -42,6 +46,17 @@ export function AddQueueForm() {
   };
 
   const [formData, setFormData] = useState(buildInitialFormData);
+  const canManageQueue = canAccess(ModuleKey.QUEUE);
+
+  const { data: vets = [] } = useQuery<ActiveVet[]>({
+    queryKey: ["users", "active-vets"],
+    queryFn: async () => {
+      const response = await userApi.getActiveVets();
+      return response.data;
+    },
+    enabled: canManageQueue,
+    staleTime: 30_000,
+  });
 
   useEffect(() => {
     if (!formData.serviceType && SERVICE_TYPE_OPTIONS.length > 0) {
@@ -78,6 +93,7 @@ export function AddQueueForm() {
         tutorName: formData.tutorName,
         serviceType: formData.serviceType as ServiceType,
         priority: formData.priority,
+        assignedVetId: formData.assignedVetId === "NONE" ? undefined : formData.assignedVetId,
         hasScheduledAppointment: formData.hasScheduledAppointment,
         scheduledAt: scheduledDateTime?.toISOString(),
         patientId: formData.patientId,
@@ -185,6 +201,32 @@ export function AddQueueForm() {
           </SelectContent>
         </Select>
       </div>
+
+      {canManageQueue && (
+        <div className="space-y-2">
+          <Label htmlFor="assignedVetId" className="text-sm font-medium">
+            Veterinário
+          </Label>
+          <Select
+            value={formData.assignedVetId}
+            onValueChange={(value) =>
+              setFormData((prev) => ({ ...prev, assignedVetId: value }))
+            }
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Fila geral" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="NONE">Fila geral</SelectItem>
+              {vets.map((vet) => (
+                <SelectItem key={vet.vetId} value={vet.vetId}>
+                  {vet.vetName} - {vet.roomName}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
 
       <div className="border-t pt-4">
         <Button

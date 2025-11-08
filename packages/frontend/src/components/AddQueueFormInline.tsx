@@ -1,7 +1,21 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  ModuleKey,
+  Patient,
+  Priority,
+  queueApi,
+  serviceApi,
+  userApi
+} from "@/lib/api";
+import { createErrorHandler } from "@/lib/errors";
+import { loadQueueFormPreferences, saveQueueFormPreferences } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
+import { PatientAutocomplete } from "./PatientAutocomplete";
+import { TutorAutocomplete } from "./TutorAutocomplete";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
@@ -12,21 +26,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
-import {
-  Priority,
-  queueApi,
-  userApi,
-  serviceApi,
-  ActiveVet,
-  Patient,
-  ModuleKey,
-} from "@/lib/api";
-import { useToast } from "@/components/ui/use-toast";
-import { createErrorHandler } from "@/lib/errors";
-import { useAuth } from "@/contexts/AuthContext";
-import { PatientAutocomplete } from "./PatientAutocomplete";
-import { TutorAutocomplete } from "./TutorAutocomplete";
-import { loadQueueFormPreferences, saveQueueFormPreferences } from "@/lib/utils";
 
 interface AddQueueFormInlineProps {
   onSuccess?: () => void;
@@ -203,6 +202,32 @@ export function AddQueueFormInline({ onSuccess, onClose, inline = true }: AddQue
         </Select>
       </div>
 
+      {canManageQueue && (
+        <div className="space-y-2">
+          <Label htmlFor="assignedVetId" className="text-sm font-medium">
+            Veterinário
+          </Label>
+          <Select
+            value={formData.assignedVetId}
+            onValueChange={(value) =>
+              setFormData({ ...formData, assignedVetId: value })
+            }
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Fila geral" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="NONE">Fila geral</SelectItem>
+              {vets.map((vet) => (
+                <SelectItem key={vet.vetId} value={vet.vetId}>
+                  {vet.vetName} - {vet.roomName}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
       <div className="border-t pt-4">
         <Button
           type="button"
@@ -256,32 +281,6 @@ export function AddQueueFormInline({ onSuccess, onClose, inline = true }: AddQue
                 />
               </div>
             </div>
-
-            {canManageQueue && (
-              <div className="space-y-2">
-                <Label htmlFor="assignedVetId" className="text-sm font-medium">
-                  Veterinário
-                </Label>
-                <Select
-                  value={formData.assignedVetId}
-                  onValueChange={(value) =>
-                    setFormData((prev) => ({ ...prev, assignedVetId: value }))
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Fila geral" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="NONE">Fila geral</SelectItem>
-                    {vets.map((vet) => (
-                      <SelectItem key={vet.vetId} value={vet.vetId}>
-                        {vet.vetName} - {vet.roomName}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
 
             <div className="flex items-center space-x-2">
               <input

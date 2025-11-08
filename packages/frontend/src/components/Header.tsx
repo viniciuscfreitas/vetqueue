@@ -71,7 +71,7 @@ export function Header({
   };
 
   return (
-    <div className="w-full px-4 sm:px-6 lg:px-8">
+    <div className="w-full">
       <div className="flex flex-wrap items-center gap-3 py-3 sm:gap-4">
         <div className="flex min-w-[220px] flex-1 flex-col gap-1">
           <h1 className="truncate text-left text-2xl font-semibold tracking-tight text-slate-900">

@@ -298,8 +298,6 @@ export default function QueuePage() {
           onCall={canCallOrManageQueue ? handleCall : undefined}
           onViewRecord={handleViewRecord}
           onRegisterConsultation={isVet ? handleRegisterConsultation : undefined}
-          onCallNext={canCallOrManageQueue ? handleCallNext : undefined}
-          callNextPending={queueMutations.callNextPending}
         />
       </div>
 

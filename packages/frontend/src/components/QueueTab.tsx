@@ -3,7 +3,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { queueApi, Status, QueueEntry, Role } from "@/lib/api";
 import { QueueList } from "@/components/QueueList";
-import { QueueHeader } from "@/components/QueueHeader";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -20,8 +19,6 @@ interface QueueTabProps {
   onCall?: (entryId: string) => void;
   onViewRecord?: (patientId: string, queueEntryId: string) => void;
   onRegisterConsultation?: (patientId: string, queueEntryId: string) => void;
-  onCallNext?: () => void;
-  callNextPending: boolean;
 }
 
 export function QueueTab({
@@ -35,8 +32,6 @@ export function QueueTab({
   onCall,
   onViewRecord,
   onRegisterConsultation,
-  onCallNext,
-  callNextPending,
 }: QueueTabProps) {
   const queryClient = useQueryClient();
 
@@ -51,20 +46,8 @@ export function QueueTab({
     enabled: !authLoading && !!user,
   });
 
-  const waitingCount = entries.filter((entry) => entry.status === Status.WAITING).length;
-
   return (
-    <div className="space-y-4">
-      <QueueHeader
-        entries={entries}
-        isLoading={isLoading}
-        isError={isError}
-        waitingCount={waitingCount}
-        onAddClick={onShowAddQueueModal}
-        onCallNextClick={onCallNext}
-        callNextPending={callNextPending}
-      />
-
+    <div className="space-y-6">
       {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {[1, 2, 3].map((i) => (

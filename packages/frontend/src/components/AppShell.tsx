@@ -59,7 +59,7 @@ function AppShellInner({ header, children }: AppShellProps) {
       <div className="flex min-h-screen">
         <aside
           className={cn(
-            "fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-border/60 bg-white/95 px-3 pb-4 pt-3 shadow-sm backdrop-blur transition-transform duration-200",
+            "fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-white px-3 pb-4 pt-3 transition-transform duration-200",
             sidebarOpen ? "translate-x-0" : "-translate-x-full sm:translate-x-0",
           )}
           aria-label="Menu principal"
@@ -164,7 +164,7 @@ function AppShellInner({ header, children }: AppShellProps) {
         )}
 
         <div className="flex min-h-screen flex-1 flex-col sm:pl-64">
-          <div className="sticky top-0 z-20 border-b border-border/60 bg-white/90 backdrop-blur">
+          <div className="sticky top-0 z-20 bg-white">
             <div className="flex items-start gap-3 px-4 py-3 sm:px-6 lg:px-10">
               <button
                 type="button"

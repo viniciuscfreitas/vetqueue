@@ -71,8 +71,8 @@ export function Header({
   };
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-2 sm:px-0">
-      <div className="flex flex-wrap items-center gap-3 rounded-xl bg-white/90 px-3 py-3 shadow-sm ring-1 ring-slate-100/60 backdrop-blur-sm sm:px-4 lg:gap-4 lg:px-6">
+    <div className="w-full px-4 sm:px-6 lg:px-8">
+      <div className="flex flex-wrap items-center gap-3 py-3 sm:gap-4">
         <div className="flex min-w-[220px] flex-1 flex-col gap-1">
           <h1 className="truncate text-left text-2xl font-semibold tracking-tight text-slate-900">
             {effectiveTitle}
@@ -138,9 +138,7 @@ export function Header({
         )}
       </div>
 
-      {children && (
-        <div className="mt-3 rounded-xl border border-dashed border-slate-200 bg-white/70 p-4">{children}</div>
-      )}
+      {children && <div className="mt-4">{children}</div>}
     </div>
   );
 }

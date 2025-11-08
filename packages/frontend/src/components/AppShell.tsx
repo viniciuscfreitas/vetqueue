@@ -174,9 +174,7 @@ function AppShellInner({ header, children }: AppShellProps) {
               >
                 <Menu className="h-5 w-5" />
               </button>
-              <div className="flex-1">
-                <div className="mx-auto w-full max-w-6xl">{header}</div>
-              </div>
+              <div className="flex-1">{header}</div>
             </div>
           </div>
           <main className="flex-1 px-4 py-6 sm:px-6 lg:px-10">{children}</main>

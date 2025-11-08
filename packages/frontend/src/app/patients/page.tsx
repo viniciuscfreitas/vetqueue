@@ -98,11 +98,14 @@ export default function PatientsPage() {
     enabled: isAuthorized,
   });
 
-  const patients = searchTerm.trim()
-    ? allPatients.filter(p => 
-        p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.tutorName.toLowerCase().includes(searchTerm.toLowerCase())
-      )
+  const normalizedSearch = searchTerm.trim().toLowerCase();
+
+  const patients = normalizedSearch
+    ? allPatients.filter((p) => {
+        const patientName = p.name?.toLowerCase() ?? "";
+        const tutorName = p.tutorName?.toLowerCase() ?? "";
+        return patientName.includes(normalizedSearch) || tutorName.includes(normalizedSearch);
+      })
     : allPatients;
 
   const createMutation = useMutation({

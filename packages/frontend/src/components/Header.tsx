@@ -71,15 +71,15 @@ export function Header({
   };
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-4 px-2 sm:px-0">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="space-y-1">
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">{effectiveTitle}</h1>
-          <p className="max-w-2xl text-sm text-muted-foreground">{effectiveSubtitle}</p>
+    <div className="mx-auto w-full max-w-6xl space-y-3 px-2 sm:px-0">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
+          <h1 className="truncate text-2xl font-semibold tracking-tight text-slate-900">{effectiveTitle}</h1>
+          <p className="text-sm text-muted-foreground lg:max-w-xl">{effectiveSubtitle}</p>
         </div>
-        {alerts.length > 0 && (
-          <div className="flex flex-wrap items-center gap-2">
-            {alerts.map((alert, index) => (
+        <div className="flex flex-wrap items-center justify-end gap-2 lg:flex-1 lg:justify-end">
+          {alerts.length > 0 &&
+            alerts.map((alert, index) => (
               <span
                 key={`${alert.label}-${index}`}
                 className={cn(
@@ -95,16 +95,10 @@ export function Header({
                 {alert.label}
               </span>
             ))}
-          </div>
-        )}
-      </div>
-
-      {(onSearch || actions.length > 0) && (
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
           {onSearch && (
             <form
               onSubmit={handleSubmit}
-              className="flex flex-1 items-center gap-2 rounded-xl border border-transparent bg-white px-3 py-2 shadow-sm transition focus-within:border-primary/40 focus-within:shadow-md"
+              className="flex min-w-[280px] flex-1 items-center gap-2 rounded-xl border border-transparent bg-white px-3 py-2 shadow-sm transition focus-within:border-primary/40 focus-within:shadow-md lg:min-w-[320px] lg:max-w-md"
             >
               <Search className="h-4 w-4 text-muted-foreground" />
               <Input
@@ -135,7 +129,7 @@ export function Header({
             </div>
           )}
         </div>
-      )}
+      </div>
 
       {children && (
         <div className="rounded-xl border border-dashed border-slate-200 bg-white/70 p-4">{children}</div>

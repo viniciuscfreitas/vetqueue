@@ -3,10 +3,8 @@
 import { AddQueueFormInline } from "@/components/AddQueueFormInline";
 import { AppShell } from "@/components/AppShell";
 import { Header } from "@/components/Header";
-import { HistoryTab } from "@/components/HistoryTab";
 import { PatientRecordDialog } from "@/components/PatientRecordDialog";
 import { QueueTab } from "@/components/QueueTab";
-import { ReportsTab } from "@/components/ReportsTab";
 import { RoomSelectModal } from "@/components/RoomSelectModal";
 import {
   AlertDialog,
@@ -25,7 +23,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Spinner } from "@/components/ui/spinner";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQueueMutations } from "@/hooks/useQueueMutations";
@@ -57,7 +54,6 @@ export default function QueuePage() {
   const isVet = user?.role === Role.VET;
   const canManageQueue = canAccess(ModuleKey.QUEUE);
   const canCallOrManageQueue = canManageQueue || isVet;
-  const canViewReports = canAccess(ModuleKey.REPORTS);
 
   const { data: headerEntries = [] } = useQuery({
     queryKey: ["queue", "active", isVet ? user?.id : undefined],
@@ -235,19 +231,6 @@ export default function QueuePage() {
     return null;
   }
 
-  const secondaryTabs = [
-    canManageQueue && { value: "history", label: "Histórico" },
-    canViewReports && { value: "reports", label: "Relatórios" },
-  ].filter(Boolean) as Array<{ value: string; label: string }>;
-
-  const tabLayoutClass = secondaryTabs.length === 0
-    ? "grid-cols-1"
-    : secondaryTabs.length === 1
-      ? "grid-cols-2"
-      : secondaryTabs.length === 2
-        ? "grid-cols-3"
-        : "grid-cols-4";
-
   const waitingCount = headerEntries.filter((entry) => entry.status === Status.WAITING).length;
   const inProgressCount = headerEntries.filter(
     (entry) => entry.status === Status.CALLED || entry.status === Status.IN_PROGRESS,
@@ -303,54 +286,22 @@ export default function QueuePage() {
         />
       }
     >
-      <Tabs defaultValue="queue" className="space-y-8">
-        <TabsList className={`grid h-auto w-full ${tabLayoutClass}`}>
-          <TabsTrigger
-            value="queue"
-            className="py-2.5 text-sm data-[state=active]:font-semibold sm:text-base"
-          >
-            Fila
-          </TabsTrigger>
-          {secondaryTabs.map((tab) => (
-            <TabsTrigger
-              key={tab.value}
-              value={tab.value}
-              className="py-2.5 text-sm data-[state=active]:font-semibold sm:text-base"
-            >
-              {tab.label}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-
-        <TabsContent value="queue" className="mt-6 space-y-6">
-          <QueueTab
-            user={user}
-            authLoading={authLoading}
-            onShowAddQueueModal={canManageQueue ? handleShowAddQueueModal : undefined}
-            canManageQueue={canManageQueue}
-            onStart={isVet ? handleStart : undefined}
-            onComplete={handleComplete}
-            onCancel={canManageQueue ? handleCancel : undefined}
-            onCall={canCallOrManageQueue ? handleCall : undefined}
-            onViewRecord={handleViewRecord}
-            onRegisterConsultation={isVet ? handleRegisterConsultation : undefined}
-            onCallNext={canCallOrManageQueue ? handleCallNext : undefined}
-            callNextPending={queueMutations.callNextPending}
-          />
-        </TabsContent>
-
-        {canManageQueue && (
-          <TabsContent value="history" className="mt-6 space-y-6">
-            <HistoryTab authLoading={authLoading} />
-          </TabsContent>
-        )}
-
-        {canViewReports && (
-          <TabsContent value="reports" className="mt-6 space-y-6">
-            <ReportsTab authLoading={authLoading} />
-          </TabsContent>
-        )}
-      </Tabs>
+      <div className="space-y-6">
+        <QueueTab
+          user={user}
+          authLoading={authLoading}
+          onShowAddQueueModal={canManageQueue ? handleShowAddQueueModal : undefined}
+          canManageQueue={canManageQueue}
+          onStart={isVet ? handleStart : undefined}
+          onComplete={handleComplete}
+          onCancel={canManageQueue ? handleCancel : undefined}
+          onCall={canCallOrManageQueue ? handleCall : undefined}
+          onViewRecord={handleViewRecord}
+          onRegisterConsultation={isVet ? handleRegisterConsultation : undefined}
+          onCallNext={canCallOrManageQueue ? handleCallNext : undefined}
+          callNextPending={queueMutations.callNextPending}
+        />
+      </div>
 
       <AlertDialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
         <AlertDialogContent>

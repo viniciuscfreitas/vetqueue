@@ -64,8 +64,8 @@ function AppShellInner({ header, children }: AppShellProps) {
           )}
           aria-label="Menu principal"
         >
-          <div className="flex items-center justify-between px-2">
-            <Link href="/" className="flex items-center gap-2">
+          <div className="relative flex items-center justify-center px-2 py-1">
+            <Link href="/" className="flex items-center justify-center gap-2">
               <Image
                 src="/logo.png"
                 alt="FisioPet"
@@ -78,7 +78,7 @@ function AppShellInner({ header, children }: AppShellProps) {
             <button
               type="button"
               aria-label="Fechar menu"
-              className="rounded-md p-2 text-muted-foreground hover:bg-muted sm:hidden"
+              className="absolute right-1 top-1 rounded-md p-2 text-muted-foreground hover:bg-muted sm:hidden"
               onClick={() => setSidebarOpen(false)}
             >
               <X className="h-5 w-5" />

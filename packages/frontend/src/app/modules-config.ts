@@ -1,16 +1,5 @@
 import { ModuleKey } from "@/lib/api";
-import {
-  PawPrint,
-  ClipboardList,
-  CalendarClock,
-  Wallet,
-  Users,
-  ShieldCheck,
-  LayoutDashboard,
-  Stethoscope,
-  HeartPulse,
-  LucideIcon,
-} from "lucide-react";
+import { PawPrint, ClipboardList, Wallet, Users, ShieldCheck, LucideIcon } from "lucide-react";
 
 type ModuleGroup = "core" | "admin";
 
@@ -26,14 +15,6 @@ export interface ShellModule {
 }
 
 export const shellModules: ShellModule[] = [
-  {
-    id: "dashboard",
-    label: "Resumo",
-    description: "Visão geral do hospital",
-    href: "/",
-    icon: LayoutDashboard,
-    group: "core",
-  },
   {
     id: ModuleKey.QUEUE,
     label: "Fila",
@@ -71,15 +52,6 @@ export const shellModules: ShellModule[] = [
     group: "core",
   },
   {
-    id: "reports",
-    label: "Relatórios",
-    description: "KPIs de conversão e engajamento",
-    href: "/queue?tab=reports",
-    icon: HeartPulse,
-    requiredModules: [ModuleKey.REPORTS],
-    group: "core",
-  },
-  {
     id: "admin",
     label: "Administração",
     description: "Permissões e infraestrutura",
@@ -93,15 +65,6 @@ export const shellModules: ShellModule[] = [
     ],
     requireAll: false,
     group: "admin",
-  },
-  {
-    id: "consultations",
-    label: "Consultas",
-    description: "Cadastros rápidos de consultas",
-    href: "/queue?tab=history",
-    icon: Stethoscope,
-    requiredModules: [ModuleKey.QUEUE],
-    group: "core",
   },
 ];
 

@@ -4,7 +4,7 @@ import { AddQueueFormInline } from "@/components/AddQueueFormInline";
 import { AppShell } from "@/components/AppShell";
 import { Header } from "@/components/Header";
 import { PatientRecordDialog } from "@/components/PatientRecordDialog";
-import { QueueTab } from "@/components/QueueTab";
+import { FilaWorkflow } from "@/components/FilaWorkflow";
 import { RoomSelectModal } from "@/components/RoomSelectModal";
 import {
   AlertDialog,
@@ -23,6 +23,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Spinner } from "@/components/ui/spinner";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQueueMutations } from "@/hooks/useQueueMutations";
@@ -55,17 +57,11 @@ export default function QueuePage() {
   const canManageQueue = canAccess(ModuleKey.QUEUE);
   const canCallOrManageQueue = canManageQueue || isVet;
 
-  const { data: headerEntries = [] } = useQuery({
-    queryKey: ["queue", "active", isVet ? user?.id : undefined],
-    queryFn: () =>
-      queueApi
-        .listActive(isVet ? user?.id : undefined)
-        .then((res) => res.data),
-    refetchInterval: (query) => (query.state.error ? false : 3000),
-    enabled: !authLoading && !!user,
-  });
-
-  const { data: entries = [] } = useQuery({
+  const {
+    data: entries = [],
+    isLoading: entriesLoading,
+    isError: entriesError,
+  } = useQuery({
     queryKey: ["queue", "active", isVet ? user?.id : undefined],
     queryFn: () => queueApi
       .listActive(isVet ? user?.id : undefined)
@@ -231,8 +227,8 @@ export default function QueuePage() {
     return null;
   }
 
-  const waitingCount = headerEntries.filter((entry) => entry.status === Status.WAITING).length;
-  const inProgressCount = headerEntries.filter(
+  const waitingCount = entries.filter((entry) => entry.status === Status.WAITING).length;
+  const inProgressCount = entries.filter(
     (entry) => entry.status === Status.CALLED || entry.status === Status.IN_PROGRESS,
   ).length;
 
@@ -264,18 +260,53 @@ export default function QueuePage() {
       }
     >
       <div className="space-y-6">
-        <QueueTab
-          user={user}
-          authLoading={authLoading}
-          onShowAddQueueModal={canManageQueue ? handleShowAddQueueModal : undefined}
-          canManageQueue={canManageQueue}
-          onStart={isVet ? handleStart : undefined}
-          onComplete={handleComplete}
-          onCancel={canManageQueue ? handleCancel : undefined}
-          onCall={canCallOrManageQueue ? handleCall : undefined}
-          onViewRecord={handleViewRecord}
-          onRegisterConsultation={isVet ? handleRegisterConsultation : undefined}
-        />
+        {entriesLoading ? (
+          <div className="space-y-6 rounded-2xl border border-border bg-card p-6 shadow-sm">
+            <div className="space-y-3">
+              <Skeleton className="h-6 w-48" />
+              <Skeleton className="h-4 w-64" />
+            </div>
+            <div className="grid gap-4 md:grid-cols-3">
+              {Array.from({ length: 3 }).map((_, index) => (
+                <Skeleton key={index} className="h-28 rounded-xl" />
+              ))}
+            </div>
+            <div className="grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
+              {Array.from({ length: 3 }).map((_, index) => (
+                <Skeleton key={index} className="h-60 rounded-xl" />
+              ))}
+            </div>
+          </div>
+        ) : entriesError ? (
+          <div className="rounded-2xl border border-destructive/40 bg-destructive/5 p-10 text-center">
+            <p className="text-lg font-semibold text-destructive">
+              Erro ao carregar fila
+            </p>
+            <p className="mt-2 text-sm text-destructive/80">
+              Não foi possível carregar os atendimentos em andamento. Tente novamente.
+            </p>
+            <Button
+              variant="outline"
+              className="mt-4"
+              onClick={() => queryClient.invalidateQueries({ queryKey: ["queue", "active"] })}
+            >
+              Tentar novamente
+            </Button>
+          </div>
+        ) : (
+          <FilaWorkflow
+            user={user}
+            entries={entries}
+            canManageQueue={canManageQueue}
+            onAddPatient={canManageQueue ? handleShowAddQueueModal : undefined}
+            onCall={canCallOrManageQueue ? handleCall : undefined}
+            onStart={isVet ? handleStart : undefined}
+            onComplete={handleComplete}
+            onCancel={canManageQueue ? handleCancel : undefined}
+            onViewRecord={handleViewRecord}
+            onRegisterConsultation={isVet ? handleRegisterConsultation : undefined}
+          />
+        )}
       </div>
 
       <AlertDialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>

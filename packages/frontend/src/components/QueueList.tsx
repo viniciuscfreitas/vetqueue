@@ -1,7 +1,8 @@
-import { QueueEntry, Status } from "@/lib/api";
+import { QueueEntry } from "@/lib/api";
 import { QueueCard } from "./QueueCard";
 import { Button } from "./ui/button";
 import { Plus } from "lucide-react";
+import { sortQueueEntries, splitActiveEntries } from "@/lib/queueHelpers";
 
 interface QueueListProps {
   entries: QueueEntry[];
@@ -44,17 +45,8 @@ export function QueueList({
     );
   }
 
-  const sortEntries = (entries: QueueEntry[]) => {
-    return [...entries].sort((a, b) => {
-      if (a.priority !== b.priority) {
-        return a.priority - b.priority;
-      }
-      return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-    });
-  };
-
   if (mode === "history") {
-    const sortedHistory = sortEntries(entries).reverse();
+    const sortedHistory = sortQueueEntries(entries).reverse();
 
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -75,17 +67,7 @@ export function QueueList({
     );
   }
 
-  const inProgress = sortEntries(
-    entries.filter(e => e.status === Status.CALLED || e.status === Status.IN_PROGRESS)
-  ).sort((a, b) => {
-    if (a.status === Status.CALLED && b.status === Status.IN_PROGRESS) return -1;
-    if (a.status === Status.IN_PROGRESS && b.status === Status.CALLED) return 1;
-    return 0;
-  });
-
-  const waiting = sortEntries(
-    entries.filter(e => e.status === Status.WAITING)
-  );
+  const { inProgress, waiting } = splitActiveEntries(entries);
 
   const renderSection = (title: string, sectionEntries: QueueEntry[], showPosition: boolean) => {
     if (sectionEntries.length === 0) return null;

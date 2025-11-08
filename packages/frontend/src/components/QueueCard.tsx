@@ -1,4 +1,4 @@
-import { QueueEntry, Status, ServiceType } from "@/lib/api";
+import { QueueEntry, Status, ServiceType, PaymentStatus } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { PriorityBadge } from "./PriorityBadge";
 import { Badge } from "./ui/badge";
@@ -19,6 +19,8 @@ interface QueueCardProps {
   onCall?: (id: string) => void;
   onViewRecord?: (patientId: string, queueEntryId: string) => void;
   onRegisterConsultation?: (patientId: string, queueEntryId: string) => void;
+  onRequeue?: (id: string) => void;
+  tabContext?: "emergency" | "triage" | "in-progress" | "completed" | "paid";
 }
 
 const statusConfig = {
@@ -54,6 +56,8 @@ export function QueueCard({
   onCall,
   onViewRecord,
   onRegisterConsultation: _onRegisterConsultation,
+  onRequeue,
+  tabContext,
 }: QueueCardProps) {
   const status = statusConfig[entry.status];
   const canStart = entry.status === Status.CALLED || entry.status === Status.WAITING;
@@ -79,12 +83,31 @@ export function QueueCard({
 
   const canEdit = entry.status === Status.WAITING && canManageQueue;
   const queryClient = useQueryClient();
-  const waitCardHighlight = entry.status === Status.WAITING ? "border-amber-200 bg-amber-50" : "border-border bg-background";
-  const serviceCardHighlight = entry.status === Status.IN_PROGRESS ? "border-blue-200 bg-blue-50" : "border-border bg-background";
+  const tabAccent = {
+    emergency: "border-red-200 bg-red-50",
+    triage: "border-sky-200 bg-sky-50",
+    "in-progress": "border-orange-200 bg-orange-50",
+    completed: "border-emerald-200 bg-emerald-50",
+    paid: "border-emerald-300 bg-emerald-100",
+  } as const;
+
+  const waitCardHighlight =
+    entry.status === Status.WAITING
+      ? "border-amber-200 bg-amber-50"
+      : "border-border bg-background";
+  const serviceCardHighlight =
+    entry.status === Status.IN_PROGRESS
+      ? "border-blue-200 bg-blue-50"
+      : "border-border bg-background";
 
   return (
      <>
-      <Card className="transition-all hover:shadow-md">
+      <Card
+        className={cn(
+          "transition-all hover:shadow-md border",
+          tabContext && tabAccent[tabContext] ? tabAccent[tabContext] : "border-border bg-background",
+        )}
+      >
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0 space-y-2">
@@ -170,6 +193,16 @@ export function QueueCard({
                   Iniciar
                 </Button>
               )}
+              {tabContext === "in-progress" && onRequeue && (
+                <Button
+                  onClick={() => onRequeue(entry.id)}
+                  size="sm"
+                  variant="outline"
+                  className="flex-1 sm:flex-none"
+                >
+                  Reenfileirar
+                </Button>
+              )}
               {entry.status === Status.IN_PROGRESS &&
                 entry.serviceType !== ServiceType.CONSULTA &&
                 entry.serviceType !== "Consulta" &&
@@ -192,6 +225,16 @@ export function QueueCard({
                   className="flex-1 sm:flex-none bg-green-600 text-white hover:bg-green-700"
                 >
                   Finalizar
+                </Button>
+              )}
+              {tabContext === "completed" && entry.paymentStatus !== PaymentStatus.PAID && onRequeue && (
+                <Button
+                  onClick={() => onRequeue(entry.id)}
+                  size="sm"
+                  variant="outline"
+                  className="flex-1 sm:flex-none"
+                >
+                  Retornar à fila
                 </Button>
               )}
               {entry.status !== Status.COMPLETED &&
@@ -259,6 +302,17 @@ export function QueueCard({
                   <div className="flex-1 min-w-0">
                     <p className="text-xs text-muted-foreground uppercase tracking-wide">Ficha SimplesVet</p>
                     <p className="text-sm font-medium break-words">#{entry.simplesVetId}</p>
+                  </div>
+                </div>
+              )}
+              {entry.paymentAmount && (
+                <div className="flex items-start gap-2">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 text-muted-foreground" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide">Valor estimado</p>
+                    <p className="text-sm font-medium break-words" title={`Status: ${entry.paymentStatus ?? "PENDENTE"}`}>
+                      {entry.paymentAmount}
+                    </p>
                   </div>
                 </div>
               )}

@@ -30,8 +30,8 @@ import { ModuleKey, patientApi, Priority, queueApi, Role, Status } from "@/lib/a
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { BellRing, ClipboardList, PawPrint } from "lucide-react";
-import type { HeaderAction, HeaderAlert } from "@/components/Header";
+import { BellRing, ClipboardList } from "lucide-react";
+import type { HeaderAction } from "@/components/Header";
 
 export default function QueuePage() {
   const router = useRouter();
@@ -236,28 +236,6 @@ export default function QueuePage() {
     (entry) => entry.status === Status.CALLED || entry.status === Status.IN_PROGRESS,
   ).length;
 
-  const headerAlerts: HeaderAlert[] = [
-    waitingCount > 0
-      ? {
-          label: `${waitingCount} aguardando`,
-          tone: waitingCount > 3 ? "critical" : "warning",
-          icon: <PawPrint className="h-3.5 w-3.5" />,
-        }
-      : {
-          label: "Fila sob controle",
-          tone: "default",
-          icon: <PawPrint className="h-3.5 w-3.5" />,
-        },
-  ];
-
-  if (inProgressCount > 0) {
-    headerAlerts.push({
-      label: `${inProgressCount} em atendimento`,
-      tone: "default",
-      icon: <BellRing className="h-3.5 w-3.5" />,
-    });
-  }
-
   const headerActions: HeaderAction[] = [
     canManageQueue
       ? {
@@ -281,7 +259,6 @@ export default function QueuePage() {
         <Header
           title="Fila de atendimentos"
           subtitle="Priorize emergências, acompanhe triagens e finalize altas sem ruído."
-          alerts={headerAlerts}
           actions={headerActions}
         />
       }

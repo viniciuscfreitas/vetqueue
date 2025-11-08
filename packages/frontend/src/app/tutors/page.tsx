@@ -14,7 +14,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Header } from "@/components/Header";
-import type { HeaderAction, HeaderAlert } from "@/components/Header";
+import type { HeaderAction } from "@/components/Header";
 import { Spinner } from "@/components/ui/spinner";
 import { Edit, Trash2, Users, Plus } from "lucide-react";
 import {
@@ -197,13 +197,6 @@ export default function TutorsPage() {
     resetForm();
   };
 
-  const headerAlerts: HeaderAlert[] = [
-    {
-      label: `${tutors.length} tutores`,
-      icon: <Users className="h-3.5 w-3.5" />,
-    },
-  ];
-
   const headerActions: HeaderAction[] = [
     {
       label: showForm ? "Fechar formulário" : "Novo tutor",
@@ -230,7 +223,6 @@ export default function TutorsPage() {
           onSearch={(term) => setSearchTerm(term)}
           defaultSearchValue={searchTerm}
           actions={headerActions}
-          alerts={headerAlerts}
         />
       }
     >

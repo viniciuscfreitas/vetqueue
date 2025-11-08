@@ -4,12 +4,10 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { Header } from "@/components/Header";
-import type { HeaderAlert } from "@/components/Header";
 import { Spinner } from "@/components/ui/spinner";
 import { useAuth } from "@/contexts/AuthContext";
 import { ModuleKey } from "@/lib/api";
 import { AuditView } from "@/components/AuditView";
-import { ShieldCheck } from "lucide-react";
 
 export default function AuditPage() {
   const router = useRouter();
@@ -39,20 +37,12 @@ export default function AuditPage() {
     return null;
   }
 
-  const headerAlerts: HeaderAlert[] = [
-    {
-      label: "Registro contínuo",
-      icon: <ShieldCheck className="h-3.5 w-3.5" />,
-    },
-  ];
-
   return (
     <AppShell
       header={
         <Header
           title="Auditoria"
           subtitle="Acompanhe cada ação registrada para manter o hospital em compliance."
-          alerts={headerAlerts}
         />
       }
     >

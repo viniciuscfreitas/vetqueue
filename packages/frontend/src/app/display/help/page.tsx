@@ -2,9 +2,7 @@
 
 import { AppShell } from "@/components/AppShell";
 import { Header } from "@/components/Header";
-import type { HeaderAlert } from "@/components/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Monitor } from "lucide-react";
 // Simple QR Code component - using canvas approach
 function QRCode({ value, size }: { value: string; size: number }) {
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(value)}`;
@@ -16,20 +14,12 @@ export default function DisplayHelpPage() {
     ? `${window.location.origin}/display`
     : "";
 
-  const headerAlerts: HeaderAlert[] = [
-    {
-      label: "Modo TV",
-      icon: <Monitor className="h-3.5 w-3.5" />,
-    },
-  ];
-
   return (
     <AppShell
       header={
         <Header
           title="Tela de Exibição"
           subtitle="Compartilhe o link ou escaneie o QR Code para ativar o painel da TV."
-          alerts={headerAlerts}
         />
       }
     >

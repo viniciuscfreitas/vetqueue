@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { Header } from "@/components/Header";
-import type { HeaderAction, HeaderAlert } from "@/components/Header";
+import type { HeaderAction } from "@/components/Header";
 import { Spinner } from "@/components/ui/spinner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FinancialFilters, FinancialFiltersState } from "@/components/FinancialFilters";
@@ -15,7 +15,7 @@ import { FinancialReportsTab } from "@/components/FinancialReportsTab";
 import { ModuleKey, Role, userApi } from "@/lib/api";
 import { useDateRange } from "@/hooks/useDateRange";
 import { useQuery } from "@tanstack/react-query";
-import { PiggyBank, Receipt } from "lucide-react";
+import { Receipt } from "lucide-react";
 
 const DEFAULT_FILTERS = {
   tutorName: "",
@@ -98,13 +98,6 @@ export default function FinancialPage() {
     return null;
   }
 
-  const headerAlerts: HeaderAlert[] = [
-    {
-      label: `Período ${startDate || "início"} → ${endDate || "hoje"}`,
-      icon: <PiggyBank className="h-3.5 w-3.5" />,
-    },
-  ];
-
   const headerActions: HeaderAction[] = [
     {
       label: "Ver relatórios",
@@ -121,7 +114,6 @@ export default function FinancialPage() {
           title="Financeiro"
           subtitle="Controle MRR, ARPU e pagamentos sem atrito entre recepção e faturamento."
           actions={headerActions}
-          alerts={headerAlerts}
         />
       }
     >

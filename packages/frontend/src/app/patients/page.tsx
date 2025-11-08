@@ -14,9 +14,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Header } from "@/components/Header";
-import type { HeaderAction, HeaderAlert } from "@/components/Header";
+import type { HeaderAction } from "@/components/Header";
 import { Spinner } from "@/components/ui/spinner";
-import { History, AlertCircle, PawPrint, Plus } from "lucide-react";
+import { History, AlertCircle, Plus } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { PatientRecordDialog } from "@/components/PatientRecordDialog";
@@ -282,13 +282,6 @@ export default function PatientsPage() {
     resetForm();
   };
 
-  const headerAlerts: HeaderAlert[] = [
-    {
-      label: `${patients.length} pacientes`,
-      icon: <PawPrint className="h-3.5 w-3.5" />,
-    },
-  ];
-
   const headerActions: HeaderAction[] = [
     {
       label: showForm ? "Fechar formulário" : "Novo paciente",
@@ -313,7 +306,6 @@ export default function PatientsPage() {
           onSearch={(term) => setSearchTerm(term)}
           defaultSearchValue={searchTerm}
           actions={headerActions}
-          alerts={headerAlerts}
         />
       }
     >

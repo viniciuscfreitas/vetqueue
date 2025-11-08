@@ -16,12 +16,6 @@ export interface HeaderAction {
   ariaLabel?: string;
 }
 
-export interface HeaderAlert {
-  label: string;
-  tone?: "default" | "warning" | "critical";
-  icon?: React.ReactNode;
-}
-
 type HeaderActionsPlacement = "right" | "below";
 
 interface HeaderProps {
@@ -35,7 +29,6 @@ interface HeaderProps {
   onSearch?: (term: string) => void;
   isSearching?: boolean;
   actions?: HeaderAction[];
-  alerts?: HeaderAlert[];
   children?: React.ReactNode;
   showGreeting?: boolean;
   actionsPlacement?: HeaderActionsPlacement;
@@ -52,7 +45,6 @@ export function Header({
   onSearch,
   isSearching,
   actions = [],
-  alerts = [],
   children,
   showGreeting = true,
   actionsPlacement = "right",
@@ -131,9 +123,8 @@ export function Header({
 
   const topActions = actionsPlacement === "right" ? actions : [];
   const bottomActions = actionsPlacement === "below" ? actions : [];
-  const hasAlerts = alerts.length > 0;
   const hasSearch = Boolean(onSearch || onSearchChange);
-  const hasLowerRow = hasAlerts || hasSearch || bottomActions.length > 0;
+  const hasLowerRow = hasSearch || bottomActions.length > 0;
 
   return (
     <div className="w-full">
@@ -154,17 +145,6 @@ export function Header({
 
         {hasLowerRow && (
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            {hasAlerts && (
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground/80">
-                {alerts.map((alert, index) => (
-                  <span key={`${alert.label}-${index}`} className="inline-flex items-center gap-1">
-                    {alert.icon ?? <span className="text-muted-foreground/60">•</span>}
-                    {alert.label}
-                  </span>
-                ))}
-              </div>
-            )}
-
             {(hasSearch || bottomActions.length > 0) && (
               <div className="flex flex-wrap items-center gap-2 sm:justify-end">
                 {hasSearch && (

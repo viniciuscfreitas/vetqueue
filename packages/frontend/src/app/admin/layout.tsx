@@ -4,7 +4,6 @@ import { ReactNode, useEffect, useMemo } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { Header } from "@/components/Header";
-import type { HeaderAlert } from "@/components/Header";
 import { useAuth } from "@/contexts/AuthContext";
 import { Spinner } from "@/components/ui/spinner";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -63,20 +62,12 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 
   const currentValue = currentItem?.href ?? "/admin";
 
-  const headerAlerts: HeaderAlert[] = [
-    {
-      label: `${navItems.length} módulos`,
-      icon: <Settings className="h-3.5 w-3.5" />,
-    },
-  ];
-
   return (
     <AppShell
       header={
         <Header
           title="Administração"
           subtitle="Configure usuários, salas, serviços e permissões sem sair do fluxo."
-          alerts={headerAlerts}
         />
       }
     >

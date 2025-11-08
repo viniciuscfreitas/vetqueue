@@ -59,7 +59,7 @@ function AppShellInner({ header, children }: AppShellProps) {
       <div className="flex min-h-screen">
         <aside
           className={cn(
-            "fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-white px-3 pb-4 pt-3 transition-transform duration-200",
+            "fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-white px-4 pb-6 pt-4 transition-transform duration-200",
             sidebarOpen ? "translate-x-0" : "-translate-x-full sm:translate-x-0",
           )}
           aria-label="Menu principal"
@@ -85,7 +85,7 @@ function AppShellInner({ header, children }: AppShellProps) {
             </button>
           </div>
 
-          <nav className="mt-6 flex-1 space-y-1 overflow-y-auto">
+          <nav className="mt-6 flex-1 space-y-1 overflow-y-auto pr-1">
             {navigation.map((item) => {
               const pathOnly = item.href.split("?")[0];
               const isActive =
@@ -101,23 +101,18 @@ function AppShellInner({ header, children }: AppShellProps) {
                   key={item.id}
                   href={item.href}
                   className={cn(
-                    "group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors duration-150",
+                    "group relative flex items-center gap-3 border-l-2 border-transparent px-3 py-2 text-sm transition-colors",
                     isActive
-                      ? "bg-primary/10 text-primary"
-                      : "text-muted-foreground hover:bg-muted/80 hover:text-foreground",
+                      ? "border-primary text-foreground font-semibold"
+                      : "text-muted-foreground hover:border-muted hover:text-foreground",
                   )}
                   onClick={() => setSidebarOpen(false)}
                 >
-                  <span
-                    className={cn(
-                      "flex h-9 w-9 items-center justify-center rounded-full border border-transparent bg-primary/5 text-primary transition-colors",
-                      isActive && "border-primary/40 bg-primary/15",
-                    )}
-                  >
+                  <span className={cn("flex h-8 w-8 items-center justify-center text-muted-foreground transition-colors", isActive && "text-primary")}>
                     <Icon className="h-4 w-4" />
                   </span>
                   <span className="flex-1">
-                    <span className="block font-semibold">{item.label}</span>
+                    <span className={cn("block", isActive ? "font-semibold" : "font-medium")}>{item.label}</span>
                     {item.description && (
                       <span className="block text-xs text-muted-foreground/80">
                         {item.description}
@@ -129,26 +124,17 @@ function AppShellInner({ header, children }: AppShellProps) {
             })}
           </nav>
 
-          <div className="space-y-3 rounded-lg border border-dashed border-border/60 bg-muted/40 p-3">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
-                {user?.name ? user.name[0]?.toUpperCase() : "?"}
-              </div>
+          <div className="mt-auto space-y-3">
+            <div className="flex items-start gap-3">
               <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-foreground">
-                  {user?.name ?? "Usuário"}
-                </p>
-                <p className="truncate text-xs uppercase tracking-wide text-muted-foreground">
+                <p className="truncate text-sm font-medium text-muted-foreground">Logado como</p>
+                <p className="truncate text-base font-semibold text-foreground">{user?.name ?? "Usuário"}</p>
+                <p className="truncate text-xs uppercase tracking-wide text-muted-foreground/70">
                   {user?.role?.toLowerCase() ?? "role"}
                 </p>
               </div>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full gap-2 border border-border/60"
-              onClick={handleLogout}
-            >
+            <Button variant="ghost" size="sm" className="w-full justify-start gap-2 px-2" onClick={handleLogout}>
               <LogOut className="h-4 w-4" />
               Sair
             </Button>

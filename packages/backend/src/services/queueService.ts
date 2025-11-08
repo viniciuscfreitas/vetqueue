@@ -70,8 +70,8 @@ export class QueueService {
   }
 
   async addToQueue(data: {
-    patientName: string;
-    tutorName: string;
+    patientName?: string;
+    tutorName?: string;
     serviceType: string;
     priority?: Priority;
     assignedVetId?: string;
@@ -82,9 +82,12 @@ export class QueueService {
     paymentMethod?: string;
     userId?: string;
   }): Promise<QueueEntry> {
+    const trimmedPatientName = (data.patientName ?? "").trim();
+    const trimmedTutorName = (data.tutorName ?? "").trim();
+
     log.debug("addToQueue called", {
-      patientName: data.patientName,
-      tutorName: data.tutorName,
+      patientName: trimmedPatientName || null,
+      tutorName: trimmedTutorName || null,
       serviceType: data.serviceType,
       priority: data.priority,
       assignedVetId: data.assignedVetId,
@@ -92,6 +95,23 @@ export class QueueService {
       scheduledAt: data.scheduledAt,
       patientId: data.patientId,
     });
+
+    if (!data.patientId && trimmedPatientName.length === 0) {
+      log.warn("Missing required patient name for walk-in entry", {
+        hasPatientId: !!data.patientId,
+      });
+      throw new Error("Nome do paciente é obrigatório");
+    }
+
+    if (!data.patientId && trimmedTutorName.length === 0) {
+      log.warn("Missing required tutor name for walk-in entry", {
+        hasPatientId: !!data.patientId,
+      });
+      throw new Error("Nome do tutor é obrigatório");
+    }
+
+    const cleanedPatientName = trimmedPatientName || data.patientName || "";
+    const cleanedTutorName = trimmedTutorName || data.tutorName || "";
 
     const processed = this.processPriorityAndSchedule(
       data.priority || Priority.NORMAL,
@@ -104,7 +124,7 @@ export class QueueService {
     if (data.hasScheduledAppointment && !processed.hasScheduledAppointment) {
       log.info("Scheduled appointment converted to walk-in (late >15min)", {
         eventType: "AppointmentConversion",
-        patientName: data.patientName,
+        patientName: cleanedPatientName,
         patientId: data.patientId || null,
       });
       systemMessage = "Entrada convertida para encaixe por atraso maior que 15 minutos.";
@@ -124,8 +144,8 @@ export class QueueService {
 
     const addQueueMeta: any = {
       eventType: "AnimalEnqueued",
-      patientName: data.patientName,
-      tutorName: data.tutorName,
+      patientName: cleanedPatientName,
+      tutorName: cleanedTutorName,
       serviceType: data.serviceType,
       priority: processed.priority,
       hasScheduledAppointment: processed.hasScheduledAppointment,
@@ -135,15 +155,10 @@ export class QueueService {
     log.info("Adding to queue", addQueueMeta);
 
     try {
-      if (!data.patientName.trim() || !data.tutorName.trim()) {
-        log.warn("Missing required fields", { hasPatientName: !!data.patientName.trim(), hasTutorName: !!data.tutorName.trim() });
-        throw new Error("Nome do paciente e tutor são obrigatórios");
-      }
-
       const startTime = Date.now();
       const entry = await this.repository.create({
-        patientName: data.patientName.trim(),
-        tutorName: data.tutorName.trim(),
+        patientName: cleanedPatientName,
+        tutorName: cleanedTutorName,
         serviceType: data.serviceType,
         priority: processed.priority,
         assignedVetId: data.assignedVetId,
@@ -201,8 +216,8 @@ export class QueueService {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
         patientId: data.patientId || null,
-        patientName: data.patientName,
-        tutorName: data.tutorName,
+        patientName: cleanedPatientName,
+        tutorName: cleanedTutorName,
         serviceType: data.serviceType,
         priority: processed.priority,
         assignedVetId: data.assignedVetId || null,
@@ -237,6 +252,31 @@ export class QueueService {
       lastAssignedVetId: data.lastAssignedVetId ?? null,
       lastHasAppointment: data.lastHasAppointment ?? false,
       lastSimplesVetId: data.lastSimplesVetId ?? null,
+    });
+  }
+
+  async recordFormDraft(
+    userId: string,
+    data: {
+      step: "identify" | "details";
+      tutorId?: string | null;
+      patientId?: string | null;
+      serviceType?: string | null;
+      priority?: Priority | null;
+      hasScheduledAppointment?: boolean;
+      scheduledAt?: Date | null;
+    }
+  ): Promise<void> {
+    log.debug("Queue form draft received", {
+      eventType: "QueueFormDraft",
+      userId,
+      step: data.step,
+      tutorId: data.tutorId ?? null,
+      patientId: data.patientId ?? null,
+      serviceType: data.serviceType ?? null,
+      priority: data.priority ?? null,
+      hasScheduledAppointment: data.hasScheduledAppointment ?? false,
+      scheduledAt: data.scheduledAt ?? null,
     });
   }
 

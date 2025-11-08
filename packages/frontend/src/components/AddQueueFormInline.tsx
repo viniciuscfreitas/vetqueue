@@ -23,6 +23,7 @@ import { recordQueueFormMetric } from "@/lib/metrics";
 import { loadQueueFormPreferences, saveQueueFormPreferences } from "@/lib/utils";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { ChevronDown, ChevronRight, ChevronUp } from "lucide-react";
 import { PatientAutocomplete } from "./PatientAutocomplete";
 import { TutorAutocomplete } from "./TutorAutocomplete";
 import { Button } from "./ui/button";
@@ -180,6 +181,16 @@ const serviceOptions = useMemo(() => {
   useEffect(() => {
     sessionRef.current.hasScheduledAppointment = formData.hasScheduledAppointment;
   }, [formData.hasScheduledAppointment]);
+
+  useEffect(() => {
+    if (currentStepIndex === 0 && formData.tutorId && formData.patientId) {
+      sessionRef.current.interacted = true;
+      if (sessionRef.current.identifyCompletedAt === null) {
+        sessionRef.current.identifyCompletedAt = now();
+      }
+      setCurrentStepIndex(1);
+    }
+  }, [currentStepIndex, formData.tutorId, formData.patientId]);
 
   useEffect(() => {
     return () => {
@@ -480,9 +491,9 @@ const serviceOptions = useMemo(() => {
                     {step.label}
                   </span>
                   {index < steps.length - 1 && (
-                    <div
-                      className={`mx-2 h-px w-12 ${
-                        isCompleted ? "bg-primary" : "bg-muted"
+                    <ChevronRight
+                      className={`h-4 w-4 ${
+                        isCompleted ? "text-primary" : "text-muted-foreground"
                       }`}
                     />
                   )}
@@ -639,8 +650,11 @@ const serviceOptions = useMemo(() => {
                 onClick={() => setShowAdvanced((prev) => !prev)}
               >
                 <span className="text-sm font-medium">Opções avançadas</span>
-                <span>{showAdvanced ? "▲" : "▼"}</span>
+                {showAdvanced ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
               </Button>
+              <p className="text-xs text-muted-foreground">
+                Priorize casos especiais ou informe dados adicionais apenas quando indispensável.
+              </p>
 
               {showAdvanced && (
                 <div className="space-y-4">
@@ -687,29 +701,34 @@ const serviceOptions = useMemo(() => {
                     />
                   </div>
 
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id="hasScheduledAppointment"
-                      checked={formData.hasScheduledAppointment}
-                      onChange={(event) => {
-                        const checked = event.target.checked;
-                        setFormData((prev) => ({
-                          ...prev,
-                          hasScheduledAppointment: checked,
-                          scheduledAt: checked ? prev.scheduledAt : "",
-                        }));
-                        sessionRef.current.hasScheduledAppointment = checked;
-                        sessionRef.current.interacted = true;
-                      }}
-                      className="h-4 w-4 rounded border-gray-300"
-                    />
-                    <Label
-                      htmlFor="hasScheduledAppointment"
-                      className="text-sm font-normal cursor-pointer"
-                    >
-                      Tem hora marcada hoje
-                    </Label>
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id="hasScheduledAppointment"
+                        checked={formData.hasScheduledAppointment}
+                        onChange={(event) => {
+                          const checked = event.target.checked;
+                          setFormData((prev) => ({
+                            ...prev,
+                            hasScheduledAppointment: checked,
+                            scheduledAt: checked ? prev.scheduledAt : "",
+                          }));
+                          sessionRef.current.hasScheduledAppointment = checked;
+                          sessionRef.current.interacted = true;
+                        }}
+                        className="h-4 w-4 rounded border-gray-300"
+                      />
+                      <Label
+                        htmlFor="hasScheduledAppointment"
+                        className="text-sm font-normal cursor-pointer"
+                      >
+                        Tem hora marcada hoje
+                      </Label>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Isso garante prioridade automática para quem chegou no horário agendado.
+                    </p>
                   </div>
 
                   {formData.hasScheduledAppointment && (

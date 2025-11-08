@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { consultationApi, Consultation, Patient, CreateConsultationData, UpdateConsultationData } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
@@ -11,6 +11,15 @@ import { Textarea } from "./ui/textarea";
 import { useToast } from "./ui/use-toast";
 import { createErrorHandler } from "@/lib/errors";
 import { useAuth } from "@/contexts/AuthContext";
+import { recordQueueFormMetric } from "@/lib/metrics";
+
+const now = () => (typeof performance !== "undefined" ? performance.now() : Date.now());
+
+interface ConsultationFormSession {
+  startedAt: number;
+  submitted: boolean;
+  interacted: boolean;
+}
 
 interface ConsultationFormProps {
   patient: Patient;
@@ -32,6 +41,12 @@ export function ConsultationForm({
   const { toast } = useToast();
   const handleError = createErrorHandler(toast);
 
+  const createSession = (): ConsultationFormSession => ({
+    startedAt: now(),
+    submitted: false,
+    interacted: false,
+  });
+
   const [formData, setFormData] = useState({
     diagnosis: "",
     treatment: "",
@@ -40,6 +55,43 @@ export function ConsultationForm({
     notes: "",
     date: new Date().toISOString().split("T")[0],
   });
+  const sessionRef = useRef<ConsultationFormSession>(createSession());
+  const latestFormRef = useRef(formData);
+
+  useEffect(() => {
+    latestFormRef.current = formData;
+  }, [formData]);
+
+  useEffect(() => {
+    sessionRef.current = createSession();
+  }, [consultation?.id, patient.id]);
+
+  const registerMetric = (status: "submitted" | "abandoned") => {
+    const session = sessionRef.current;
+    const durationMs = now() - session.startedAt;
+    recordQueueFormMetric({
+      status,
+      variant: "consultation",
+      durationMs,
+      usedTutorQuickCreate: false,
+      usedPatientQuickCreate: false,
+      hasScheduledAppointment: false,
+      timestamp: new Date().toISOString(),
+    });
+  };
+
+  const markInteracted = () => {
+    sessionRef.current.interacted = true;
+  };
+
+  useEffect(() => {
+    return () => {
+      const session = sessionRef.current;
+      if (!session.submitted && session.interacted) {
+        registerMetric("abandoned");
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (consultation) {
@@ -50,6 +102,15 @@ export function ConsultationForm({
         weightInKg: consultation.weightInKg?.toString() || "",
         notes: consultation.notes || "",
         date: consultation.date ? consultation.date.split("T")[0] : new Date().toISOString().split("T")[0],
+      });
+    } else {
+      setFormData({
+        diagnosis: "",
+        treatment: "",
+        prescription: "",
+        weightInKg: "",
+        notes: "",
+        date: new Date().toISOString().split("T")[0],
       });
     }
   }, [consultation]);
@@ -62,6 +123,9 @@ export function ConsultationForm({
         title: "Sucesso",
         description: "Consulta criada com sucesso",
       });
+      sessionRef.current.submitted = true;
+      registerMetric("submitted");
+      sessionRef.current = createSession();
       onSuccess();
     },
     onError: handleError,
@@ -76,6 +140,9 @@ export function ConsultationForm({
         title: "Sucesso",
         description: "Consulta atualizada com sucesso",
       });
+      sessionRef.current.submitted = true;
+      registerMetric("submitted");
+      sessionRef.current = createSession();
       onSuccess();
     },
     onError: handleError,
@@ -83,6 +150,7 @@ export function ConsultationForm({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    markInteracted();
 
     const data = {
       patientId: patient.id,
@@ -124,6 +192,9 @@ export function ConsultationForm({
         </div>
       </CardHeader>
       <CardContent className="pt-6">
+        <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+          Revise os campos essenciais antes de salvar; detalhes complementares podem ser adicionados depois.
+        </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -132,7 +203,10 @@ export function ConsultationForm({
                 id="date"
                 type="date"
                 value={formData.date}
-                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                onChange={(e) => {
+                  markInteracted();
+                  setFormData((prev) => ({ ...prev, date: e.target.value }));
+                }}
                 required
               />
             </div>
@@ -144,7 +218,10 @@ export function ConsultationForm({
                 step="0.1"
                 min="0"
                 value={formData.weightInKg}
-                onChange={(e) => setFormData({ ...formData, weightInKg: e.target.value })}
+                onChange={(e) => {
+                  markInteracted();
+                  setFormData((prev) => ({ ...prev, weightInKg: e.target.value }));
+                }}
                 placeholder="Ex: 25.5"
               />
             </div>
@@ -155,7 +232,10 @@ export function ConsultationForm({
               <Textarea
                 id="diagnosis"
                 value={formData.diagnosis}
-                onChange={(e) => setFormData({ ...formData, diagnosis: e.target.value })}
+                onChange={(e) => {
+                  markInteracted();
+                  setFormData((prev) => ({ ...prev, diagnosis: e.target.value }));
+                }}
                 placeholder="Resumo do diagnóstico principal"
                 rows={3}
               />
@@ -165,7 +245,10 @@ export function ConsultationForm({
               <Textarea
                 id="treatment"
                 value={formData.treatment}
-                onChange={(e) => setFormData({ ...formData, treatment: e.target.value })}
+                onChange={(e) => {
+                  markInteracted();
+                  setFormData((prev) => ({ ...prev, treatment: e.target.value }));
+                }}
                 placeholder="Condutas adotadas e orientações"
                 rows={3}
               />
@@ -178,7 +261,10 @@ export function ConsultationForm({
               <Textarea
                 id="prescription"
                 value={formData.prescription}
-                onChange={(e) => setFormData({ ...formData, prescription: e.target.value })}
+                onChange={(e) => {
+                  markInteracted();
+                  setFormData((prev) => ({ ...prev, prescription: e.target.value }));
+                }}
                 placeholder="Medicamentos, dosagens e frequências"
                 rows={3}
               />
@@ -188,7 +274,10 @@ export function ConsultationForm({
               <Textarea
                 id="notes"
                 value={formData.notes}
-                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                onChange={(e) => {
+                  markInteracted();
+                  setFormData((prev) => ({ ...prev, notes: e.target.value }));
+                }}
                 placeholder="Comportamento, retorno, orientações ao tutor..."
                 rows={3}
               />

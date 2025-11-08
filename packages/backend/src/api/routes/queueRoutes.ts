@@ -20,18 +20,37 @@ const auditService = new AuditService(auditRepository);
 const paymentMethodEnum = z.enum(["CREDIT", "DEBIT", "CASH", "PIX"]);
 const paymentStatusEnum = z.enum(["PENDING", "PARTIAL", "PAID", "CANCELLED"]);
 
-const addQueueSchema = z.object({
-  patientName: z.string().min(1, "Nome do paciente é obrigatório"),
-  tutorName: z.string().min(1, "Nome do tutor é obrigatório"),
-  serviceType: z.string().min(1, "Tipo de serviço é obrigatório"),
-  priority: z.nativeEnum(Priority).optional(),
-  assignedVetId: z.string().optional(),
-  hasScheduledAppointment: z.boolean().optional(),
-  scheduledAt: z.string().datetime().optional(),
-  patientId: z.string().optional(),
-  simplesVetId: z.string().optional(),
-  paymentMethod: paymentMethodEnum.optional(),
-});
+const addQueueSchema = z
+  .object({
+    patientName: z.string().optional(),
+    tutorName: z.string().optional(),
+    serviceType: z.string().min(1, "Tipo de serviço é obrigatório"),
+    priority: z.nativeEnum(Priority).optional(),
+    assignedVetId: z.string().optional(),
+    hasScheduledAppointment: z.boolean().optional(),
+    scheduledAt: z.string().datetime().optional(),
+    patientId: z.string().optional(),
+    simplesVetId: z.string().optional(),
+    paymentMethod: paymentMethodEnum.optional(),
+  })
+  .superRefine((data, ctx) => {
+    const patientName = (data.patientName ?? "").trim();
+    const tutorName = (data.tutorName ?? "").trim();
+    if (!data.patientId && patientName.length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Nome do paciente é obrigatório",
+        path: ["patientName"],
+      });
+    }
+    if (!data.patientId && tutorName.length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Nome do tutor é obrigatório",
+        path: ["tutorName"],
+      });
+    }
+  });
 
 const preferenceSchema = z.object({
   lastTutorId: z.string().nullable().optional(),
@@ -130,11 +149,23 @@ const paymentSchema = z.object({
   paymentReceivedById: z.string().nullable().optional(),
 });
 
+const draftSchema = z.object({
+  step: z.enum(["identify", "details"]),
+  tutorId: z.string().nullable().optional(),
+  patientId: z.string().nullable().optional(),
+  serviceType: z.string().nullable().optional(),
+  priority: z.nativeEnum(Priority).nullable().optional(),
+  hasScheduledAppointment: z.boolean().optional(),
+  scheduledAt: z.string().datetime().nullable().optional(),
+});
+
 router.post("/", authMiddleware, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const data = addQueueSchema.parse(req.body);
     const entry = await queueService.addToQueue({
       ...data,
+      patientName: data.patientName?.trim(),
+      tutorName: data.tutorName?.trim(),
       scheduledAt: data.scheduledAt ? new Date(data.scheduledAt) : undefined,
       patientId: data.patientId,
       userId: req.user?.id,
@@ -182,6 +213,29 @@ router.post("/preferences", authMiddleware, asyncHandler(async (req: Authenticat
   const saved = await queueService.saveFormPreference(req.user.id, payload);
   res.json(saved);
 }));
+
+router.post(
+  "/form-metrics/draft",
+  authMiddleware,
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    if (!req.user) {
+      res.status(401).json({ error: "Usuário não autenticado" });
+      return;
+    }
+
+    const payload = draftSchema.parse(req.body);
+    await queueService.recordFormDraft(req.user.id, {
+      step: payload.step,
+      tutorId: payload.tutorId ?? null,
+      patientId: payload.patientId ?? null,
+      serviceType: payload.serviceType ?? null,
+      priority: payload.priority ?? null,
+      hasScheduledAppointment: payload.hasScheduledAppointment,
+      scheduledAt: payload.scheduledAt ? new Date(payload.scheduledAt) : null,
+    });
+    res.status(204).send();
+  })
+);
 
 router.get("/active", authMiddleware, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const vetId = req.query.vetId as string | undefined;

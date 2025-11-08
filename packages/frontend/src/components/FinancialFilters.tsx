@@ -73,6 +73,53 @@ export function FinancialFilters({
     filters.minAmount ||
     filters.maxAmount;
 
+  const formatISODate = (date: Date) => date.toISOString().split("T")[0];
+
+  const applyDatePreset = (preset: "today" | "last7" | "month") => {
+    const today = new Date();
+    if (preset === "today") {
+      const iso = formatISODate(today);
+      onChange({ startDate: iso, endDate: iso });
+      return;
+    }
+
+    if (preset === "last7") {
+      const past = new Date(today);
+      past.setDate(today.getDate() - 6);
+      onChange({ startDate: formatISODate(past), endDate: formatISODate(today) });
+      return;
+    }
+
+    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    onChange({ startDate: formatISODate(startOfMonth), endDate: formatISODate(today) });
+  };
+
+  const applyStatusPreset = (status: PaymentStatus | "ALL") => {
+    onChange({ paymentStatus: status });
+  };
+
+  const advancedChips: Array<{ key: string; label: string; value: string }> = [];
+  if (filters.tutorName) {
+    advancedChips.push({ key: "tutorName", label: "Tutor", value: filters.tutorName });
+  }
+  if (filters.patientName) {
+    advancedChips.push({ key: "patientName", label: "Paciente", value: filters.patientName });
+  }
+  if (filters.serviceType) {
+    advancedChips.push({ key: "serviceType", label: "Serviço", value: filters.serviceType });
+  }
+  if (filters.paymentReceivedById && filters.paymentReceivedById !== "ALL") {
+    const receptionistLabel =
+      receptionistOptions.find((option) => option.value === filters.paymentReceivedById)?.label ?? "Equipe";
+    advancedChips.push({ key: "paymentReceivedById", label: "Recebido por", value: receptionistLabel });
+  }
+  if (filters.minAmount) {
+    advancedChips.push({ key: "minAmount", label: "Valor mín.", value: filters.minAmount });
+  }
+  if (filters.maxAmount) {
+    advancedChips.push({ key: "maxAmount", label: "Valor máx.", value: filters.maxAmount });
+  }
+
   return (
     <Card>
       <CardContent className="p-4">
@@ -142,6 +189,46 @@ export function FinancialFilters({
             )}
           </Button>
         </div>
+
+        <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
+          <span className="text-muted-foreground">Atalhos:</span>
+          <Button type="button" variant="outline" size="sm" onClick={() => applyDatePreset("today")}>
+            Hoje
+          </Button>
+          <Button type="button" variant="outline" size="sm" onClick={() => applyDatePreset("last7")}>
+            Últimos 7 dias
+          </Button>
+          <Button type="button" variant="outline" size="sm" onClick={() => applyDatePreset("month")}>
+            Este mês
+          </Button>
+          <span className="ml-2 text-muted-foreground">Status:</span>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => applyStatusPreset(PaymentStatus.PENDING)}
+          >
+            Pendentes
+          </Button>
+          <Button type="button" variant="ghost" size="sm" onClick={() => applyStatusPreset("ALL")}>
+            Todos
+          </Button>
+        </div>
+
+        {!isExpanded && advancedChips.length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {advancedChips.map((chip) => (
+              <button
+                key={chip.key}
+                type="button"
+                onClick={() => setIsExpanded(true)}
+                className="rounded-full border border-muted px-3 py-1 text-xs hover:border-primary hover:text-primary"
+              >
+                {chip.label}: <span className="font-medium">{chip.value}</span>
+              </button>
+            ))}
+          </div>
+        )}
 
         {isExpanded && (
           <div className="flex flex-wrap items-end gap-3 mt-3 pt-3 border-t">

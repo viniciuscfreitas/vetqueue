@@ -7,7 +7,7 @@ export type QueueFormMetricStatus = "submitted" | "abandoned";
 
 export interface QueueFormMetric {
   status: QueueFormMetricStatus;
-  variant: "page" | "inline";
+  variant: "page" | "inline" | "consultation" | "vaccination";
   durationMs: number;
   identifyStepMs?: number;
   usedTutorQuickCreate: boolean;

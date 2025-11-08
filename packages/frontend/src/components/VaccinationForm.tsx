@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { vaccinationApi, Vaccination, Patient, CreateVaccinationData, UpdateVaccinationData } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
@@ -11,6 +11,7 @@ import { Textarea } from "./ui/textarea";
 import { useToast } from "./ui/use-toast";
 import { createErrorHandler } from "@/lib/errors";
 import { useAuth } from "@/contexts/AuthContext";
+import { recordQueueFormMetric } from "@/lib/metrics";
 import {
   Select,
   SelectContent,
@@ -18,6 +19,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
+
+const now = () => (typeof performance !== "undefined" ? performance.now() : Date.now());
+
+interface VaccinationFormSession {
+  startedAt: number;
+  submitted: boolean;
+  interacted: boolean;
+}
 
 interface VaccinationFormProps {
   patient: Patient;
@@ -37,6 +46,12 @@ export function VaccinationForm({
   const { toast } = useToast();
   const handleError = createErrorHandler(toast);
 
+  const createSession = (): VaccinationFormSession => ({
+    startedAt: now(),
+    submitted: false,
+    interacted: false,
+  });
+
   const [formData, setFormData] = useState({
     vaccineName: "",
     appliedDate: new Date().toISOString().split("T")[0],
@@ -44,6 +59,43 @@ export function VaccinationForm({
     nextDoseDate: "",
     notes: "",
   });
+  const sessionRef = useRef<VaccinationFormSession>(createSession());
+  const latestFormRef = useRef(formData);
+
+  useEffect(() => {
+    latestFormRef.current = formData;
+  }, [formData]);
+
+  useEffect(() => {
+    sessionRef.current = createSession();
+  }, [vaccination?.id, patient.id]);
+
+  const registerMetric = (status: "submitted" | "abandoned") => {
+    const session = sessionRef.current;
+    const durationMs = now() - session.startedAt;
+    recordQueueFormMetric({
+      status,
+      variant: "vaccination",
+      durationMs,
+      usedTutorQuickCreate: false,
+      usedPatientQuickCreate: false,
+      hasScheduledAppointment: Boolean(latestFormRef.current.nextDoseDate),
+      timestamp: new Date().toISOString(),
+    });
+  };
+
+  const markInteracted = () => {
+    sessionRef.current.interacted = true;
+  };
+
+  useEffect(() => {
+    return () => {
+      const session = sessionRef.current;
+      if (!session.submitted && session.interacted) {
+        registerMetric("abandoned");
+      }
+    };
+  }, []);
 
   const [useSuggestion, setUseSuggestion] = useState(false);
 
@@ -62,13 +114,26 @@ export function VaccinationForm({
         nextDoseDate: vaccination.nextDoseDate ? vaccination.nextDoseDate.split("T")[0] : "",
         notes: vaccination.notes || "",
       });
+      setUseSuggestion(false);
+    } else {
+      setFormData({
+        vaccineName: "",
+        appliedDate: new Date().toISOString().split("T")[0],
+        batchNumber: "",
+        nextDoseDate: "",
+        notes: "",
+      });
+      setUseSuggestion(false);
     }
   }, [vaccination]);
 
   const calculateNextDose = (days: number) => {
-    const appliedDate = new Date(formData.appliedDate);
-    appliedDate.setDate(appliedDate.getDate() + days);
-    setFormData({ ...formData, nextDoseDate: appliedDate.toISOString().split("T")[0] });
+    markInteracted();
+    setFormData((prev) => {
+      const appliedDate = new Date(prev.appliedDate);
+      appliedDate.setDate(appliedDate.getDate() + days);
+      return { ...prev, nextDoseDate: appliedDate.toISOString().split("T")[0] };
+    });
   };
 
   const createMutation = useMutation({
@@ -80,6 +145,9 @@ export function VaccinationForm({
         title: "Sucesso",
         description: "Vacina registrada com sucesso",
       });
+      sessionRef.current.submitted = true;
+      registerMetric("submitted");
+      sessionRef.current = createSession();
       onSuccess();
     },
     onError: handleError,
@@ -94,6 +162,9 @@ export function VaccinationForm({
         title: "Sucesso",
         description: "Vacina atualizada com sucesso",
       });
+      sessionRef.current.submitted = true;
+      registerMetric("submitted");
+      sessionRef.current = createSession();
       onSuccess();
     },
     onError: handleError,
@@ -101,6 +172,7 @@ export function VaccinationForm({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    markInteracted();
 
     const data = {
       patientId: patient.id,
@@ -139,6 +211,9 @@ export function VaccinationForm({
         </div>
       </CardHeader>
       <CardContent className="pt-6">
+        <div className="mb-4 rounded-md border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-700">
+          Garanta que nome da vacina, data de aplicação e próxima dose estejam preenchidos antes de salvar.
+        </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label htmlFor="vaccineName">Nome da Vacina *</Label>
@@ -150,7 +225,8 @@ export function VaccinationForm({
                 <Select
                   value={useSuggestion ? formData.vaccineName : ""}
                   onValueChange={(value) => {
-                    setFormData({ ...formData, vaccineName: value });
+                    markInteracted();
+                    setFormData((prev) => ({ ...prev, vaccineName: value }));
                     setUseSuggestion(true);
                   }}
                 >
@@ -170,7 +246,10 @@ export function VaccinationForm({
                   variant="ghost"
                   size="sm"
                   className="mt-2 text-xs"
-                  onClick={() => setUseSuggestion(false)}
+                  onClick={() => {
+                    markInteracted();
+                    setUseSuggestion(false);
+                  }}
                 >
                   Ou digite um novo nome
                 </Button>
@@ -180,7 +259,8 @@ export function VaccinationForm({
               id="vaccineName"
               value={formData.vaccineName}
               onChange={(e) => {
-                setFormData({ ...formData, vaccineName: e.target.value });
+                markInteracted();
+                setFormData((prev) => ({ ...prev, vaccineName: e.target.value }));
                 setUseSuggestion(false);
               }}
               placeholder="Ex: V10, Antirrábica, etc."
@@ -194,7 +274,10 @@ export function VaccinationForm({
                 id="appliedDate"
                 type="date"
                 value={formData.appliedDate}
-                onChange={(e) => setFormData({ ...formData, appliedDate: e.target.value })}
+                onChange={(e) => {
+                  markInteracted();
+                  setFormData((prev) => ({ ...prev, appliedDate: e.target.value }));
+                }}
                 required
               />
             </div>
@@ -203,7 +286,10 @@ export function VaccinationForm({
               <Input
                 id="batchNumber"
                 value={formData.batchNumber}
-                onChange={(e) => setFormData({ ...formData, batchNumber: e.target.value })}
+                onChange={(e) => {
+                  markInteracted();
+                  setFormData((prev) => ({ ...prev, batchNumber: e.target.value }));
+                }}
                 placeholder="Ex: 123456"
               />
             </div>
@@ -215,7 +301,10 @@ export function VaccinationForm({
                 id="nextDoseDate"
                 type="date"
                 value={formData.nextDoseDate}
-                onChange={(e) => setFormData({ ...formData, nextDoseDate: e.target.value })}
+                onChange={(e) => {
+                  markInteracted();
+                  setFormData((prev) => ({ ...prev, nextDoseDate: e.target.value }));
+                }}
                 className="flex-1"
               />
               <div className="flex gap-1">
@@ -254,7 +343,10 @@ export function VaccinationForm({
             <Textarea
               id="notes"
               value={formData.notes}
-              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+              onChange={(e) => {
+                markInteracted();
+                setFormData((prev) => ({ ...prev, notes: e.target.value }));
+              }}
               placeholder="Reações, lembretes para retorno, orientações ao tutor..."
               rows={3}
             />

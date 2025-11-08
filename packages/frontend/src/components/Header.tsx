@@ -138,7 +138,7 @@ export function Header({
   return (
     <div className="w-full">
       <div className="flex flex-col gap-3 py-3">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-2 py-2 sm:flex-row sm:items-center sm:justify-between sm:py-3">
           <div className="flex min-w-[220px] flex-1 flex-col gap-1">
             {effectiveTitle && (
               <h1 className="truncate text-left text-xl font-semibold text-foreground">

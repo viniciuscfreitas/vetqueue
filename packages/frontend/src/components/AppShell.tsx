@@ -171,16 +171,8 @@ function AppShellInner({ header, children }: AppShellProps) {
         )}
 
         <div className="flex min-h-screen flex-1 flex-col sm:pl-64">
-          <div className="sticky top-0 z-20 bg-white">
-            <div className="flex items-start gap-3 px-4 py-3 sm:px-6 lg:px-10">
-              <button
-                type="button"
-                aria-label="Abrir menu"
-                className="mt-1 rounded-md p-2 text-muted-foreground hover:bg-muted sm:hidden"
-                onClick={() => setSidebarOpen(true)}
-              >
-                <Menu className="h-5 w-5" />
-              </button>
+          <div className="bg-white sm:sticky sm:top-0 sm:z-20">
+            <div className="flex items-start gap-3 px-4 py-2 sm:px-6 sm:py-3 lg:px-10">
               <div className="flex-1">{header}</div>
             </div>
           </div>

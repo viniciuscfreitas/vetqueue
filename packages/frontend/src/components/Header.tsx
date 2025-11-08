@@ -71,68 +71,75 @@ export function Header({
   };
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-3 px-2 sm:px-0">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-        <div className="flex min-w-0 flex-1 flex-col gap-1">
-          <h1 className="truncate text-2xl font-semibold tracking-tight text-slate-900">{effectiveTitle}</h1>
-          <p className="text-sm text-muted-foreground lg:max-w-xl">{effectiveSubtitle}</p>
+    <div className="mx-auto w-full max-w-6xl px-2 sm:px-0">
+      <div className="flex flex-wrap items-center gap-3 rounded-xl bg-white/90 px-3 py-3 shadow-sm ring-1 ring-slate-100/60 backdrop-blur-sm sm:px-4 lg:gap-4 lg:px-6">
+        <div className="flex min-w-[220px] flex-1 flex-col gap-1">
+          <h1 className="truncate text-left text-2xl font-semibold tracking-tight text-slate-900">
+            {effectiveTitle}
+          </h1>
+          <p className="text-left text-sm text-muted-foreground lg:max-w-xl">{effectiveSubtitle}</p>
         </div>
-        <div className="flex flex-wrap items-center justify-end gap-2 lg:flex-1 lg:justify-end">
-          {alerts.length > 0 &&
-            alerts.map((alert, index) => (
-              <span
-                key={`${alert.label}-${index}`}
-                className={cn(
-                  "inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium uppercase tracking-wide",
-                  alert.tone === "critical"
-                    ? "bg-rose-100 text-rose-700"
-                    : alert.tone === "warning"
-                      ? "bg-amber-100 text-amber-700"
-                      : "bg-primary/10 text-primary",
-                )}
-              >
-                {alert.icon ?? <PawPrint className="h-3.5 w-3.5" />}
-                {alert.label}
-              </span>
-            ))}
-          {onSearch && (
-            <form
-              onSubmit={handleSubmit}
-              className="flex min-w-[280px] flex-1 items-center gap-2 rounded-xl border border-transparent bg-white px-3 py-2 shadow-sm transition focus-within:border-primary/40 focus-within:shadow-md lg:min-w-[320px] lg:max-w-md"
-            >
-              <Search className="h-4 w-4 text-muted-foreground" />
-              <Input
-                value={searchTerm}
-                onChange={(event) => setSearchTerm(event.target.value)}
-                placeholder={searchPlaceholder}
-                className="border-none bg-transparent px-0 text-sm focus-visible:ring-0 focus-visible:ring-offset-0"
-              />
-              <Button type="submit" size="sm" className="whitespace-nowrap">
-                {isSearching ? "Buscando..." : "Buscar"}
-              </Button>
-            </form>
-          )}
-          {actions.length > 0 && (
-            <div className="flex flex-wrap items-center gap-2">
-              {actions.map((action) => (
-                <Button
-                  key={action.label}
-                  onClick={action.onClick}
-                  size="sm"
-                  variant={action.variant === "outline" ? "outline" : "default"}
-                  className="gap-2"
+
+        {(alerts.length > 0 || onSearch || actions.length > 0) && (
+          <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
+            {alerts.length > 0 &&
+              alerts.map((alert, index) => (
+                <span
+                  key={`${alert.label}-${index}`}
+                  className={cn(
+                    "inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium uppercase tracking-wide",
+                    alert.tone === "critical"
+                      ? "bg-rose-100 text-rose-700"
+                      : alert.tone === "warning"
+                        ? "bg-amber-100 text-amber-700"
+                        : "bg-primary/10 text-primary",
+                  )}
                 >
-                  {action.icon}
-                  {action.label}
-                </Button>
+                  {alert.icon ?? <PawPrint className="h-3.5 w-3.5" />}
+                  {alert.label}
+                </span>
               ))}
-            </div>
-          )}
-        </div>
+
+            {onSearch && (
+              <form
+                onSubmit={handleSubmit}
+                className="flex h-11 w-full max-w-[320px] items-center gap-2 rounded-full border border-slate-200 bg-white px-4 shadow transition focus-within:border-primary/40 focus-within:shadow-md sm:w-auto"
+              >
+                <Search className="h-4 w-4 text-muted-foreground" />
+                <Input
+                  value={searchTerm}
+                  onChange={(event) => setSearchTerm(event.target.value)}
+                  placeholder={searchPlaceholder}
+                  className="h-auto w-full border-none bg-transparent px-0 text-sm focus-visible:ring-0 focus-visible:ring-offset-0"
+                />
+                <Button type="submit" size="sm" className="whitespace-nowrap">
+                  {isSearching ? "Buscando..." : "Buscar"}
+                </Button>
+              </form>
+            )}
+
+            {actions.length > 0 && (
+              <div className="flex flex-wrap items-center justify-end gap-2">
+                {actions.map((action) => (
+                  <Button
+                    key={action.label}
+                    onClick={action.onClick}
+                    size="sm"
+                    variant={action.variant === "outline" ? "outline" : "default"}
+                    className="gap-2"
+                  >
+                    {action.icon}
+                    {action.label}
+                  </Button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {children && (
-        <div className="rounded-xl border border-dashed border-slate-200 bg-white/70 p-4">{children}</div>
+        <div className="mt-3 rounded-xl border border-dashed border-slate-200 bg-white/70 p-4">{children}</div>
       )}
     </div>
   );

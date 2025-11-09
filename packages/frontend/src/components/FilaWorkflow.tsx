@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useMemo } from "react";
-import * as Tabs from "@radix-ui/react-tabs";
 import {
   QueueEntry,
   Role,
@@ -13,14 +12,13 @@ import {
 import { QueueCard } from "./QueueCard";
 import { Button } from "./ui/button";
 import { cn } from "@/lib/utils";
-import { formatCurrency } from "@/lib/financialUtils";
 import { sortQueueEntries } from "@/lib/queueHelpers";
 import {
-  AlertTriangle,
-  DollarSign,
-  PawPrint,
-  Plus,
-  TrendingUp,
+  ClipboardList,
+  CreditCard,
+  HeartPulse,
+  Siren,
+  Stethoscope,
 } from "lucide-react";
 import {
   DragDropContext,
@@ -29,13 +27,13 @@ import {
   type DropResult,
 } from "react-beautiful-dnd";
 
-const TAB_DEFINITIONS = [
+const COLUMN_DEFINITIONS = [
   {
     key: "emergency",
     title: "Emergências / Fila Prioritária",
-    accent: "border-red-200 bg-red-50 text-red-700",
-    ringClass: "data-[state=active]:ring-red-200",
-    indicator: "bg-red-400",
+    accent: "ring-2 ring-red-200",
+    indicator: "bg-red-500",
+    icon: <Siren className="h-4 w-4 text-red-500" />,
     filter: (entry: QueueEntry) =>
       entry.status === Status.WAITING &&
       (entry.priority === Priority.EMERGENCY || entry.priority === Priority.HIGH),
@@ -43,25 +41,25 @@ const TAB_DEFINITIONS = [
   {
     key: "triage",
     title: "Iniciados / Triagem",
-    accent: "border-sky-200 bg-sky-50 text-sky-700",
-    ringClass: "data-[state=active]:ring-sky-200",
-    indicator: "bg-sky-400",
+    accent: "ring-2 ring-sky-200",
+    indicator: "bg-sky-500",
+    icon: <ClipboardList className="h-4 w-4 text-sky-500" />,
     filter: (entry: QueueEntry) => entry.status === Status.CALLED,
   },
   {
     key: "in-progress",
     title: "Em andamento / Tratamentos",
-    accent: "border-orange-200 bg-orange-50 text-orange-700",
-    ringClass: "data-[state=active]:ring-orange-200",
-    indicator: "bg-orange-400",
+    accent: "ring-2 ring-orange-200",
+    indicator: "bg-orange-500",
+    icon: <Stethoscope className="h-4 w-4 text-orange-500" />,
     filter: (entry: QueueEntry) => entry.status === Status.IN_PROGRESS,
   },
   {
     key: "completed",
     title: "Concluídos / Alta",
-    accent: "border-emerald-200 bg-emerald-50 text-emerald-700",
-    ringClass: "data-[state=active]:ring-emerald-200",
-    indicator: "bg-emerald-400",
+    accent: "ring-2 ring-emerald-200",
+    indicator: "bg-emerald-500",
+    icon: <HeartPulse className="h-4 w-4 text-emerald-500" />,
     filter: (entry: QueueEntry) =>
       entry.status === Status.COMPLETED &&
       entry.paymentStatus !== PaymentStatus.PAID,
@@ -69,16 +67,16 @@ const TAB_DEFINITIONS = [
   {
     key: "paid",
     title: "Pagos / Fechados",
-    accent: "border-emerald-300 bg-emerald-100 text-emerald-800",
-    ringClass: "data-[state=active]:ring-emerald-300",
+    accent: "ring-2 ring-emerald-300",
     indicator: "bg-emerald-600",
+    icon: <CreditCard className="h-4 w-4 text-emerald-600" />,
     filter: (entry: QueueEntry) =>
       entry.status === Status.COMPLETED &&
       entry.paymentStatus === PaymentStatus.PAID,
   },
 ] as const;
 
-type TabKey = (typeof TAB_DEFINITIONS)[number]["key"];
+type ColumnKey = (typeof COLUMN_DEFINITIONS)[number]["key"];
 
 export interface FilaWorkflowActions {
   onCall?: (id: string) => void;
@@ -86,7 +84,7 @@ export interface FilaWorkflowActions {
   onComplete?: (id: string) => void;
   onCancel?: (id: string) => void;
   onRequeue?: (id: string) => void;
-  onStatusChange?: (id: string, nextTab: TabKey) => void;
+  onStatusChange?: (id: string, nextColumn: ColumnKey) => void;
   onViewRecord?: (patientId: string, queueEntryId: string) => void;
   onRegisterConsultation?: (patientId: string, queueEntryId: string) => void;
 }
@@ -96,21 +94,6 @@ interface FilaWorkflowProps extends FilaWorkflowActions {
   entries: QueueEntry[];
   canManageQueue: boolean;
   onAddPatient?: () => void;
-}
-
-const DEFAULT_DELTA = "+0,0%";
-
-function parseAmount(amount?: string | null): number {
-  if (!amount) {
-    return 0;
-  }
-  const parsed = Number(
-    amount
-      .toString()
-      .replace(/\./g, "")
-      .replace(",", "."),
-  );
-  return Number.isFinite(parsed) ? parsed : 0;
 }
 
 export function FilaWorkflow({
@@ -127,59 +110,12 @@ export function FilaWorkflow({
   onViewRecord,
   onRegisterConsultation,
 }: FilaWorkflowProps) {
-  const visibleTabs = useMemo(() => {
+  const visibleColumns = useMemo(() => {
     if (!user || user.role === Role.VET) {
-      return TAB_DEFINITIONS.slice(0, 3);
+      return COLUMN_DEFINITIONS.slice(0, 3);
     }
-    return TAB_DEFINITIONS;
+    return COLUMN_DEFINITIONS;
   }, [user]);
-
-  const metrics = useMemo(() => {
-    const paidEntries = entries.filter(
-      (entry) => entry.paymentStatus === PaymentStatus.PAID,
-    );
-    const paidAmount = paidEntries.reduce((acc, entry) => {
-      return acc + parseAmount(entry.paymentAmount);
-    }, 0);
-
-    const emergencyCount = entries.filter(
-      (entry) =>
-        entry.status === Status.WAITING &&
-        (entry.priority === Priority.EMERGENCY ||
-          entry.priority === Priority.HIGH),
-    ).length;
-
-    const activePatients = entries.length;
-
-    return [
-      {
-        title: "Faturamento",
-        value: formatCurrency(paidAmount.toFixed(2)),
-        delta: DEFAULT_DELTA,
-        icon: <DollarSign className="h-5 w-5 text-slate-600" />,
-      },
-      {
-        title: "Alertas críticos",
-        value: `${emergencyCount} ${
-          emergencyCount === 1 ? "emergência" : "emergências"
-        }`,
-        delta: DEFAULT_DELTA,
-        icon: <AlertTriangle className="h-5 w-5 text-amber-600" />,
-      },
-      {
-        title: "Pacientes em fluxo",
-        value: `${activePatients}`,
-        delta: DEFAULT_DELTA,
-        icon: <PawPrint className="h-5 w-5 text-emerald-600" />,
-      },
-    ];
-  }, [entries]);
-
-  const totalEntriesCount = entries.length || 1;
-  const completedCount = entries.filter(
-    (entry) => entry.status === Status.COMPLETED,
-  ).length;
-  const funnelRatio = Math.round((completedCount / totalEntriesCount) * 100);
 
   const orderedEntries = useMemo(() => sortQueueEntries(entries), [entries]);
 
@@ -192,167 +128,125 @@ export function FilaWorkflow({
       if (!destination || destination.droppableId === source.droppableId) {
         return;
       }
-      onStatusChange(draggableId, destination.droppableId as TabKey);
+      onStatusChange(draggableId, destination.droppableId as ColumnKey);
     },
     [onStatusChange],
   );
 
   return (
-    <section className="space-y-6">
-      <header className="space-y-6 rounded-2xl bg-background/60 p-6 shadow-sm ring-1 ring-border/60">
-        <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-          <div>
-            <h1 className="text-2xl font-semibold">
-              Olá, {user?.name?.split(" ")?.[0] ?? "Equipe"}! 👋
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              Priorize emergências e mova pacientes pelo funil com clareza.
-            </p>
-          </div>
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-            <div className="rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
-              Funil hoje: {funnelRatio}%
-            </div>
-            {canManageQueue && onAddPatient ? (
-              <Button onClick={onAddPatient} className="gap-2">
-                <Plus className="h-4 w-4" />
-                Adicionar paciente
-              </Button>
-            ) : null}
-          </div>
+    <section className="space-y-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 className="text-xl font-semibold">Workflow de atendimentos</h2>
+          <p className="text-sm text-muted-foreground">
+            Arraste os pacientes entre colunas para avançar ou retornar etapas.
+          </p>
         </div>
-
-        <div className="grid gap-4 md:grid-cols-3">
-          {metrics.map((metric) => (
-            <div
-              key={metric.title}
-              className="flex items-center justify-between gap-4 rounded-xl border border-border/60 bg-card px-5 py-4 shadow-sm"
-            >
-              <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">{metric.title}</p>
-                <p className="text-xl font-semibold">{metric.value}</p>
-                <div className="flex items-center gap-1 text-xs text-emerald-600">
-                  <TrendingUp className="h-3 w-3" />
-                  {metric.delta}
-                </div>
-              </div>
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted/60">
-                {metric.icon}
-              </div>
-            </div>
-          ))}
-        </div>
-      </header>
+        {canManageQueue && onAddPatient ? (
+          <Button onClick={onAddPatient} className="self-start">
+            Adicionar paciente
+          </Button>
+        ) : null}
+      </div>
 
       <DragDropContext onDragEnd={handleDragEnd}>
-        <Tabs.Root
-          defaultValue={visibleTabs[0]?.key}
-          className="flex flex-col gap-4"
-        >
-          <Tabs.List className="flex overflow-x-auto rounded-xl border border-border bg-card p-2">
-            {visibleTabs.map((tab) => {
-              const itemsInTab = orderedEntries.filter(tab.filter).length;
+        <div className="overflow-x-auto pb-4">
+          <div className="flex min-w-max gap-6">
+            {visibleColumns.map((column) => {
+              const columnEntries = orderedEntries.filter(column.filter);
               return (
-                <Tabs.Trigger
-                  key={tab.key}
-                  value={tab.key}
-                  className={cn(
-                    "flex min-w-[220px] flex-1 items-center justify-between gap-3 rounded-lg px-4 py-3 text-left text-sm font-medium text-muted-foreground transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm data-[state=active]:ring-2",
-                    "focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400",
-                    tab.ringClass,
-                  )}
-                >
-                  <div className="flex items-center gap-3">
-                    <span
+                <Droppable droppableId={column.key} key={column.key}>
+                  {(provided, snapshot) => (
+                    <div
+                      ref={provided.innerRef}
+                      {...provided.droppableProps}
                       className={cn(
-                        "h-2 w-2 flex-shrink-0 rounded-full",
-                        tab.indicator,
+                        "flex w-[280px] shrink-0 flex-col gap-4 rounded-2xl border border-border bg-card p-4 shadow-sm transition-colors",
+                        snapshot.isDraggingOver &&
+                          "border-dashed border-sky-400 bg-sky-50/60",
                       )}
-                    />
-                    <span className="flex flex-col">
-                      <span>{tab.title}</span>
-                      <span className="text-xs font-normal text-muted-foreground/70">
-                        {itemsInTab}{" "}
-                        {itemsInTab === 1 ? "paciente" : "pacientes"} na etapa
-                      </span>
-                    </span>
-                  </div>
-                </Tabs.Trigger>
-              );
-            })}
-          </Tabs.List>
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center gap-2">
+                          {column.icon}
+                          <div>
+                            <p className="text-sm font-semibold leading-tight">
+                              {column.title}
+                            </p>
+                            <span className="text-xs text-muted-foreground">
+                              {columnEntries.length}{" "}
+                              {columnEntries.length === 1
+                                ? "paciente"
+                                : "pacientes"}
+                            </span>
+                          </div>
+                        </div>
+                        <span
+                          className={cn("h-2 w-2 rounded-full", column.indicator)}
+                        />
+                      </div>
 
-          {visibleTabs.map((tab) => {
-            const tabEntries = orderedEntries.filter(tab.filter);
-            return (
-              <Tabs.Content
-                key={tab.key}
-                value={tab.key}
-                className="rounded-2xl border border-border bg-card p-4 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
-              >
-                {tabEntries.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center gap-2 py-12 text-center text-sm text-muted-foreground">
-                    <span>Nenhum paciente nessa etapa por enquanto.</span>
-                    {canManageQueue && tab.key === "emergency" && onAddPatient ? (
-                      <Button size="sm" onClick={onAddPatient} className="gap-2">
-                        <Plus className="h-4 w-4" />
-                        Adicionar paciente
-                      </Button>
-                    ) : null}
-                  </div>
-                ) : (
-                  <Droppable droppableId={tab.key}>
-                    {(provided, snapshot) => (
-                      <div
-                        ref={provided.innerRef}
-                        {...provided.droppableProps}
-                        className={cn(
-                          "grid gap-3 md:grid-cols-2 2xl:grid-cols-3",
-                          snapshot.isDraggingOver && "bg-muted/40 rounded-xl p-2",
-                        )}
-                      >
-                        {tabEntries.map((entry, index) => (
-                          <Draggable
-                            key={entry.id}
-                            draggableId={entry.id}
-                            index={index}
-                            isDragDisabled={!canManageQueue}
-                          >
-                            {(dragProvided, dragSnapshot) => (
-                              <div
-                                ref={dragProvided.innerRef}
-                                {...dragProvided.draggableProps}
-                                {...dragProvided.dragHandleProps}
-                                className={cn(
-                                  "transition-all cursor-grab active:cursor-grabbing",
-                                  dragSnapshot.isDragging && "rotate-1 scale-[1.01]",
-                                )}
+                      <div className="flex flex-1 flex-col gap-3">
+                        {columnEntries.length === 0 ? (
+                          <div className="flex flex-1 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-muted/40 bg-muted/10 p-6 text-center text-xs text-muted-foreground">
+                            Nenhum paciente aqui.
+                            {canManageQueue &&
+                              column.key === "emergency" &&
+                              onAddPatient ? (
+                              <Button
+                                size="sm"
+                                variant="secondary"
+                                onClick={onAddPatient}
                               >
-                                <QueueCard
-                                  entry={entry}
-                                  canManageQueue={canManageQueue}
-                                  onCall={onCall}
-                                  onStart={onStart}
-                                  onComplete={onComplete}
-                                  onCancel={onCancel}
-                                  onRequeue={onRequeue}
-                                  onViewRecord={onViewRecord}
-                                  onRegisterConsultation={onRegisterConsultation}
-                                  tabContext={tab.key as TabKey}
-                                />
-                              </div>
-                            )}
-                          </Draggable>
-                        ))}
+                                Adicionar
+                              </Button>
+                            ) : null}
+                          </div>
+                        ) : (
+                          columnEntries.map((entry, index) => (
+                            <Draggable
+                              key={entry.id}
+                              draggableId={entry.id}
+                              index={index}
+                              isDragDisabled={!canManageQueue}
+                            >
+                              {(dragProvided, dragSnapshot) => (
+                                <div
+                                  ref={dragProvided.innerRef}
+                                  {...dragProvided.draggableProps}
+                                  {...dragProvided.dragHandleProps}
+                                  className={cn(
+                                    "transition-all cursor-grab active:cursor-grabbing",
+                                    dragSnapshot.isDragging &&
+                                      "rotate-1 scale-[1.01]",
+                                  )}
+                                >
+                                  <QueueCard
+                                    entry={entry}
+                                    canManageQueue={canManageQueue}
+                                    onCall={onCall}
+                                    onStart={onStart}
+                                    onComplete={onComplete}
+                                    onCancel={onCancel}
+                                    onRequeue={onRequeue}
+                                    onViewRecord={onViewRecord}
+                                    onRegisterConsultation={onRegisterConsultation}
+                                    tabContext={column.key as ColumnKey}
+                                  />
+                                </div>
+                              )}
+                            </Draggable>
+                          ))
+                        )}
                         {provided.placeholder}
                       </div>
-                    )}
-                  </Droppable>
-                )}
-              </Tabs.Content>
-            );
-          })}
-        </Tabs.Root>
+                    </div>
+                  )}
+                </Droppable>
+              );
+            })}
+          </div>
+        </div>
       </DragDropContext>
     </section>
   );

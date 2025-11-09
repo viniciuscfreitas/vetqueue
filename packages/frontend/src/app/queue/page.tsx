@@ -298,7 +298,6 @@ export default function QueuePage() {
             user={user}
             entries={entries}
             canManageQueue={canManageQueue}
-            onAddPatient={canManageQueue ? handleShowAddQueueModal : undefined}
             onCall={canCallOrManageQueue ? handleCall : undefined}
             onStart={isVet ? handleStart : undefined}
             onComplete={handleComplete}

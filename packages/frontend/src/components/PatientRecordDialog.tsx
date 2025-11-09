@@ -266,15 +266,15 @@ export function PatientRecordDialog({
 
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="flex-1 flex flex-col overflow-hidden">
           <TabsList className="w-full justify-start overflow-x-auto bg-background/60 p-1">
-            <TabsTrigger value="consultations" className="flex items-center gap-2 whitespace-nowrap rounded-md px-3 py-2 text-sm transition data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <TabsTrigger value="consultations" className="flex items-center gap-2 whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <FileText className="h-4 w-4" />
               Consultas
             </TabsTrigger>
-            <TabsTrigger value="vaccinations" className="flex items-center gap-2 whitespace-nowrap rounded-md px-3 py-2 text-sm transition data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <TabsTrigger value="vaccinations" className="flex items-center gap-2 whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <Syringe className="h-4 w-4" />
               Vacinas
             </TabsTrigger>
-            <TabsTrigger value="history" className="flex items-center gap-2 whitespace-nowrap rounded-md px-3 py-2 text-sm transition data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <TabsTrigger value="history" className="flex items-center gap-2 whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <Clock className="h-4 w-4" />
               Histórico
             </TabsTrigger>

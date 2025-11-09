@@ -122,19 +122,19 @@ export default function FinancialPage() {
           <TabsList className="w-full justify-start overflow-x-auto bg-background/60 p-1">
             <TabsTrigger
               value="overview"
-              className="flex items-center gap-2 whitespace-nowrap rounded-md px-3 py-2 text-sm transition data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:text-base"
+              className="flex items-center gap-2 whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
             >
               Resumo
             </TabsTrigger>
             <TabsTrigger
               value="payments"
-              className="flex items-center gap-2 whitespace-nowrap rounded-md px-3 py-2 text-sm transition data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:text-base"
+              className="flex items-center gap-2 whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
             >
               Pagamentos
             </TabsTrigger>
             <TabsTrigger
               value="reports"
-              className="flex items-center gap-2 whitespace-nowrap rounded-md px-3 py-2 text-sm transition data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:text-base"
+              className="flex items-center gap-2 whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
             >
               Relatórios
             </TabsTrigger>

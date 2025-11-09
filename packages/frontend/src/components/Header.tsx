@@ -195,7 +195,7 @@ export function Header({
             {helper && (
               <div
                 className={cn(
-                  "flex items-center gap-1.5 rounded-md px-2 py-1 text-[11px] font-medium",
+                  "flex max-w-full items-center gap-1.5 self-start rounded-md px-2 py-1 text-[11px] font-medium sm:max-w-md",
                   (!helper.variant || helper.variant === "default") && "bg-muted text-muted-foreground",
                   helper.variant === "info" && "bg-sky-100 text-sky-900",
                   helper.variant === "success" && "bg-emerald-100 text-emerald-900",

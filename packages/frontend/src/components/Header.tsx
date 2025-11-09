@@ -150,21 +150,29 @@ export function Header({
                 {hasSearch && (
                   <form
                     onSubmit={handleSubmit}
-                    className="group flex items-center gap-2 border-b border-transparent focus-within:border-foreground"
+                    className="group flex min-w-[220px] items-center gap-2 rounded-md border border-border bg-background/60 px-2 py-1.5 transition focus-within:border-foreground focus-within:bg-background focus-within:shadow-sm"
                   >
                     <label htmlFor={searchInputId} className="sr-only">
                       {searchLabel ?? "Buscar"}
                     </label>
-                    <Search className="h-4 w-4 text-muted-foreground" aria-hidden />
+                    <Search
+                      className="h-4 w-4 text-muted-foreground transition group-focus-within:text-foreground"
+                      aria-hidden
+                    />
                     <Input
                       id={searchInputId}
                       value={currentSearchValue}
                       onChange={(event) => handleSearchChange(event.target.value)}
                       placeholder={searchPlaceholder}
-                      className="h-8 w-28 border-none bg-transparent p-0 text-sm focus-visible:ring-0 focus-visible:ring-offset-0 sm:w-44"
+                      className="flex-1 border-none bg-transparent p-0 text-sm placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0"
                     />
                     {onSearch && (
-                      <Button type="submit" size="sm" variant="ghost" className="px-2">
+                      <Button
+                        type="submit"
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 px-2 text-muted-foreground transition group-hover:text-foreground group-focus-within:text-foreground"
+                      >
                         {isSearching ? "Buscando…" : "Buscar"}
                       </Button>
                     )}

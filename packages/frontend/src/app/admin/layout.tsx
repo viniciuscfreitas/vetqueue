@@ -71,7 +71,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         />
       }
     >
-      <div className="mx-auto max-w-6xl px-0 py-4 sm:px-2 sm:py-6">
+      <div className="space-y-6">
         <Tabs
           value={currentValue}
           onValueChange={(value) => {

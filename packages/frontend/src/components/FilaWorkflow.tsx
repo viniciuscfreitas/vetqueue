@@ -109,7 +109,7 @@ export function FilaWorkflow({
         })}
       </div>
 
-      <div className="flex min-w-max gap-8 px-1">
+      <div className="flex min-w-max gap-8 px-1 items-start">
         {visibleColumns.map((column) => {
           const columnEntries = orderedEntries.filter(column.filter);
           return (

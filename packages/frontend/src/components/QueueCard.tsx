@@ -128,16 +128,19 @@ export function QueueCard({
 
   const priorityVisualMap = {
     [Priority.EMERGENCY]: {
-      card: "bg-rose-50/70",
-      border: "#e11d48",
+      card: "border-rose-200 bg-gradient-to-br from-rose-50 to-white",
+      dot: "bg-rose-500",
+      label: "Emergência",
     },
     [Priority.HIGH]: {
-      card: "bg-amber-50/70",
-      border: "#d97706",
+      card: "border-amber-200 bg-gradient-to-br from-amber-50 to-white",
+      dot: "bg-amber-500",
+      label: "Alta",
     },
     [Priority.NORMAL]: {
-      card: "bg-sky-50/60",
-      border: "#0284c7",
+      card: "border-sky-200 bg-gradient-to-br from-sky-50 to-white",
+      dot: "bg-sky-500",
+      label: "Normal",
     },
   } as const;
 
@@ -280,24 +283,31 @@ export function QueueCard({
   return (
     <>
       <Card
-        style={{ borderLeftColor: priorityVisual.border }}
         className={cn(
-          "relative w-full max-w-xl rounded-xl border border-border border-l-4 bg-background pl-4 transition-shadow hover:shadow-md sm:mx-auto",
+          "w-full max-w-xl rounded-lg border border-border bg-background transition-shadow hover:shadow-md sm:mx-auto",
           priorityVisual.card,
           tabContext && tabAccent[tabContext] ? tabAccent[tabContext] : null,
         )}
       >
-        <CardHeader className="pb-2">
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+        <CardHeader className="pb-1 pt-3 sm:pb-2">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+              <span className="flex items-center gap-1">
+                <span
+                  className={cn("h-2 w-2 shrink-0 rounded-full", priorityVisual.dot)}
+                  aria-hidden="true"
+                  title={`Prioridade ${priorityVisual.label}`}
+                />
+                <span className="sr-only">{`Prioridade ${priorityVisual.label}`}</span>
+              </span>
               {entry.simplesVetId && (
-                <Badge variant="outline" className="flex items-center gap-1 rounded-md px-2 py-0.5">
+                <Badge variant="outline" className="flex items-center gap-1 rounded-md px-1.5 py-0.5">
                   <Hash className="h-3 w-3" />
                   {entry.simplesVetId}
                 </Badge>
               )}
               {position !== undefined && entry.status === Status.WAITING && (
-                <Badge variant="secondary" className="rounded-md px-2 py-0.5">
+                <Badge variant="secondary" className="rounded-md px-1.5 py-0.5">
                   Fila #{position}
                 </Badge>
               )}
@@ -305,7 +315,7 @@ export function QueueCard({
                 <Badge
                   variant="outline"
                   className={cn(
-                    "rounded-md border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide",
+                    "rounded-md border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
                     status.badgeClass
                   )}
                 >
@@ -332,7 +342,7 @@ export function QueueCard({
                     variant="ghost"
                     size="icon"
                     aria-label="Ver detalhes do atendimento"
-                    className="h-7 w-7 rounded-full"
+                    className="h-7 w-7 rounded-full text-muted-foreground"
                   >
                     <FileText className="h-3.5 w-3.5" />
                   </Button>
@@ -412,26 +422,26 @@ export function QueueCard({
             </Dialog>
           </div>
         </CardHeader>
-        <CardContent className="space-y-3 pb-4 pt-0">
-          <div className="flex flex-col gap-1">
-            <CardTitle className="text-lg font-semibold leading-tight text-foreground">
+        <CardContent className="space-y-2 pb-3 pt-1">
+          <div className="flex flex-col gap-0.5">
+            <CardTitle className="text-base font-semibold leading-tight text-foreground">
               {entry.patientName}
             </CardTitle>
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
               <span className="font-medium text-foreground">{serviceLabel}</span>
               <span className="flex items-center gap-1">
-                <User className="h-3.5 w-3.5" />
+                <User className="h-3 w-3" />
                 {entry.tutorName}
               </span>
               {entry.assignedVet && (
                 <span className="flex items-center gap-1">
-                  <Stethoscope className="h-3.5 w-3.5" />
+                  <Stethoscope className="h-3 w-3" />
                   {entry.assignedVet.name}
                 </span>
               )}
               {entry.room && (
                 <span className="flex items-center gap-1">
-                  <DoorOpen className="h-3.5 w-3.5" />
+                  <DoorOpen className="h-3 w-3" />
                   Sala {entry.room.name}
                 </span>
               )}
@@ -482,7 +492,7 @@ export function QueueCard({
                 metrics.push({
                   key: "called-at",
                   label: "Chamado às",
-                  icon: <Clock className="h-3 w-3" />,
+                  icon: <Clock className="h-3 w-3 text-muted-foreground" />,
                   value: calledAtTime,
                 });
               }
@@ -514,12 +524,12 @@ export function QueueCard({
             }
 
             return metrics.length > 0 ? (
-              <div className="flex flex-wrap items-center gap-2 text-[11px] font-medium text-muted-foreground">
+              <div className="flex flex-wrap items-center gap-1.5 text-[10px] font-medium text-muted-foreground">
                 {metrics.map((metric) => (
                   <div
                     key={metric.key}
                     className={cn(
-                      "flex items-center gap-1 rounded-md border border-transparent px-2 py-1",
+                      "flex items-center gap-1 rounded-md border border-transparent px-1.5 py-0.5",
                       metric.highlightClass ?? "bg-muted/40"
                     )}
                   >
@@ -533,7 +543,7 @@ export function QueueCard({
           })()}
 
           {(primaryActions.length > 0 || secondaryActions.length > 0) && (
-            <div className="flex flex-wrap justify-end gap-2">
+            <div className="flex flex-wrap justify-end gap-1.5">
               {[...primaryActions, ...secondaryActions].map((action) => action)}
             </div>
           )}

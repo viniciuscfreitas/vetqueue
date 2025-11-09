@@ -45,7 +45,7 @@ export const shellModules: ShellModule[] = [
   {
     id: ModuleKey.FINANCIAL,
     label: "Financeiro",
-    description: "Cobranças, MRR e ARPU",
+    description: "Cobranças e pagamentos do dia",
     href: "/financial",
     icon: Wallet,
     requiredModules: [ModuleKey.FINANCIAL],

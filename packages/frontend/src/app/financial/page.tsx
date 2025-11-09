@@ -151,7 +151,7 @@ export default function FinancialPage() {
       header={
         <Header
           title="Financeiro"
-          subtitle="Monitore receitas e pagamentos em tempo real."
+          subtitle="Veja o que entrou e o que falta receber."
           actions={headerActions}
           helper={headerHelper}
         />

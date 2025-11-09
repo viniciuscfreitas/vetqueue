@@ -104,7 +104,7 @@ export function QueueCard({
      <>
       <Card
         className={cn(
-          "transition-all hover:shadow-md border border-border bg-background",
+          "w-full transition-all hover:shadow-md border border-border bg-background",
           tabContext && tabAccent[tabContext] ? tabAccent[tabContext] : null,
         )}
       >

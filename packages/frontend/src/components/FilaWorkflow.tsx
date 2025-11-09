@@ -12,13 +12,7 @@ import {
 import { QueueCard } from "./QueueCard";
 import { cn } from "@/lib/utils";
 import { sortQueueEntries } from "@/lib/queueHelpers";
-import {
-  ClipboardList,
-  CreditCard,
-  HeartPulse,
-  PawPrint,
-  Stethoscope,
-} from "lucide-react";
+import { ClipboardList, CreditCard, HeartPulse, PawPrint, Stethoscope } from "lucide-react";
 
 const COLUMN_DEFINITIONS = [
   {
@@ -102,54 +96,51 @@ export function FilaWorkflow({
   const orderedEntries = useMemo(() => sortQueueEntries(entries), [entries]);
 
   return (
-    <section className="overflow-x-auto pb-4">
-      <div className="flex min-w-max gap-6">
+    <section className="space-y-4 overflow-x-auto pb-4">
+      <div className="flex min-w-max gap-8 px-1">
         {visibleColumns.map((column) => {
           const columnEntries = orderedEntries.filter(column.filter);
           return (
-            <div
-              key={column.key}
-              className="flex w-[280px] shrink-0 flex-col gap-4 rounded-2xl border border-border bg-card p-4 shadow-sm"
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-2">
-                  {column.icon}
-                  <div>
-                    <p className="text-sm font-semibold leading-tight">
-                      {column.title}
-                    </p>
-                    <span className="text-xs text-muted-foreground">
-                      {columnEntries.length}{" "}
-                      {columnEntries.length === 1 ? "paciente" : "pacientes"}
-                    </span>
-                  </div>
-                </div>
+            <div key={column.key} className="w-[320px] shrink-0">
+              <div className="flex items-center gap-2">
+                {column.icon}
+                <p className="text-sm font-semibold">{column.title}</p>
                 <span className={cn("h-2 w-2 rounded-full", column.indicator)} />
               </div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {columnEntries.length} {columnEntries.length === 1 ? "paciente" : "pacientes"}
+              </p>
+            </div>
+          );
+        })}
+      </div>
 
-              <div className="flex flex-1 flex-col gap-3">
-                {columnEntries.length === 0 ? (
-                  <div className="flex flex-1 flex-col items-center justify-center rounded-xl border border-dashed border-muted/40 bg-muted/10 p-6 text-center text-xs text-muted-foreground">
-                    Nenhum paciente aqui.
-                  </div>
-                ) : (
-                  columnEntries.map((entry) => (
-                    <QueueCard
-                      key={entry.id}
-                      entry={entry}
-                      canManageQueue={canManageQueue}
-                      onCall={onCall}
-                      onStart={onStart}
-                      onComplete={onComplete}
-                      onCancel={onCancel}
-                      onRequeue={onRequeue}
-                      onViewRecord={onViewRecord}
-                      onRegisterConsultation={onRegisterConsultation}
-                      tabContext={column.key as ColumnKey}
-                    />
-                  ))
-                )}
-              </div>
+      <div className="flex min-w-max gap-8 px-1">
+        {visibleColumns.map((column) => {
+          const columnEntries = orderedEntries.filter(column.filter);
+          return (
+            <div key={column.key} className="flex w-[320px] shrink-0 flex-col gap-3">
+              {columnEntries.length === 0 ? (
+                <div className="flex flex-1 items-center justify-center rounded-xl border border-dashed border-muted/40 bg-muted/10 p-6 text-center text-xs text-muted-foreground">
+                  Nenhum paciente aqui.
+                </div>
+              ) : (
+                columnEntries.map((entry) => (
+                  <QueueCard
+                    key={entry.id}
+                    entry={entry}
+                    canManageQueue={canManageQueue}
+                    onCall={onCall}
+                    onStart={onStart}
+                    onComplete={onComplete}
+                    onCancel={onCancel}
+                    onRequeue={onRequeue}
+                    onViewRecord={onViewRecord}
+                    onRegisterConsultation={onRegisterConsultation}
+                    tabContext={column.key as ColumnKey}
+                  />
+                ))
+              )}
             </div>
           );
         })}

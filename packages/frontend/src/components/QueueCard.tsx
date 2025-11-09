@@ -1,21 +1,8 @@
 import { QueueEntry, Status, ServiceType, PaymentStatus, Priority } from "@/lib/api";
 import { Card, CardContent, CardTitle } from "./ui/card";
-import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
-import { calculateWaitTime, calculateServiceTime, cn } from "@/lib/utils";
+import { calculateWaitTime, calculateServiceTime } from "@/lib/utils";
 import { useState, useEffect } from "react";
-import {
-  Calendar,
-  Clock,
-  CreditCard,
-  User,
-  Stethoscope,
-  CheckCircle2,
-  DoorOpen,
-  Pencil,
-  FileText,
-  Hash,
-} from "lucide-react";
 import { EditQueueDialog } from "./EditQueueDialog";
 import { useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
@@ -119,41 +106,11 @@ export function QueueCard({
 
   const canEdit = entry.status === Status.WAITING && canManageQueue;
   const queryClient = useQueryClient();
-  const tabAccent = {
-    queue: "ring-1 ring-slate-200",
-    "in-progress": "ring-1 ring-orange-200",
-    completed: "ring-1 ring-emerald-200",
-    paid: "ring-1 ring-emerald-300",
+  const priorityLabels = {
+    [Priority.EMERGENCY]: "Emergência",
+    [Priority.HIGH]: "Alta",
+    [Priority.NORMAL]: "Normal",
   } as const;
-
-  const priorityVisualMap = {
-    [Priority.EMERGENCY]: {
-      card: "border-rose-200 bg-gradient-to-br from-rose-50 to-white",
-      dot: "bg-rose-500",
-      label: "Emergência",
-    },
-    [Priority.HIGH]: {
-      card: "border-amber-200 bg-gradient-to-br from-amber-50 to-white",
-      dot: "bg-amber-500",
-      label: "Alta",
-    },
-    [Priority.NORMAL]: {
-      card: "border-sky-200 bg-gradient-to-br from-sky-50 to-white",
-      dot: "bg-sky-500",
-      label: "Normal",
-    },
-  } as const;
-
-  const priorityVisual = priorityVisualMap[entry.priority] ?? priorityVisualMap[Priority.NORMAL];
-
-  const waitCardHighlight =
-    entry.status === Status.WAITING
-      ? "border-amber-200 bg-amber-50"
-      : "border-border bg-background";
-  const serviceCardHighlight =
-    entry.status === Status.IN_PROGRESS
-      ? "border-blue-200 bg-blue-50"
-      : "border-border bg-background";
 
   const formatTime = (value?: string | null) => {
     if (!value) return undefined;
@@ -246,7 +203,6 @@ export function QueueCard({
         variant="outline"
         className="flex-1 sm:flex-none"
       >
-        <FileText className="mr-2 h-4 w-4" />
         Ver Prontuário
       </Button>
     );
@@ -282,69 +238,33 @@ export function QueueCard({
 
   return (
     <>
-      <Card
-        className={cn(
-          "w-full max-w-xl rounded-xl border border-border bg-background transition-shadow hover:shadow-md sm:mx-auto",
-          priorityVisual.card,
-          tabContext && tabAccent[tabContext] ? tabAccent[tabContext] : null,
-        )}
-      >
+      <Card className="w-full max-w-xl rounded-xl border border-border bg-background sm:mx-auto">
         <CardContent className="pb-2">
           <div className="flex items-start justify-between gap-3">
-            <div className="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-              <span className="flex items-center gap-1">
-                <span
-                  className={cn("h-2.5 w-2.5 shrink-0 rounded-full", priorityVisual.dot)}
-                  aria-hidden="true"
-                  title={`Prioridade ${priorityVisual.label}`}
-                />
-                <span className="sr-only">{`Prioridade ${priorityVisual.label}`}</span>
-              </span>
-              {entry.simplesVetId && (
-                <Badge variant="outline" className="flex items-center gap-1 rounded-md px-2 py-0.5">
-                  <Hash className="h-3 w-3" />
-                  {entry.simplesVetId}
-                </Badge>
-              )}
-              {position !== undefined && entry.status === Status.WAITING && (
-                <Badge variant="secondary" className="rounded-md px-2 py-0.5">
-                  Fila #{position}
-                </Badge>
-              )}
-              {!([Status.WAITING, Status.IN_PROGRESS].includes(entry.status)) && (
-                <Badge
-                  variant="outline"
-                  className={cn(
-                    "rounded-md border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide",
-                    status.badgeClass
-                  )}
-                >
-                  {status.label}
-                </Badge>
-              )}
+            <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-muted-foreground">
+              <span>Prioridade: {priorityLabels[entry.priority] ?? priorityLabels[Priority.NORMAL]}</span>
+              {entry.simplesVetId && <span>Ficha #{entry.simplesVetId}</span>}
+              {position !== undefined && entry.status === Status.WAITING && <span>Fila #{position}</span>}
+              {!([Status.WAITING, Status.IN_PROGRESS].includes(entry.status)) && <span>{status.label}</span>}
             </div>
-
             <Dialog open={detailsDialogOpen} onOpenChange={setDetailsDialogOpen}>
               <div className="flex items-center gap-1">
                 {canEdit && (
                   <Button
                     variant="ghost"
-                    size="icon"
+                    size="sm"
                     onClick={() => setEditDialogOpen(true)}
                     aria-label="Editar atendimento"
-                    className="h-7 w-7 rounded-full"
                   >
-                    <Pencil className="h-3.5 w-3.5" />
+                    Editar
                   </Button>
                 )}
                 <DialogTrigger asChild>
                   <Button
                     variant="ghost"
-                    size="icon"
                     aria-label="Ver detalhes do atendimento"
-                    className="h-7 w-7 rounded-full"
                   >
-                    <FileText className="h-3.5 w-3.5" />
+                    Detalhes
                   </Button>
                 </DialogTrigger>
               </div>
@@ -356,54 +276,42 @@ export function QueueCard({
 
                 <div className="space-y-4">
                   <div className="space-y-3">
-                    <div className="flex items-start gap-2">
-                      <User className="mt-0.5 h-4 w-4 text-muted-foreground" />
-                      <div className="flex-1 min-w-0 space-y-1">
-                        <p className="text-xs text-muted-foreground uppercase tracking-wide">Tutor</p>
-                        <p className="text-sm font-medium break-words">{entry.tutorName}</p>
-                        {entry.simplesVetId && (
-                          <p className="text-xs text-muted-foreground">Ficha #{entry.simplesVetId}</p>
-                        )}
-                      </div>
+                    <div className="space-y-1">
+                      <p className="text-xs text-muted-foreground uppercase tracking-wide">Tutor</p>
+                      <p className="text-sm font-medium break-words">{entry.tutorName}</p>
+                      {entry.simplesVetId && (
+                        <p className="text-xs text-muted-foreground">Ficha #{entry.simplesVetId}</p>
+                      )}
                     </div>
 
-                    <div className="flex items-start gap-2">
-                      <Stethoscope className="mt-0.5 h-4 w-4 text-muted-foreground" />
-                      <div className="flex-1 min-w-0 space-y-1">
-                        <p className="text-xs text-muted-foreground uppercase tracking-wide">Serviço</p>
-                        <p className="text-sm font-medium break-words">{serviceLabel}</p>
-                        {entry.hasScheduledAppointment && (
-                          <p className="text-xs text-muted-foreground">
-                            {entry.scheduledAt
-                              ? `Agendado para ${new Date(entry.scheduledAt).toLocaleString("pt-BR", {
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                  day: "2-digit",
-                                  month: "2-digit",
-                                })}`
-                              : "Agendamento confirmado"}
-                          </p>
-                        )}
-                      </div>
+                    <div className="space-y-1">
+                      <p className="text-xs text-muted-foreground uppercase tracking-wide">Serviço</p>
+                      <p className="text-sm font-medium break-words">{serviceLabel}</p>
+                      {entry.hasScheduledAppointment && (
+                        <p className="text-xs text-muted-foreground">
+                          {entry.scheduledAt
+                            ? `Agendado para ${new Date(entry.scheduledAt).toLocaleString("pt-BR", {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                                day: "2-digit",
+                                month: "2-digit",
+                              })}`
+                            : "Agendamento confirmado"}
+                        </p>
+                      )}
                     </div>
 
                     {entry.assignedVet && (
-                      <div className="flex items-start gap-2">
-                        <CheckCircle2 className="mt-0.5 h-4 w-4 text-muted-foreground" />
-                        <div className="flex-1 min-w-0 space-y-1">
-                          <p className="text-xs text-muted-foreground uppercase tracking-wide">Veterinário</p>
-                          <p className="text-sm font-medium break-words">{entry.assignedVet.name}</p>
-                        </div>
+                      <div className="space-y-1">
+                        <p className="text-xs text-muted-foreground uppercase tracking-wide">Veterinário</p>
+                        <p className="text-sm font-medium break-words">{entry.assignedVet.name}</p>
                       </div>
                     )}
 
                     {entry.room && (
-                      <div className="flex items-start gap-2">
-                        <DoorOpen className="mt-0.5 h-4 w-4 text-muted-foreground" />
-                        <div className="flex-1 min-w-0 space-y-1">
-                          <p className="text-xs text-muted-foreground uppercase tracking-wide">Sala</p>
-                          <p className="text-sm font-medium break-words">{entry.room.name}</p>
-                        </div>
+                      <div className="space-y-1">
+                        <p className="text-xs text-muted-foreground uppercase tracking-wide">Sala</p>
+                        <p className="text-sm font-medium break-words">{entry.room.name}</p>
                       </div>
                     )}
                   </div>
@@ -429,22 +337,9 @@ export function QueueCard({
             </CardTitle>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
               <span className="font-medium text-foreground">{serviceLabel}</span>
-              <span className="flex items-center gap-1">
-                <User className="h-3.5 w-3.5" />
-                {entry.tutorName}
-              </span>
-              {entry.assignedVet && (
-                <span className="flex items-center gap-1">
-                  <Stethoscope className="h-3.5 w-3.5" />
-                  {entry.assignedVet.name}
-                </span>
-              )}
-              {entry.room && (
-                <span className="flex items-center gap-1">
-                  <DoorOpen className="h-3.5 w-3.5" />
-                  Sala {entry.room.name}
-                </span>
-              )}
+              <span>{entry.tutorName}</span>
+              {entry.assignedVet && <span>{entry.assignedVet.name}</span>}
+              {entry.room && <span>Sala {entry.room.name}</span>}
             </div>
           </div>
 
@@ -452,18 +347,14 @@ export function QueueCard({
             const metrics: Array<{
               key: string;
               label: string;
-              icon: JSX.Element;
               value: string;
-              highlightClass?: string;
             }> = [];
 
             if (tabContext === "queue" || !tabContext) {
               metrics.push({
                 key: "wait",
                 label: "Espera",
-                icon: <Clock className="h-3 w-3" />,
                 value: waitTime || "—",
-                highlightClass: waitCardHighlight,
               });
 
               const scheduledValue = entry.hasScheduledAppointment
@@ -475,16 +366,13 @@ export function QueueCard({
               metrics.push({
                 key: "schedule",
                 label: entry.hasScheduledAppointment ? "Agendamento" : "Chegada",
-                icon: <Calendar className="h-3 w-3" />,
                 value: scheduledValue,
               });
             } else if (tabContext === "in-progress") {
               metrics.push({
                 key: "service",
                 label: "Atendimento",
-                icon: <Stethoscope className="h-3 w-3" />,
                 value: serviceTime || "—",
-                highlightClass: serviceCardHighlight,
               });
 
               const calledAtTime = formatTime(entry.calledAt);
@@ -492,7 +380,6 @@ export function QueueCard({
                 metrics.push({
                   key: "called-at",
                   label: "Chamado às",
-                  icon: <Clock className="h-3 w-3" />,
                   value: calledAtTime,
                 });
               }
@@ -500,7 +387,6 @@ export function QueueCard({
               metrics.push({
                 key: "service",
                 label: "Atendimento",
-                icon: <Stethoscope className="h-3 w-3" />,
                 value: serviceTime || "—",
               });
 
@@ -514,7 +400,6 @@ export function QueueCard({
               metrics.push({
                 key: "payment",
                 label: "Pagamento",
-                icon: <CreditCard className="h-3 w-3" />,
                 value: paymentSummary,
               });
             }
@@ -524,18 +409,11 @@ export function QueueCard({
             }
 
             return metrics.length > 0 ? (
-              <div className="flex flex-wrap items-center gap-2 text-[11px] font-medium text-muted-foreground">
+              <div className="flex flex-col gap-1 text-sm text-muted-foreground">
                 {metrics.map((metric) => (
-                  <div
-                    key={metric.key}
-                    className={cn(
-                      "flex items-center gap-1 rounded-md border border-transparent px-2 py-1",
-                      metric.highlightClass ?? "bg-muted/40"
-                    )}
-                  >
-                    {metric.icon}
-                    <span className="uppercase">{metric.label}:</span>
-                    <span className="font-semibold text-foreground">{metric.value}</span>
+                  <div key={metric.key} className="flex items-baseline justify-between rounded border border-border px-2 py-1">
+                    <span className="text-xs">{metric.label}</span>
+                    <span className="font-medium text-foreground">{metric.value}</span>
                   </div>
                 ))}
               </div>

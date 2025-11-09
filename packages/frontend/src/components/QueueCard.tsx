@@ -6,6 +6,19 @@ import { useState, useEffect } from "react";
 import { EditQueueDialog } from "./EditQueueDialog";
 import { useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
+import {
+  AlertTriangle,
+  CheckCircle2,
+  Clock,
+  CreditCard,
+  DoorOpen,
+  FileText,
+  Hash,
+  ListOrdered,
+  Pencil,
+  Stethoscope,
+  User,
+} from "lucide-react";
 
 interface QueueCardProps {
   entry: QueueEntry;
@@ -203,6 +216,7 @@ export function QueueCard({
         variant="outline"
         className="flex-1 sm:flex-none"
       >
+        <FileText className="mr-2 h-4 w-4" />
         Ver Prontuário
       </Button>
     );
@@ -240,31 +254,50 @@ export function QueueCard({
     <>
       <Card className="w-full max-w-xl rounded-xl border border-border bg-background sm:mx-auto">
         <CardContent className="pb-2">
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-muted-foreground">
-              <span>Prioridade: {priorityLabels[entry.priority] ?? priorityLabels[Priority.NORMAL]}</span>
-              {entry.simplesVetId && <span>Ficha #{entry.simplesVetId}</span>}
-              {position !== undefined && entry.status === Status.WAITING && <span>Fila #{position}</span>}
-              {!([Status.WAITING, Status.IN_PROGRESS].includes(entry.status)) && <span>{status.label}</span>}
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+            <div className="flex flex-wrap items-center gap-3 text-xs font-semibold text-muted-foreground">
+              <span className="flex items-center gap-1">
+                <AlertTriangle className="h-3.5 w-3.5" />
+                {priorityLabels[entry.priority] ?? priorityLabels[Priority.NORMAL]}
+              </span>
+              {entry.simplesVetId && (
+                <span className="flex items-center gap-1">
+                  <Hash className="h-3.5 w-3.5" />
+                  {entry.simplesVetId}
+                </span>
+              )}
+              {position !== undefined && entry.status === Status.WAITING && (
+                <span className="flex items-center gap-1">
+                  <ListOrdered className="h-3.5 w-3.5" />
+                  Fila #{position}
+                </span>
+              )}
+              {!([Status.WAITING, Status.IN_PROGRESS].includes(entry.status)) && (
+                <span className="flex items-center gap-1">
+                  <Clock className="h-3.5 w-3.5" />
+                  {status.label}
+                </span>
+              )}
             </div>
             <Dialog open={detailsDialogOpen} onOpenChange={setDetailsDialogOpen}>
               <div className="flex items-center gap-1">
                 {canEdit && (
                   <Button
                     variant="ghost"
-                    size="sm"
+                    size="icon"
                     onClick={() => setEditDialogOpen(true)}
                     aria-label="Editar atendimento"
                   >
-                    Editar
+                    <Pencil className="h-3.5 w-3.5" />
                   </Button>
                 )}
                 <DialogTrigger asChild>
                   <Button
                     variant="ghost"
+                    size="icon"
                     aria-label="Ver detalhes do atendimento"
                   >
-                    Detalhes
+                    <FileText className="h-3.5 w-3.5" />
                   </Button>
                 </DialogTrigger>
               </div>
@@ -335,11 +368,27 @@ export function QueueCard({
             <CardTitle className="text-lg font-semibold leading-tight text-foreground">
               {entry.patientName}
             </CardTitle>
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
-              <span className="font-medium text-foreground">{serviceLabel}</span>
-              <span>{entry.tutorName}</span>
-              {entry.assignedVet && <span>{entry.assignedVet.name}</span>}
-              {entry.room && <span>Sala {entry.room.name}</span>}
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+              <span className="flex items-center gap-1 font-medium text-foreground">
+                <Stethoscope className="h-4 w-4" />
+                {serviceLabel}
+              </span>
+              <span className="flex items-center gap-1">
+                <User className="h-4 w-4" />
+                {entry.tutorName}
+              </span>
+              {entry.assignedVet && (
+                <span className="flex items-center gap-1">
+                  <CheckCircle2 className="h-4 w-4" />
+                  {entry.assignedVet.name}
+                </span>
+              )}
+              {entry.room && (
+                <span className="flex items-center gap-1">
+                  <DoorOpen className="h-4 w-4" />
+                  Sala {entry.room.name}
+                </span>
+              )}
             </div>
           </div>
 
@@ -348,6 +397,7 @@ export function QueueCard({
               key: string;
               label: string;
               value: string;
+              icon: JSX.Element;
             }> = [];
 
             if (tabContext === "queue" || !tabContext) {
@@ -355,24 +405,14 @@ export function QueueCard({
                 key: "wait",
                 label: "Espera",
                 value: waitTime || "—",
-              });
-
-              const scheduledValue = entry.hasScheduledAppointment
-                ? entry.scheduledAt
-                  ? formatTime(entry.scheduledAt) ?? "Agendado"
-                  : "Agendado"
-                : formatTime(entry.createdAt) ?? "—";
-
-              metrics.push({
-                key: "schedule",
-                label: entry.hasScheduledAppointment ? "Agendamento" : "Chegada",
-                value: scheduledValue,
+                icon: <Clock className="h-4 w-4 text-muted-foreground" />,
               });
             } else if (tabContext === "in-progress") {
               metrics.push({
                 key: "service",
                 label: "Atendimento",
                 value: serviceTime || "—",
+                icon: <Stethoscope className="h-4 w-4 text-muted-foreground" />,
               });
 
               const calledAtTime = formatTime(entry.calledAt);
@@ -381,6 +421,7 @@ export function QueueCard({
                   key: "called-at",
                   label: "Chamado às",
                   value: calledAtTime,
+                  icon: <Clock className="h-4 w-4 text-muted-foreground" />,
                 });
               }
             } else {
@@ -388,6 +429,7 @@ export function QueueCard({
                 key: "service",
                 label: "Atendimento",
                 value: serviceTime || "—",
+                icon: <Stethoscope className="h-4 w-4 text-muted-foreground" />,
               });
 
               const paymentSummary = [
@@ -401,6 +443,7 @@ export function QueueCard({
                 key: "payment",
                 label: "Pagamento",
                 value: paymentSummary,
+                icon: <CreditCard className="h-4 w-4 text-muted-foreground" />,
               });
             }
 
@@ -409,10 +452,16 @@ export function QueueCard({
             }
 
             return metrics.length > 0 ? (
-              <div className="flex flex-col gap-1 text-sm text-muted-foreground">
+              <div className="grid gap-2 text-sm text-muted-foreground sm:grid-cols-2">
                 {metrics.map((metric) => (
-                  <div key={metric.key} className="flex items-baseline justify-between rounded border border-border px-2 py-1">
-                    <span className="text-xs">{metric.label}</span>
+                  <div
+                    key={metric.key}
+                    className="flex items-center justify-between rounded border border-border px-3 py-2"
+                  >
+                    <span className="flex items-center gap-2 text-xs uppercase">
+                      {metric.icon}
+                      {metric.label}
+                    </span>
                     <span className="font-medium text-foreground">{metric.value}</span>
                   </div>
                 ))}

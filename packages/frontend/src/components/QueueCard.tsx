@@ -251,9 +251,9 @@ export function QueueCard({
   return (
     <>
       <Card className="w-full max-w-xl rounded-xl border border-border bg-background sm:mx-auto">
-        <CardContent className="pb-2 pt-[13px]">
+        <CardContent className="pb-2">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-            <div className="flex flex-col gap-1">
+            <div className="mt-[13px] flex flex-col gap-1 sm:mt-[13px]">
               <CardTitle className="text-lg font-semibold leading-tight text-foreground">
                 {entry.patientName}
               </CardTitle>

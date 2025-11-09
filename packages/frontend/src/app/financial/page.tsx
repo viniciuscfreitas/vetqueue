@@ -15,7 +15,7 @@ import { FinancialReportsTab } from "@/components/FinancialReportsTab";
 import { ModuleKey, Role, userApi } from "@/lib/api";
 import { useDateRange } from "@/hooks/useDateRange";
 import { useQuery } from "@tanstack/react-query";
-import { Receipt } from "lucide-react";
+import { CreditCard, FileText, LayoutDashboard, Receipt } from "lucide-react";
 
 const DEFAULT_FILTERS = {
   tutorName: "",
@@ -124,18 +124,21 @@ export default function FinancialPage() {
               value="overview"
               className="flex items-center gap-2 whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
             >
+              <LayoutDashboard className="h-4 w-4" />
               Resumo
             </TabsTrigger>
             <TabsTrigger
               value="payments"
               className="flex items-center gap-2 whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
             >
+              <CreditCard className="h-4 w-4" />
               Pagamentos
             </TabsTrigger>
             <TabsTrigger
               value="reports"
               className="flex items-center gap-2 whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
             >
+              <FileText className="h-4 w-4" />
               Relatórios
             </TabsTrigger>
           </TabsList>

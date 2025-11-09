@@ -5,9 +5,21 @@ import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { calculateWaitTime, calculateServiceTime, cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
-import { Clock, User, Stethoscope, CheckCircle2, DoorOpen, Pencil, FileText, ChevronDown, ChevronUp } from "lucide-react";
+import {
+  Calendar,
+  Clock,
+  CreditCard,
+  User,
+  Stethoscope,
+  CheckCircle2,
+  DoorOpen,
+  Pencil,
+  FileText,
+  Hash,
+} from "lucide-react";
 import { EditQueueDialog } from "./EditQueueDialog";
 import { useQueryClient } from "@tanstack/react-query";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
 
 interface QueueCardProps {
   entry: QueueEntry;
@@ -92,7 +104,7 @@ export function QueueCard({
 
   const [, setCurrentTime] = useState(Date.now());
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [showDetails, setShowDetails] = useState(false);
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
 
   useEffect(() => {
     if (entry.status === Status.WAITING || entry.status === Status.IN_PROGRESS) {
@@ -100,10 +112,6 @@ export function QueueCard({
       return () => clearInterval(interval);
     }
   }, [entry.status]);
-
-  useEffect(() => {
-    setShowDetails(false);
-  }, [entry.id]);
 
   const waitTime = calculateWaitTime(entry.createdAt, entry.calledAt);
   const serviceTime = calculateServiceTime(entry.calledAt, entry.completedAt);
@@ -127,6 +135,18 @@ export function QueueCard({
     entry.status === Status.IN_PROGRESS
       ? "border-blue-200 bg-blue-50"
       : "border-border bg-background";
+
+  const formatTime = (value?: string | null) => {
+    if (!value) return undefined;
+    try {
+      return new Date(value).toLocaleTimeString("pt-BR", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } catch {
+      return undefined;
+    }
+  };
 
   const primaryActions: JSX.Element[] = [];
   const secondaryActions: JSX.Element[] = [];
@@ -251,8 +271,16 @@ export function QueueCard({
       >
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between gap-3">
-            <div className="flex-1 min-w-0 space-y-1.5">
-              <CardTitle className="text-lg font-semibold truncate">{entry.patientName}</CardTitle>
+            <div className="flex-1 min-w-0 space-y-2">
+              <div className="flex items-center gap-2">
+                <CardTitle className="text-lg font-semibold truncate">{entry.patientName}</CardTitle>
+                {entry.simplesVetId && (
+                  <Badge variant="outline" className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wide">
+                    <Hash className="h-3 w-3" />
+                    {entry.simplesVetId}
+                  </Badge>
+                )}
+              </div>
               <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground uppercase tracking-wide">
                 <span className="font-semibold text-foreground">{serviceLabel}</span>
                 <PriorityBadge priority={entry.priority} />
@@ -271,46 +299,211 @@ export function QueueCard({
                   </Badge>
                 )}
               </div>
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                <span className="flex items-center gap-1 truncate">
+                  <User className="h-3.5 w-3.5" />
+                  <span className="truncate">{entry.tutorName}</span>
+                </span>
+                {entry.assignedVet && (
+                  <span className="flex items-center gap-1 truncate">
+                    <Stethoscope className="h-3.5 w-3.5" />
+                    <span className="truncate">{entry.assignedVet.name}</span>
+                  </span>
+                )}
+                {entry.room && (
+                  <span className="flex items-center gap-1 truncate">
+                    <DoorOpen className="h-3.5 w-3.5" />
+                    <span className="truncate">Sala {entry.room.name}</span>
+                  </span>
+                )}
+              </div>
             </div>
-            <div className="flex items-start gap-2">
-              {canEdit && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setEditDialogOpen(true)}
-                  aria-label="Editar atendimento"
-                >
-                  <Pencil className="h-4 w-4" />
-                </Button>
-              )}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowDetails((prev) => !prev)}
-                aria-label={showDetails ? "Ocultar detalhes" : "Mostrar detalhes"}
-              >
-                {showDetails ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-              </Button>
-            </div>
+            <Dialog open={detailsDialogOpen} onOpenChange={setDetailsDialogOpen}>
+              <div className="flex items-start gap-2">
+                {canEdit && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setEditDialogOpen(true)}
+                    aria-label="Editar atendimento"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                )}
+                <DialogTrigger asChild>
+                  <Button variant="ghost" size="sm" aria-label="Ver detalhes do atendimento">
+                    <FileText className="mr-2 h-4 w-4" />
+                    Detalhes
+                  </Button>
+                </DialogTrigger>
+              </div>
+
+              <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle>Detalhes do atendimento</DialogTitle>
+                </DialogHeader>
+
+                <div className="space-y-4">
+                  <div className="space-y-3">
+                    <div className="flex items-start gap-2">
+                      <User className="mt-0.5 h-4 w-4 text-muted-foreground" />
+                      <div className="flex-1 min-w-0 space-y-1">
+                        <p className="text-xs text-muted-foreground uppercase tracking-wide">Tutor</p>
+                        <p className="text-sm font-medium break-words">{entry.tutorName}</p>
+                        {entry.simplesVetId && (
+                          <p className="text-xs text-muted-foreground">Ficha #{entry.simplesVetId}</p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-2">
+                      <Stethoscope className="mt-0.5 h-4 w-4 text-muted-foreground" />
+                      <div className="flex-1 min-w-0 space-y-1">
+                        <p className="text-xs text-muted-foreground uppercase tracking-wide">Serviço</p>
+                        <p className="text-sm font-medium break-words">{serviceLabel}</p>
+                        {entry.hasScheduledAppointment && (
+                          <p className="text-xs text-muted-foreground">
+                            {entry.scheduledAt
+                              ? `Agendado para ${new Date(entry.scheduledAt).toLocaleString("pt-BR", {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                  day: "2-digit",
+                                  month: "2-digit",
+                                })}`
+                              : "Agendamento confirmado"}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    {entry.assignedVet && (
+                      <div className="flex items-start gap-2">
+                        <CheckCircle2 className="mt-0.5 h-4 w-4 text-muted-foreground" />
+                        <div className="flex-1 min-w-0 space-y-1">
+                          <p className="text-xs text-muted-foreground uppercase tracking-wide">Veterinário</p>
+                          <p className="text-sm font-medium break-words">{entry.assignedVet.name}</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {entry.room && (
+                      <div className="flex items-start gap-2">
+                        <DoorOpen className="mt-0.5 h-4 w-4 text-muted-foreground" />
+                        <div className="flex-1 min-w-0 space-y-1">
+                          <p className="text-xs text-muted-foreground uppercase tracking-wide">Sala</p>
+                          <p className="text-sm font-medium break-words">{entry.room.name}</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {(entry.paymentAmount || paymentStatusLabel) && (
+                    <div className="space-y-1 rounded-md border border-border bg-muted/30 p-3 text-sm">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Pagamento</p>
+                      {entry.paymentAmount && <p className="font-medium">Valor: R$ {entry.paymentAmount}</p>}
+                      {paymentStatusLabel && (
+                        <p className="text-xs uppercase tracking-wide text-muted-foreground">Status: {paymentStatusLabel}</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <div className={cn("rounded-md border p-3 transition-colors", waitCardHighlight)}>
-              <div className="flex items-center gap-2 text-xs text-muted-foreground uppercase tracking-wide">
-                <Clock className="h-3 w-3" />
-                Espera
+          {(() => {
+            const metrics: Array<{
+              key: string;
+              label: string;
+              icon: JSX.Element;
+              value: string;
+              highlightClass?: string;
+            }> = [];
+
+            if (tabContext === "queue" || !tabContext) {
+              metrics.push({
+                key: "wait",
+                label: "Espera",
+                icon: <Clock className="h-3 w-3" />,
+                value: waitTime || "—",
+                highlightClass: waitCardHighlight,
+              });
+
+              const scheduledValue = entry.hasScheduledAppointment
+                ? entry.scheduledAt
+                  ? formatTime(entry.scheduledAt) ?? "Agendado"
+                  : "Agendado"
+                : formatTime(entry.createdAt) ?? "—";
+
+              metrics.push({
+                key: "schedule",
+                label: entry.hasScheduledAppointment ? "Agendamento" : "Chegada",
+                icon: <Calendar className="h-3 w-3" />,
+                value: scheduledValue,
+              });
+            } else if (tabContext === "in-progress") {
+              metrics.push({
+                key: "service",
+                label: "Atendimento",
+                icon: <Stethoscope className="h-3 w-3" />,
+                value: serviceTime || "—",
+                highlightClass: serviceCardHighlight,
+              });
+
+              const calledAtTime = formatTime(entry.calledAt);
+              if (calledAtTime) {
+                metrics.push({
+                  key: "called-at",
+                  label: "Chamado às",
+                  icon: <Clock className="h-3 w-3" />,
+                  value: calledAtTime,
+                });
+              }
+            } else {
+              metrics.push({
+                key: "service",
+                label: "Atendimento",
+                icon: <Stethoscope className="h-3 w-3" />,
+                value: serviceTime || "—",
+              });
+
+              const paymentSummary = [
+                entry.paymentAmount ? `R$ ${entry.paymentAmount}` : null,
+                paymentStatusLabel ? `Status ${paymentStatusLabel}` : null,
+              ]
+                .filter(Boolean)
+                .join(" • ") || "—";
+
+              metrics.push({
+                key: "payment",
+                label: "Pagamento",
+                icon: <CreditCard className="h-3 w-3" />,
+                value: paymentSummary,
+              });
+            }
+
+            if (metrics.length === 0) {
+              return null;
+            }
+
+            return (
+              <div className={cn("grid grid-cols-1 gap-3 sm:grid-cols-2")}>
+                {metrics.map((metric) => (
+                  <div
+                    key={metric.key}
+                    className={cn("rounded-md border p-3 transition-colors", metric.highlightClass ?? "border-border bg-background")}
+                  >
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground uppercase tracking-wide">
+                      {metric.icon}
+                      {metric.label}
+                    </div>
+                    <p className="mt-1 text-sm font-semibold">{metric.value}</p>
+                  </div>
+                ))}
               </div>
-              <p className="mt-1 text-sm font-semibold">{waitTime || "—"}</p>
-            </div>
-            <div className={cn("rounded-md border p-3 transition-colors", serviceCardHighlight)}>
-              <div className="flex items-center gap-2 text-xs text-muted-foreground uppercase tracking-wide">
-                <Stethoscope className="h-3 w-3" />
-                Atendimento
-              </div>
-              <p className="mt-1 text-sm font-semibold">{serviceTime || "—"}</p>
-            </div>
-          </div>
+            );
+          })()}
 
           {(primaryActions.length > 0 || secondaryActions.length > 0) && (
             <div className="space-y-2">
@@ -319,79 +512,6 @@ export function QueueCard({
               )}
               {secondaryActions.length > 0 && (
                 <div className="flex flex-wrap gap-2">{secondaryActions}</div>
-              )}
-            </div>
-          )}
-
-          {showDetails && (
-            <div className="space-y-3 border-t pt-3">
-              <div className="flex items-start gap-2">
-                <User className="mt-0.5 h-4 w-4 text-muted-foreground" />
-                <div className="flex-1 min-w-0 space-y-1">
-                  <p className="text-xs text-muted-foreground uppercase tracking-wide">Tutor</p>
-                  <p className="text-sm font-medium break-words">{entry.tutorName}</p>
-                  {entry.simplesVetId && (
-                    <p className="text-xs text-muted-foreground">Ficha #{entry.simplesVetId}</p>
-                  )}
-                </div>
-              </div>
-
-              <div className="flex items-start gap-2">
-                <Stethoscope className="mt-0.5 h-4 w-4 text-muted-foreground" />
-                <div className="flex-1 min-w-0 space-y-1">
-                  <p className="text-xs text-muted-foreground uppercase tracking-wide">Serviço</p>
-                  <p className="text-sm font-medium break-words">{serviceLabel}</p>
-                  {entry.hasScheduledAppointment && (
-                    <p className="text-xs text-muted-foreground">
-                      {entry.scheduledAt
-                        ? `Agendado para ${new Date(entry.scheduledAt).toLocaleString()}`
-                        : "Agendamento confirmado"}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {entry.assignedVet && (
-                <div className="flex items-start gap-2">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 text-muted-foreground" />
-                  <div className="flex-1 min-w-0 space-y-1">
-                    <p className="text-xs text-muted-foreground uppercase tracking-wide">Veterinário</p>
-                    <p className="text-sm font-medium break-words">{entry.assignedVet.name}</p>
-                    {entry.room && (
-                      <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
-                        <DoorOpen className="h-3 w-3" />
-                        Sala {entry.room.name}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {!entry.assignedVet && entry.room && (
-                <div className="flex items-start gap-2">
-                  <DoorOpen className="mt-0.5 h-4 w-4 text-muted-foreground" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs text-muted-foreground uppercase tracking-wide">Sala</p>
-                    <p className="text-sm font-medium break-words">{entry.room.name}</p>
-                  </div>
-                </div>
-              )}
-
-              {entry.paymentAmount && (
-                <div className="flex items-start gap-2">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 text-muted-foreground" />
-                  <div className="flex-1 min-w-0 space-y-1">
-                    <p className="text-xs text-muted-foreground uppercase tracking-wide">Pagamento</p>
-                    <p className="text-sm font-medium break-words">
-                      {entry.paymentAmount}
-                    </p>
-                    {paymentStatusLabel && (
-                      <p className="text-xs text-muted-foreground uppercase tracking-wide">
-                        Status: {paymentStatusLabel}
-                      </p>
-                    )}
-                  </div>
-                </div>
               )}
             </div>
           )}

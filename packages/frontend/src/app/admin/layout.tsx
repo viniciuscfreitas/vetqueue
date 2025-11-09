@@ -67,11 +67,12 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       header={
         <Header
           title="Administração"
-          subtitle="Configure usuários, salas, serviços e permissões sem sair do fluxo."
+          subtitle="Ajuste configurações essenciais com rapidez."
+          subtitleClassName="text-xs whitespace-nowrap truncate"
         />
       }
     >
-      <div className="space-y-6">
+      <div className="space-y-4">
         <Tabs
           value={currentValue}
           onValueChange={(value) => {
@@ -79,7 +80,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
               router.push(value);
             }
           }}
-          className="flex flex-col gap-6"
+          className="flex flex-col gap-4"
         >
           <TabsList className="w-full justify-start overflow-x-auto bg-background/60 p-1">
             {navItems.map((item) => {

@@ -302,7 +302,7 @@ export default function PatientsPage() {
       header={
         <Header
           title="Pacientes"
-          subtitle="Cadastre pets, mantenha dados atualizados e deixe o prontuário sempre pronto para o próximo atendimento."
+          subtitle="Centralize cadastros e encontre pacientes num toque."
           onSearch={(term) => setSearchTerm(term)}
           defaultSearchValue={searchTerm}
           actions={headerActions}

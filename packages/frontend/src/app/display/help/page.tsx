@@ -19,7 +19,7 @@ export default function DisplayHelpPage() {
       header={
         <Header
           title="Tela de Exibição"
-          subtitle="Compartilhe o link ou escaneie o QR Code para ativar o painel da TV."
+          subtitle="Ative a tela da TV em poucos passos."
         />
       }
     >

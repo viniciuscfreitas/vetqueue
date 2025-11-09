@@ -254,7 +254,7 @@ export default function QueuePage() {
       header={
         <Header
           title="Fila de atendimentos"
-          subtitle="Priorize emergências, acompanhe triagens e finalize altas sem ruído."
+          subtitle="Organize a fila e chame o próximo paciente com fluidez."
           actions={headerActions}
         />
       }

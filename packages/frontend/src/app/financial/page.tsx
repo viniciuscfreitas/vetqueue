@@ -112,7 +112,7 @@ export default function FinancialPage() {
       header={
         <Header
           title="Financeiro"
-          subtitle="Controle MRR, ARPU e pagamentos sem atrito entre recepção e faturamento."
+          subtitle="Monitore receitas e pagamentos em tempo real."
           actions={headerActions}
         />
       }

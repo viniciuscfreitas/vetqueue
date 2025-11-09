@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 type HeaderActionVariant = "primary" | "outline";
 
@@ -32,6 +33,7 @@ interface HeaderProps {
   children?: React.ReactNode;
   showGreeting?: boolean;
   actionsPlacement?: HeaderActionsPlacement;
+  subtitleClassName?: string;
 }
 
 export function Header({
@@ -48,6 +50,7 @@ export function Header({
   children,
   showGreeting = true,
   actionsPlacement = "right",
+  subtitleClassName,
 }: HeaderProps) {
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState(defaultSearchValue);
@@ -137,7 +140,14 @@ export function Header({
               </h1>
             )}
             {effectiveSubtitle && (
-              <p className="max-w-xl text-left text-sm text-muted-foreground">{effectiveSubtitle}</p>
+              <p
+                className={cn(
+                  "max-w-full text-left text-xs text-muted-foreground whitespace-nowrap truncate",
+                  subtitleClassName,
+                )}
+              >
+                {effectiveSubtitle}
+              </p>
             )}
           </div>
           {renderActions(topActions, "justify-end")}

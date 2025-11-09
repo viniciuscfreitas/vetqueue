@@ -42,7 +42,7 @@ export default function AuditPage() {
       header={
         <Header
           title="Auditoria"
-          subtitle="Acompanhe cada ação registrada para manter o hospital em compliance."
+          subtitle="Revise atividades e mantenha o time em compliance."
         />
       }
     >

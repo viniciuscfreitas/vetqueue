@@ -219,7 +219,7 @@ export default function TutorsPage() {
       header={
         <Header
           title="Tutores"
-          subtitle="Gerencie responsáveis pelos pets e mantenha dados de contato atualizados para campanhas e retornos."
+          subtitle="Gerencie responsáveis e mantenha contatos atualizados."
           onSearch={(term) => setSearchTerm(term)}
           defaultSearchValue={searchTerm}
           actions={headerActions}

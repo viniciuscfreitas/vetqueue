@@ -7,14 +7,12 @@ import { EditQueueDialog } from "./EditQueueDialog";
 import { useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
 import {
-  AlertTriangle,
   CheckCircle2,
   Clock,
   CreditCard,
   DoorOpen,
   FileText,
   Hash,
-  ListOrdered,
   Pencil,
   Stethoscope,
   User,
@@ -254,31 +252,7 @@ export function QueueCard({
     <>
       <Card className="w-full max-w-xl rounded-xl border border-border bg-background sm:mx-auto">
         <CardContent className="pb-2">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-            <div className="flex flex-wrap items-center gap-3 text-xs font-semibold text-muted-foreground">
-              <span className="flex items-center gap-1">
-                <AlertTriangle className="h-3.5 w-3.5" />
-                {priorityLabels[entry.priority] ?? priorityLabels[Priority.NORMAL]}
-              </span>
-              {entry.simplesVetId && (
-                <span className="flex items-center gap-1">
-                  <Hash className="h-3.5 w-3.5" />
-                  {entry.simplesVetId}
-                </span>
-              )}
-              {position !== undefined && entry.status === Status.WAITING && (
-                <span className="flex items-center gap-1">
-                  <ListOrdered className="h-3.5 w-3.5" />
-                  Fila #{position}
-                </span>
-              )}
-              {!([Status.WAITING, Status.IN_PROGRESS].includes(entry.status)) && (
-                <span className="flex items-center gap-1">
-                  <Clock className="h-3.5 w-3.5" />
-                  {status.label}
-                </span>
-              )}
-            </div>
+          <div className="flex justify-end">
             <Dialog open={detailsDialogOpen} onOpenChange={setDetailsDialogOpen}>
               <div className="flex items-center gap-1">
                 {canEdit && (
@@ -334,6 +308,13 @@ export function QueueCard({
                       )}
                     </div>
 
+                    <div className="space-y-1">
+                      <p className="text-xs text-muted-foreground uppercase tracking-wide">Prioridade</p>
+                      <p className="text-sm font-medium break-words">
+                        {priorityLabels[entry.priority] ?? priorityLabels[Priority.NORMAL]}
+                      </p>
+                    </div>
+
                     {entry.assignedVet && (
                       <div className="space-y-1">
                         <p className="text-xs text-muted-foreground uppercase tracking-wide">Veterinário</p>
@@ -368,6 +349,26 @@ export function QueueCard({
             <CardTitle className="text-lg font-semibold leading-tight text-foreground">
               {entry.patientName}
             </CardTitle>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-semibold uppercase text-muted-foreground">
+              {position !== undefined && entry.status === Status.WAITING && (
+                <span className="flex items-center gap-1">
+                  <Clock className="h-3.5 w-3.5" />
+                  Fila #{position}
+                </span>
+              )}
+              {!([Status.WAITING, Status.IN_PROGRESS].includes(entry.status)) && (
+                <span className="flex items-center gap-1">
+                  <Clock className="h-3.5 w-3.5" />
+                  {status.label}
+                </span>
+              )}
+              {entry.simplesVetId && (
+                <span className="flex items-center gap-1">
+                  <Hash className="h-3.5 w-3.5" />
+                  {entry.simplesVetId}
+                </span>
+              )}
+            </div>
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
               <span className="flex items-center gap-1 font-medium text-foreground">
                 <Stethoscope className="h-4 w-4" />

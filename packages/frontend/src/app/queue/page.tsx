@@ -33,7 +33,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { BellRing, ClipboardList } from "lucide-react";
-import type { HeaderAction } from "@/components/Header";
+import type { HeaderAction, HeaderHelper } from "@/components/Header";
 
 export default function QueuePage() {
   const router = useRouter();
@@ -245,9 +245,20 @@ export default function QueuePage() {
           label: "Chamar próximo",
           icon: <BellRing className="h-4 w-4" />,
           onClick: handleCallNext,
+          badgeCount: waitingCount,
+          badgeTone: waitingCount >= 5 ? "warning" : waitingCount > 0 ? "info" : "default",
         }
       : null,
   ].filter(Boolean) as HeaderAction[];
+
+  const queueTone = waitingCount >= 5 ? "warning" : "info";
+  const queueHelper: HeaderHelper | undefined =
+    waitingCount > 0 || inProgressCount > 0
+      ? {
+          text: `${waitingCount} aguardando${inProgressCount ? ` • ${inProgressCount} em andamento` : ""}`,
+          variant: queueTone,
+        }
+      : undefined;
 
   return (
     <AppShell
@@ -256,6 +267,7 @@ export default function QueuePage() {
           title="Fila de atendimentos"
           subtitle="Organize a fila e chame o próximo paciente com fluidez."
           actions={headerActions}
+          helper={queueHelper}
         />
       }
     >

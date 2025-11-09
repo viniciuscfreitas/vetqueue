@@ -172,7 +172,7 @@ function AppShellInner({ header, children }: AppShellProps) {
 
         <div className="flex min-h-screen flex-1 flex-col sm:pl-64">
           <div className="bg-white sm:sticky sm:top-0 sm:z-20">
-            <div className="flex items-start gap-3 px-4 py-2 sm:px-6 sm:py-3 lg:px-10">
+            <div className="flex items-start gap-2 px-4 py-1.5 sm:px-6 sm:py-2 lg:px-10">
               <div className="flex-1">{header}</div>
             </div>
           </div>

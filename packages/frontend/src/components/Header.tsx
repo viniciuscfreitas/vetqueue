@@ -9,15 +9,26 @@ import { cn } from "@/lib/utils";
 
 type HeaderActionVariant = "primary" | "outline";
 
+type HeaderActionsPlacement = "right" | "below";
+
+export type HeaderHelperVariant = "default" | "warning" | "success" | "info";
+
+export interface HeaderHelper {
+  text: string;
+  actionLabel?: string;
+  onAction?: () => void;
+  variant?: HeaderHelperVariant;
+}
+
 export interface HeaderAction {
   label: string;
   onClick: () => void;
   icon?: React.ReactNode;
   variant?: HeaderActionVariant;
   ariaLabel?: string;
+  badgeCount?: number;
+  badgeTone?: "default" | "info" | "success" | "warning" | "destructive";
 }
-
-type HeaderActionsPlacement = "right" | "below";
 
 interface HeaderProps {
   title?: string;
@@ -34,6 +45,7 @@ interface HeaderProps {
   showGreeting?: boolean;
   actionsPlacement?: HeaderActionsPlacement;
   subtitleClassName?: string;
+  helper?: HeaderHelper;
 }
 
 export function Header({
@@ -51,6 +63,7 @@ export function Header({
   showGreeting = true,
   actionsPlacement = "right",
   subtitleClassName,
+  helper,
 }: HeaderProps) {
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState(defaultSearchValue);
@@ -104,6 +117,26 @@ export function Header({
       }
     };
 
+    const formatBadge = (value: number) => {
+      if (value > 99) return "99+";
+      return value.toString();
+    };
+
+    const badgeClasses = (tone: HeaderAction["badgeTone"]) => {
+      switch (tone) {
+        case "info":
+          return "bg-sky-100 text-sky-900";
+        case "success":
+          return "bg-emerald-100 text-emerald-900";
+        case "warning":
+          return "bg-amber-100 text-amber-900";
+        case "destructive":
+          return "bg-destructive/15 text-destructive";
+        default:
+          return "bg-muted text-muted-foreground";
+      }
+    };
+
     return (
       <div className={`flex flex-wrap items-center gap-2 ${alignment}`}>
         {items.map((action) => (
@@ -118,6 +151,16 @@ export function Header({
           >
             {action.icon}
             <span className="leading-none">{action.label}</span>
+            {typeof action.badgeCount === "number" && (
+              <span
+                className={cn(
+                  "inline-flex min-w-[1.5rem] justify-center rounded-full px-1.5 py-0.5 text-[11px] font-semibold leading-none",
+                  badgeClasses(action.badgeTone),
+                )}
+              >
+                {formatBadge(action.badgeCount)}
+              </span>
+            )}
           </Button>
         ))}
       </div>
@@ -148,6 +191,28 @@ export function Header({
               >
                 {effectiveSubtitle}
               </p>
+            )}
+            {helper && (
+              <div
+                className={cn(
+                  "flex items-center gap-1.5 rounded-md px-2 py-1 text-[11px] font-medium",
+                  (!helper.variant || helper.variant === "default") && "bg-muted text-muted-foreground",
+                  helper.variant === "info" && "bg-sky-100 text-sky-900",
+                  helper.variant === "success" && "bg-emerald-100 text-emerald-900",
+                  helper.variant === "warning" && "bg-amber-100 text-amber-900",
+                )}
+              >
+                <span className="truncate">{helper.text}</span>
+                {helper.actionLabel && helper.onAction && (
+                  <button
+                    type="button"
+                    onClick={helper.onAction}
+                    className="shrink-0 text-[11px] font-semibold underline-offset-2 hover:underline"
+                  >
+                    {helper.actionLabel}
+                  </button>
+                )}
+              </div>
             )}
           </div>
           {renderActions(topActions, "justify-end")}

@@ -211,8 +211,17 @@ export default function TutorsPage() {
           setShowForm(true);
         }
       },
+      badgeCount: tutors.length,
+      badgeTone: tutors.length > 0 ? "info" : "warning",
     },
   ];
+
+  const tutorsHelper = {
+    text: searchTerm
+      ? `${tutors.length} tutor${tutors.length === 1 ? "" : "es"} para "${searchTerm}"`
+      : `${tutors.length} tutor${tutors.length === 1 ? "" : "es"} cadastrados`,
+    variant: tutors.length === 0 ? "warning" : "info",
+  } as const;
 
   return (
     <AppShell
@@ -223,6 +232,7 @@ export default function TutorsPage() {
           onSearch={(term) => setSearchTerm(term)}
           defaultSearchValue={searchTerm}
           actions={headerActions}
+          helper={tutorsHelper}
         />
       }
     >

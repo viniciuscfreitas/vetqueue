@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
@@ -15,7 +15,7 @@ import { FinancialReportsTab } from "@/components/FinancialReportsTab";
 import { ModuleKey, Role, userApi } from "@/lib/api";
 import { useDateRange } from "@/hooks/useDateRange";
 import { useQuery } from "@tanstack/react-query";
-import { CreditCard, FileText, LayoutDashboard, Receipt } from "lucide-react";
+import { CreditCard, FileText, Filter, LayoutDashboard, Receipt } from "lucide-react";
 
 const DEFAULT_FILTERS = {
   tutorName: "",
@@ -98,7 +98,34 @@ export default function FinancialPage() {
     return null;
   }
 
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+    if (startDate) count += 1;
+    if (endDate) count += 1;
+
+    Object.entries(filters).forEach(([key, value]) => {
+      const defaultValue = DEFAULT_FILTERS[key as keyof typeof DEFAULT_FILTERS];
+      if (typeof value === "string") {
+        const trimmed = value.trim();
+        if (trimmed !== (defaultValue as string)) {
+          count += 1;
+        }
+      } else if (value !== defaultValue) {
+        count += 1;
+      }
+    });
+
+    return count;
+  }, [filters, startDate, endDate]);
+
   const headerActions: HeaderAction[] = [
+    {
+      label: "Filtros",
+      icon: <Filter className="h-4 w-4" />,
+      onClick: () => setTab("overview"),
+      badgeCount: activeFilterCount,
+      badgeTone: activeFilterCount > 0 ? "info" : "default",
+    },
     {
       label: "Ver relatórios",
       icon: <Receipt className="h-4 w-4" />,
@@ -107,6 +134,18 @@ export default function FinancialPage() {
     },
   ];
 
+  const headerHelper =
+    activeFilterCount > 0
+      ? {
+          text: `${activeFilterCount} filtro${activeFilterCount > 1 ? "s" : ""} aplicado${
+            activeFilterCount > 1 ? "s" : ""
+          }`,
+          actionLabel: "Limpar",
+          onAction: handleReset,
+          variant: "info" as const,
+        }
+      : undefined;
+
   return (
     <AppShell
       header={
@@ -114,6 +153,7 @@ export default function FinancialPage() {
           title="Financeiro"
           subtitle="Monitore receitas e pagamentos em tempo real."
           actions={headerActions}
+          helper={headerHelper}
         />
       }
     >

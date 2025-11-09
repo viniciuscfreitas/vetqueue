@@ -294,8 +294,17 @@ export default function PatientsPage() {
           setShowForm(true);
         }
       },
+      badgeCount: patients.length,
+      badgeTone: patients.length > 0 ? "info" : "warning",
     },
   ];
+
+  const patientsHelper = {
+    text: searchTerm
+      ? `${patients.length} resultado${patients.length === 1 ? "" : "s"} para "${searchTerm}"`
+      : `${patients.length} paciente${patients.length === 1 ? "" : "s"} cadastrados`,
+    variant: patients.length === 0 ? "warning" : "info",
+  } as const;
 
   return (
     <AppShell
@@ -306,6 +315,7 @@ export default function PatientsPage() {
           onSearch={(term) => setSearchTerm(term)}
           defaultSearchValue={searchTerm}
           actions={headerActions}
+          helper={patientsHelper}
         />
       }
     >

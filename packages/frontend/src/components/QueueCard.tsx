@@ -46,6 +46,33 @@ const statusConfig = {
   },
 } as const;
 
+const SERVICE_LABELS: Record<string, string> = {
+  [ServiceType.CONSULTA]: "Consulta",
+  [ServiceType.VACINACAO]: "Vacinação",
+  [ServiceType.CIRURGIA]: "Cirurgia",
+  [ServiceType.EXAME]: "Exame",
+  [ServiceType.BANHO_TOSA]: "Banho e Tosa",
+};
+
+const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
+  [PaymentStatus.PENDING]: "Pendente",
+  [PaymentStatus.PARTIAL]: "Parcial",
+  [PaymentStatus.PAID]: "Pago",
+  [PaymentStatus.CANCELLED]: "Cancelado",
+};
+
+function getServiceLabel(serviceType: string): string {
+  if (!serviceType) {
+    return "Serviço";
+  }
+  return SERVICE_LABELS[serviceType] ?? serviceType;
+}
+
+function getPaymentStatusLabel(status?: PaymentStatus): string | undefined {
+  if (!status) return undefined;
+  return PAYMENT_STATUS_LABELS[status] ?? status;
+}
+
 export function QueueCard({
   entry,
   position,
@@ -55,7 +82,7 @@ export function QueueCard({
   onCancel,
   onCall,
   onViewRecord,
-  onRegisterConsultation: _onRegisterConsultation,
+  onRegisterConsultation,
   onRequeue,
   tabContext,
 }: QueueCardProps) {
@@ -80,6 +107,8 @@ export function QueueCard({
 
   const waitTime = calculateWaitTime(entry.createdAt, entry.calledAt);
   const serviceTime = calculateServiceTime(entry.calledAt, entry.completedAt);
+  const serviceLabel = getServiceLabel(entry.serviceType);
+  const paymentStatusLabel = getPaymentStatusLabel(entry.paymentStatus);
 
   const canEdit = entry.status === Status.WAITING && canManageQueue;
   const queryClient = useQueryClient();
@@ -99,6 +128,119 @@ export function QueueCard({
       ? "border-blue-200 bg-blue-50"
       : "border-border bg-background";
 
+  const primaryActions: JSX.Element[] = [];
+  const secondaryActions: JSX.Element[] = [];
+
+  if (entry.status === Status.WAITING && onCall) {
+    primaryActions.push(
+      <Button key="call" onClick={() => onCall(entry.id)} size="sm" className="flex-1 sm:flex-none">
+        Chamar
+      </Button>
+    );
+  }
+
+  if (entry.status === Status.CALLED && onStart) {
+    primaryActions.push(
+      <Button key="start" onClick={() => onStart(entry.id)} size="sm" className="flex-1 sm:flex-none">
+        Iniciar
+      </Button>
+    );
+  }
+
+  if (entry.status === Status.IN_PROGRESS && onComplete) {
+    primaryActions.push(
+      <Button
+        key="complete"
+        onClick={() => onComplete(entry.id)}
+        size="sm"
+        className="flex-1 sm:flex-none bg-green-600 text-white hover:bg-green-700"
+      >
+        Finalizar
+      </Button>
+    );
+  }
+
+  if (tabContext === "in-progress" && onRequeue) {
+    secondaryActions.push(
+      <Button
+        key="requeue-in-progress"
+        onClick={() => onRequeue(entry.id)}
+        size="sm"
+        variant="outline"
+        className="flex-1 sm:flex-none"
+      >
+        Reenfileirar
+      </Button>
+    );
+  }
+
+  if (
+    entry.status === Status.IN_PROGRESS &&
+    entry.serviceType === ServiceType.CONSULTA &&
+    entry.patientId &&
+    onRegisterConsultation
+  ) {
+    secondaryActions.push(
+      <Button
+        key="register-consultation"
+        onClick={() => onRegisterConsultation(entry.patientId!, entry.id)}
+        size="sm"
+        variant="outline"
+        className="flex-1 sm:flex-none"
+      >
+        Registrar consulta
+      </Button>
+    );
+  }
+
+  if (
+    entry.status === Status.IN_PROGRESS &&
+    entry.serviceType !== ServiceType.CONSULTA &&
+    entry.patientId &&
+    onViewRecord
+  ) {
+    secondaryActions.push(
+      <Button
+        key="view-record"
+        onClick={() => onViewRecord(entry.patientId!, entry.id)}
+        size="sm"
+        variant="outline"
+        className="flex-1 sm:flex-none"
+      >
+        <FileText className="mr-2 h-4 w-4" />
+        Ver Prontuário
+      </Button>
+    );
+  }
+
+  if (tabContext === "completed" && entry.paymentStatus !== PaymentStatus.PAID && onRequeue) {
+    secondaryActions.push(
+      <Button
+        key="requeue-completed"
+        onClick={() => onRequeue(entry.id)}
+        size="sm"
+        variant="outline"
+        className="flex-1 sm:flex-none"
+      >
+        Retornar à fila
+      </Button>
+    );
+  }
+
+  if (entry.status !== Status.COMPLETED && entry.status !== Status.CANCELLED && onCancel) {
+    secondaryActions.push(
+      <Button
+        key="cancel"
+        onClick={() => onCancel(entry.id)}
+        size="sm"
+        variant="destructive"
+        className="flex-1 sm:flex-none"
+      >
+        Cancelar
+      </Button>
+    );
+  }
+
   return (
      <>
       <Card
@@ -109,24 +251,10 @@ export function QueueCard({
       >
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between gap-3">
-            <div className="flex-1 min-w-0 space-y-2">
-              <div className="flex flex-wrap items-center gap-2">
-                <CardTitle className="text-lg font-semibold truncate">
-                  {entry.patientName}
-                </CardTitle>
-                {entry.simplesVetId && (
-                  <Badge variant="outline" className="text-xs font-medium">
-                    #{entry.simplesVetId}
-                  </Badge>
-                )}
-                {position !== undefined && entry.status === Status.WAITING && (
-                  <Badge variant="secondary" className="text-xs font-semibold uppercase tracking-wide">
-                    Fila #{position}
-                  </Badge>
-                )}
-              </div>
-              <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                <span className="font-medium">{entry.serviceType}</span>
+            <div className="flex-1 min-w-0 space-y-1.5">
+              <CardTitle className="text-lg font-semibold truncate">{entry.patientName}</CardTitle>
+              <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground uppercase tracking-wide">
+                <span className="font-semibold text-foreground">{serviceLabel}</span>
                 <PriorityBadge priority={entry.priority} />
                 <Badge
                   variant="outline"
@@ -137,8 +265,12 @@ export function QueueCard({
                 >
                   {status.label}
                 </Badge>
+                {position !== undefined && entry.status === Status.WAITING && (
+                  <Badge variant="secondary" className="text-xs font-semibold uppercase tracking-wide">
+                    Fila #{position}
+                  </Badge>
+                )}
               </div>
-              <p className="text-sm text-muted-foreground truncate">{entry.tutorName}</p>
             </div>
             <div className="flex items-start gap-2">
               {canEdit && (
@@ -180,74 +312,14 @@ export function QueueCard({
             </div>
           </div>
 
-          {(onStart || onComplete || onCancel || onCall || onViewRecord) && (
-            <div className="flex flex-wrap gap-2">
-              {entry.status === Status.WAITING && onCall && (
-                <Button onClick={() => onCall(entry.id)} size="sm" className="flex-1 sm:flex-none">
-                  Chamar
-                </Button>
+          {(primaryActions.length > 0 || secondaryActions.length > 0) && (
+            <div className="space-y-2">
+              {primaryActions.length > 0 && (
+                <div className="flex flex-wrap gap-2">{primaryActions}</div>
               )}
-              {entry.status === Status.CALLED && onStart && (
-                <Button onClick={() => onStart(entry.id)} size="sm" className="flex-1 sm:flex-none">
-                  Iniciar
-                </Button>
+              {secondaryActions.length > 0 && (
+                <div className="flex flex-wrap gap-2">{secondaryActions}</div>
               )}
-              {tabContext === "in-progress" && onRequeue && (
-                <Button
-                  onClick={() => onRequeue(entry.id)}
-                  size="sm"
-                  variant="outline"
-                  className="flex-1 sm:flex-none"
-                >
-                  Reenfileirar
-                </Button>
-              )}
-              {entry.status === Status.IN_PROGRESS &&
-                entry.serviceType !== ServiceType.CONSULTA &&
-                entry.serviceType !== "Consulta" &&
-                entry.patientId &&
-                onViewRecord && (
-                  <Button
-                    onClick={() => onViewRecord(entry.patientId!, entry.id)}
-                    size="sm"
-                    variant="outline"
-                    className="flex-1 sm:flex-none"
-                  >
-                    <FileText className="mr-2 h-4 w-4" />
-                    Ver Prontuário
-                  </Button>
-                )}
-              {entry.status === Status.IN_PROGRESS && onComplete && (
-                <Button
-                  onClick={() => onComplete(entry.id)}
-                  size="sm"
-                  className="flex-1 sm:flex-none bg-green-600 text-white hover:bg-green-700"
-                >
-                  Finalizar
-                </Button>
-              )}
-              {tabContext === "completed" && entry.paymentStatus !== PaymentStatus.PAID && onRequeue && (
-                <Button
-                  onClick={() => onRequeue(entry.id)}
-                  size="sm"
-                  variant="outline"
-                  className="flex-1 sm:flex-none"
-                >
-                  Retornar à fila
-                </Button>
-              )}
-              {entry.status !== Status.COMPLETED &&
-                entry.status !== Status.CANCELLED &&
-                onCancel && (
-                  <Button
-                    onClick={() => onCancel(entry.id)}
-                    size="sm"
-                    variant="destructive"
-                    className="flex-1 sm:flex-none"
-                  >
-                    Cancelar
-                  </Button>
-                )}
             </div>
           )}
 
@@ -255,24 +327,34 @@ export function QueueCard({
             <div className="space-y-3 border-t pt-3">
               <div className="flex items-start gap-2">
                 <User className="mt-0.5 h-4 w-4 text-muted-foreground" />
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-0 space-y-1">
                   <p className="text-xs text-muted-foreground uppercase tracking-wide">Tutor</p>
                   <p className="text-sm font-medium break-words">{entry.tutorName}</p>
+                  {entry.simplesVetId && (
+                    <p className="text-xs text-muted-foreground">Ficha #{entry.simplesVetId}</p>
+                  )}
                 </div>
               </div>
 
               <div className="flex items-start gap-2">
                 <Stethoscope className="mt-0.5 h-4 w-4 text-muted-foreground" />
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-0 space-y-1">
                   <p className="text-xs text-muted-foreground uppercase tracking-wide">Serviço</p>
-                  <p className="text-sm font-medium break-words">{entry.serviceType}</p>
+                  <p className="text-sm font-medium break-words">{serviceLabel}</p>
+                  {entry.hasScheduledAppointment && (
+                    <p className="text-xs text-muted-foreground">
+                      {entry.scheduledAt
+                        ? `Agendado para ${new Date(entry.scheduledAt).toLocaleString()}`
+                        : "Agendamento confirmado"}
+                    </p>
+                  )}
                 </div>
               </div>
 
               {entry.assignedVet && (
                 <div className="flex items-start gap-2">
                   <CheckCircle2 className="mt-0.5 h-4 w-4 text-muted-foreground" />
-                  <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-0 space-y-1">
                     <p className="text-xs text-muted-foreground uppercase tracking-wide">Veterinário</p>
                     <p className="text-sm font-medium break-words">{entry.assignedVet.name}</p>
                     {entry.room && (
@@ -295,23 +377,19 @@ export function QueueCard({
                 </div>
               )}
 
-              {entry.simplesVetId && (
-                <div className="flex items-start gap-2">
-                  <FileText className="mt-0.5 h-4 w-4 text-muted-foreground" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs text-muted-foreground uppercase tracking-wide">Ficha SimplesVet</p>
-                    <p className="text-sm font-medium break-words">#{entry.simplesVetId}</p>
-                  </div>
-                </div>
-              )}
               {entry.paymentAmount && (
                 <div className="flex items-start gap-2">
                   <CheckCircle2 className="mt-0.5 h-4 w-4 text-muted-foreground" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs text-muted-foreground uppercase tracking-wide">Valor estimado</p>
-                    <p className="text-sm font-medium break-words" title={`Status: ${entry.paymentStatus ?? "PENDENTE"}`}>
+                  <div className="flex-1 min-w-0 space-y-1">
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide">Pagamento</p>
+                    <p className="text-sm font-medium break-words">
                       {entry.paymentAmount}
                     </p>
+                    {paymentStatusLabel && (
+                      <p className="text-xs text-muted-foreground uppercase tracking-wide">
+                        Status: {paymentStatusLabel}
+                      </p>
+                    )}
                   </div>
                 </div>
               )}

@@ -118,23 +118,23 @@ export default function FinancialPage() {
       }
     >
       <div className="space-y-6">
-        <Tabs value={tab} onValueChange={(value) => setTab(value as typeof tab)} className="space-y-6">
-          <TabsList className="grid h-auto w-full grid-cols-3">
+        <Tabs value={tab} onValueChange={(value) => setTab(value as typeof tab)} className="flex flex-col gap-6">
+          <TabsList className="w-full justify-start overflow-x-auto bg-background/60 p-1">
             <TabsTrigger
               value="overview"
-              className="py-2.5 text-sm data-[state=active]:font-semibold sm:text-base"
+              className="flex items-center gap-2 whitespace-nowrap rounded-md px-3 py-2 text-sm transition data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:text-base"
             >
               Resumo
             </TabsTrigger>
             <TabsTrigger
               value="payments"
-              className="py-2.5 text-sm data-[state=active]:font-semibold sm:text-base"
+              className="flex items-center gap-2 whitespace-nowrap rounded-md px-3 py-2 text-sm transition data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:text-base"
             >
               Pagamentos
             </TabsTrigger>
             <TabsTrigger
               value="reports"
-              className="py-2.5 text-sm data-[state=active]:font-semibold sm:text-base"
+              className="flex items-center gap-2 whitespace-nowrap rounded-md px-3 py-2 text-sm transition data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:text-base"
             >
               Relatórios
             </TabsTrigger>

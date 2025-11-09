@@ -262,48 +262,52 @@ export function QueueCard({
   }
 
   return (
-     <>
+    <>
       <Card
         className={cn(
-          "w-full transition-all hover:shadow-md border border-border bg-background",
+          "w-full max-w-3xl transition-all hover:shadow-md border border-border bg-background sm:mx-auto",
           tabContext && tabAccent[tabContext] ? tabAccent[tabContext] : null,
         )}
       >
-        <CardHeader className="pb-3">
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex-1 min-w-0 space-y-2">
-              <div className="flex items-center gap-2">
-                <CardTitle className="text-lg font-semibold truncate">{entry.patientName}</CardTitle>
+        <CardHeader className="pb-4">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="flex flex-1 flex-col gap-3">
+              <div className="flex flex-wrap items-center gap-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 {entry.simplesVetId && (
-                  <Badge variant="outline" className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wide">
+                  <Badge variant="outline" className="flex items-center gap-1 rounded-full px-2 py-0.5">
                     <Hash className="h-3 w-3" />
                     {entry.simplesVetId}
                   </Badge>
                 )}
-              </div>
-              <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground uppercase tracking-wide">
-                <span className="font-semibold text-foreground">{serviceLabel}</span>
+                {position !== undefined && entry.status === Status.WAITING && (
+                  <Badge variant="secondary" className="rounded-full px-2 py-0.5">
+                    Fila #{position}
+                  </Badge>
+                )}
                 <PriorityBadge priority={entry.priority} />
                 <Badge
                   variant="outline"
                   className={cn(
-                    "border text-xs font-medium uppercase tracking-wide",
+                    "rounded-full border px-2 py-0.5 text-xs font-semibold uppercase tracking-wide",
                     status.badgeClass
                   )}
                 >
                   {status.label}
                 </Badge>
-                {position !== undefined && entry.status === Status.WAITING && (
-                  <Badge variant="secondary" className="text-xs font-semibold uppercase tracking-wide">
-                    Fila #{position}
-                  </Badge>
-                )}
               </div>
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                <span className="flex items-center gap-1 truncate">
+
+              <div className="flex flex-col gap-1">
+                <CardTitle className="text-xl font-semibold leading-tight text-foreground">
+                  {entry.patientName}
+                </CardTitle>
+                <p className="text-sm font-medium text-muted-foreground">{serviceLabel}</p>
+                <span className="flex items-center gap-1 text-sm text-muted-foreground">
                   <User className="h-3.5 w-3.5" />
-                  <span className="truncate">{entry.tutorName}</span>
+                  {entry.tutorName}
                 </span>
+              </div>
+
+              <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs text-muted-foreground">
                 {entry.assignedVet && (
                   <span className="flex items-center gap-1 truncate">
                     <Stethoscope className="h-3.5 w-3.5" />
@@ -316,22 +320,37 @@ export function QueueCard({
                     <span className="truncate">Sala {entry.room.name}</span>
                   </span>
                 )}
+                {entry.hasScheduledAppointment && entry.scheduledAt && (
+                  <span className="flex items-center gap-1 truncate">
+                    <Calendar className="h-3.5 w-3.5" />
+                    <span className="truncate">
+                      {new Date(entry.scheduledAt).toLocaleDateString("pt-BR")}
+                    </span>
+                  </span>
+                )}
               </div>
             </div>
+
             <Dialog open={detailsDialogOpen} onOpenChange={setDetailsDialogOpen}>
-              <div className="flex items-start gap-2">
+              <div className="flex items-center gap-2 self-stretch">
                 {canEdit && (
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => setEditDialogOpen(true)}
                     aria-label="Editar atendimento"
+                    className="rounded-full"
                   >
                     <Pencil className="h-4 w-4" />
                   </Button>
                 )}
                 <DialogTrigger asChild>
-                  <Button variant="ghost" size="sm" aria-label="Ver detalhes do atendimento">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    aria-label="Ver detalhes do atendimento"
+                    className="rounded-full px-3"
+                  >
                     <FileText className="mr-2 h-4 w-4" />
                     Detalhes
                   </Button>
@@ -411,7 +430,7 @@ export function QueueCard({
             </Dialog>
           </div>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-5">
           {(() => {
             const metrics: Array<{
               key: string;
@@ -487,32 +506,31 @@ export function QueueCard({
               return null;
             }
 
-            return (
-              <div className={cn("grid grid-cols-1 gap-3 sm:grid-cols-2")}>
+            return metrics.length > 0 ? (
+              <div className={cn("grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3")}>
                 {metrics.map((metric) => (
                   <div
                     key={metric.key}
-                    className={cn("rounded-md border p-3 transition-colors", metric.highlightClass ?? "border-border bg-background")}
+                    className={cn(
+                      "rounded-xl border border-border/70 bg-muted/40 p-3 transition-all hover:border-border",
+                      metric.highlightClass ?? ""
+                    )}
                   >
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground uppercase tracking-wide">
+                    <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                       {metric.icon}
                       {metric.label}
                     </div>
-                    <p className="mt-1 text-sm font-semibold">{metric.value}</p>
+                    <p className="mt-1 text-base font-semibold text-foreground">{metric.value}</p>
                   </div>
                 ))}
               </div>
-            );
+            ) : null;
           })()}
 
           {(primaryActions.length > 0 || secondaryActions.length > 0) && (
-            <div className="space-y-2">
-              {primaryActions.length > 0 && (
-                <div className="flex flex-wrap gap-2">{primaryActions}</div>
-              )}
-              {secondaryActions.length > 0 && (
-                <div className="flex flex-wrap gap-2">{secondaryActions}</div>
-              )}
+            <div className="flex flex-col gap-2">
+              {primaryActions.length > 0 && <div className="flex flex-wrap gap-2">{primaryActions}</div>}
+              {secondaryActions.length > 0 && <div className="flex flex-wrap gap-2 text-sm">{secondaryActions}</div>}
             </div>
           )}
         </CardContent>

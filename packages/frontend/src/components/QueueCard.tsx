@@ -284,15 +284,17 @@ export function QueueCard({
                 </Badge>
               )}
               <PriorityBadge priority={entry.priority} />
-              <Badge
-                variant="outline"
-                className={cn(
-                  "rounded-md border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide",
-                  status.badgeClass
-                )}
-              >
-                {status.label}
-              </Badge>
+              {!([Status.WAITING, Status.IN_PROGRESS].includes(entry.status)) && (
+                <Badge
+                  variant="outline"
+                  className={cn(
+                    "rounded-md border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide",
+                    status.badgeClass
+                  )}
+                >
+                  {status.label}
+                </Badge>
+              )}
             </div>
 
             <Dialog open={detailsDialogOpen} onOpenChange={setDetailsDialogOpen}>

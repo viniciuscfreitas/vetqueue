@@ -250,7 +250,7 @@ export function QueueCard({
 
   return (
     <>
-      <Card className="w-full max-w-xl rounded-xl border border-border bg-background sm:mx-auto">
+      <Card className="mt-[13px] w-full max-w-xl rounded-xl border border-border bg-background sm:mx-auto">
         <CardContent className="pb-2">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex flex-col gap-1">

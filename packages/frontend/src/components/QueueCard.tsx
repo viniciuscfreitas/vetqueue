@@ -252,9 +252,56 @@ export function QueueCard({
     <>
       <Card className="w-full max-w-xl rounded-xl border border-border bg-background sm:mx-auto">
         <CardContent className="pb-2">
-          <div className="flex justify-end">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+            <div className="flex flex-col gap-1">
+              <CardTitle className="text-lg font-semibold leading-tight text-foreground">
+                {entry.patientName}
+              </CardTitle>
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-semibold uppercase text-muted-foreground">
+                {position !== undefined && entry.status === Status.WAITING && (
+                  <span className="flex items-center gap-1">
+                    <Clock className="h-3.5 w-3.5" />
+                    Fila #{position}
+                  </span>
+                )}
+                {!([Status.WAITING, Status.IN_PROGRESS].includes(entry.status)) && (
+                  <span className="flex items-center gap-1">
+                    <Clock className="h-3.5 w-3.5" />
+                    {status.label}
+                  </span>
+                )}
+                {entry.simplesVetId && (
+                  <span className="flex items-center gap-1">
+                    <Hash className="h-3.5 w-3.5" />
+                    {entry.simplesVetId}
+                  </span>
+                )}
+              </div>
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                <span className="flex items-center gap-1 font-medium text-foreground">
+                  <Stethoscope className="h-4 w-4" />
+                  {serviceLabel}
+                </span>
+                <span className="flex items-center gap-1">
+                  <User className="h-4 w-4" />
+                  {entry.tutorName}
+                </span>
+                {entry.assignedVet && (
+                  <span className="flex items-center gap-1">
+                    <CheckCircle2 className="h-4 w-4" />
+                    {entry.assignedVet.name}
+                  </span>
+                )}
+                {entry.room && (
+                  <span className="flex items-center gap-1">
+                    <DoorOpen className="h-4 w-4" />
+                    Sala {entry.room.name}
+                  </span>
+                )}
+              </div>
+            </div>
             <Dialog open={detailsDialogOpen} onOpenChange={setDetailsDialogOpen}>
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 self-start">
                 {canEdit && (
                   <Button
                     variant="ghost"
@@ -344,54 +391,7 @@ export function QueueCard({
             </Dialog>
           </div>
         </CardContent>
-        <CardContent className="space-y-3 pb-4 pt-12">
-          <div className="flex flex-col gap-1">
-            <CardTitle className="text-lg font-semibold leading-tight text-foreground">
-              {entry.patientName}
-            </CardTitle>
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-semibold uppercase text-muted-foreground">
-              {position !== undefined && entry.status === Status.WAITING && (
-                <span className="flex items-center gap-1">
-                  <Clock className="h-3.5 w-3.5" />
-                  Fila #{position}
-                </span>
-              )}
-              {!([Status.WAITING, Status.IN_PROGRESS].includes(entry.status)) && (
-                <span className="flex items-center gap-1">
-                  <Clock className="h-3.5 w-3.5" />
-                  {status.label}
-                </span>
-              )}
-              {entry.simplesVetId && (
-                <span className="flex items-center gap-1">
-                  <Hash className="h-3.5 w-3.5" />
-                  {entry.simplesVetId}
-                </span>
-              )}
-            </div>
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
-              <span className="flex items-center gap-1 font-medium text-foreground">
-                <Stethoscope className="h-4 w-4" />
-                {serviceLabel}
-              </span>
-              <span className="flex items-center gap-1">
-                <User className="h-4 w-4" />
-                {entry.tutorName}
-              </span>
-              {entry.assignedVet && (
-                <span className="flex items-center gap-1">
-                  <CheckCircle2 className="h-4 w-4" />
-                  {entry.assignedVet.name}
-                </span>
-              )}
-              {entry.room && (
-                <span className="flex items-center gap-1">
-                  <DoorOpen className="h-4 w-4" />
-                  Sala {entry.room.name}
-                </span>
-              )}
-            </div>
-          </div>
+        <CardContent className="space-y-3 pb-4 pt-0">
 
           {(() => {
             const metrics: Array<{

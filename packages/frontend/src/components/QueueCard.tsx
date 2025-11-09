@@ -1,6 +1,5 @@
-import { QueueEntry, Status, ServiceType, PaymentStatus } from "@/lib/api";
+import { QueueEntry, Status, ServiceType, PaymentStatus, Priority } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
-import { PriorityBadge } from "./PriorityBadge";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { calculateWaitTime, calculateServiceTime, cn } from "@/lib/utils";
@@ -126,6 +125,26 @@ export function QueueCard({
     completed: "ring-1 ring-emerald-200",
     paid: "ring-1 ring-emerald-300",
   } as const;
+
+  const priorityVisualMap = {
+    [Priority.EMERGENCY]: {
+      card: "border-rose-200 bg-gradient-to-br from-rose-50 to-white",
+      dot: "bg-rose-500",
+      label: "Emergência",
+    },
+    [Priority.HIGH]: {
+      card: "border-amber-200 bg-gradient-to-br from-amber-50 to-white",
+      dot: "bg-amber-500",
+      label: "Alta",
+    },
+    [Priority.NORMAL]: {
+      card: "border-sky-200 bg-gradient-to-br from-sky-50 to-white",
+      dot: "bg-sky-500",
+      label: "Normal",
+    },
+  } as const;
+
+  const priorityVisual = priorityVisualMap[entry.priority] ?? priorityVisualMap[Priority.NORMAL];
 
   const waitCardHighlight =
     entry.status === Status.WAITING
@@ -266,12 +285,21 @@ export function QueueCard({
       <Card
         className={cn(
           "w-full max-w-xl rounded-xl border border-border bg-background transition-shadow hover:shadow-md sm:mx-auto",
+          priorityVisual.card,
           tabContext && tabAccent[tabContext] ? tabAccent[tabContext] : null,
         )}
       >
         <CardHeader className="pb-2">
           <div className="flex items-start justify-between gap-3">
             <div className="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+              <span className="flex items-center gap-1">
+                <span
+                  className={cn("h-2.5 w-2.5 shrink-0 rounded-full", priorityVisual.dot)}
+                  aria-hidden="true"
+                  title={`Prioridade ${priorityVisual.label}`}
+                />
+                <span className="sr-only">{`Prioridade ${priorityVisual.label}`}</span>
+              </span>
               {entry.simplesVetId && (
                 <Badge variant="outline" className="flex items-center gap-1 rounded-md px-2 py-0.5">
                   <Hash className="h-3 w-3" />
@@ -283,7 +311,6 @@ export function QueueCard({
                   Fila #{position}
                 </Badge>
               )}
-              <PriorityBadge priority={entry.priority} />
               {!([Status.WAITING, Status.IN_PROGRESS].includes(entry.status)) && (
                 <Badge
                   variant="outline"

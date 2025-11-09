@@ -344,7 +344,7 @@ export function QueueCard({
             </Dialog>
           </div>
         </CardContent>
-        <CardContent className="space-y-3 pb-4 pt-0">
+        <CardContent className="space-y-3 pb-4 pt-12">
           <div className="flex flex-col gap-1">
             <CardTitle className="text-lg font-semibold leading-tight text-foreground">
               {entry.patientName}

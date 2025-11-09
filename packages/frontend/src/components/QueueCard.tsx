@@ -20,7 +20,7 @@ interface QueueCardProps {
   onViewRecord?: (patientId: string, queueEntryId: string) => void;
   onRegisterConsultation?: (patientId: string, queueEntryId: string) => void;
   onRequeue?: (id: string) => void;
-  tabContext?: "queue" | "called" | "in-progress" | "completed" | "paid";
+  tabContext?: "queue" | "in-progress" | "completed" | "paid";
 }
 
 const statusConfig = {
@@ -85,7 +85,6 @@ export function QueueCard({
   const queryClient = useQueryClient();
   const tabAccent = {
     queue: "ring-1 ring-slate-200",
-    called: "ring-1 ring-sky-200",
     "in-progress": "ring-1 ring-orange-200",
     completed: "ring-1 ring-emerald-200",
     paid: "ring-1 ring-emerald-300",

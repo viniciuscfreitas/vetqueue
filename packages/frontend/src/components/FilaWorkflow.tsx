@@ -12,7 +12,7 @@ import {
 import { QueueCard } from "./QueueCard";
 import { cn } from "@/lib/utils";
 import { sortQueueEntries } from "@/lib/queueHelpers";
-import { ClipboardList, CreditCard, HeartPulse, PawPrint, Stethoscope } from "lucide-react";
+import { CreditCard, HeartPulse, PawPrint, Stethoscope } from "lucide-react";
 
 const COLUMN_DEFINITIONS = [
   {
@@ -20,14 +20,8 @@ const COLUMN_DEFINITIONS = [
     title: "Fila",
     indicator: "bg-slate-400",
     icon: <PawPrint className="h-4 w-4 text-slate-500" />,
-    filter: (entry: QueueEntry) => entry.status === Status.WAITING,
-  },
-  {
-    key: "called",
-    title: "Chamado",
-    indicator: "bg-sky-500",
-    icon: <ClipboardList className="h-4 w-4 text-sky-500" />,
-    filter: (entry: QueueEntry) => entry.status === Status.CALLED,
+    filter: (entry: QueueEntry) =>
+      entry.status === Status.WAITING || entry.status === Status.CALLED,
   },
   {
     key: "in-progress",

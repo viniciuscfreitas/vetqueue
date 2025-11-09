@@ -128,19 +128,16 @@ export function QueueCard({
 
   const priorityVisualMap = {
     [Priority.EMERGENCY]: {
-      card: "border-rose-200 bg-gradient-to-br from-rose-50 to-white",
-      dot: "bg-rose-500",
-      label: "Emergência",
+      card: "bg-rose-50/70",
+      border: "#e11d48",
     },
     [Priority.HIGH]: {
-      card: "border-amber-200 bg-gradient-to-br from-amber-50 to-white",
-      dot: "bg-amber-500",
-      label: "Alta",
+      card: "bg-amber-50/70",
+      border: "#d97706",
     },
     [Priority.NORMAL]: {
-      card: "border-sky-200 bg-gradient-to-br from-sky-50 to-white",
-      dot: "bg-sky-500",
-      label: "Normal",
+      card: "bg-sky-50/60",
+      border: "#0284c7",
     },
   } as const;
 
@@ -283,8 +280,9 @@ export function QueueCard({
   return (
     <>
       <Card
+        style={{ borderLeftColor: priorityVisual.border }}
         className={cn(
-          "w-full max-w-xl rounded-xl border border-border bg-background transition-shadow hover:shadow-md sm:mx-auto",
+          "relative w-full max-w-xl rounded-xl border border-border border-l-4 bg-background pl-4 transition-shadow hover:shadow-md sm:mx-auto",
           priorityVisual.card,
           tabContext && tabAccent[tabContext] ? tabAccent[tabContext] : null,
         )}
@@ -292,14 +290,6 @@ export function QueueCard({
         <CardHeader className="pb-2">
           <div className="flex items-start justify-between gap-3">
             <div className="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-              <span className="flex items-center gap-1">
-                <span
-                  className={cn("h-2.5 w-2.5 shrink-0 rounded-full", priorityVisual.dot)}
-                  aria-hidden="true"
-                  title={`Prioridade ${priorityVisual.label}`}
-                />
-                <span className="sr-only">{`Prioridade ${priorityVisual.label}`}</span>
-              </span>
               {entry.simplesVetId && (
                 <Badge variant="outline" className="flex items-center gap-1 rounded-md px-2 py-0.5">
                   <Hash className="h-3 w-3" />

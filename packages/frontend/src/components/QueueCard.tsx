@@ -394,80 +394,59 @@ export function QueueCard({
         <CardContent className="space-y-3 pb-4 pt-0">
 
           {(() => {
-            const metrics: Array<{
-              key: string;
-              label: string;
-              value: string;
-              icon: JSX.Element;
-            }> = [];
-
             if (tabContext === "queue" || !tabContext) {
-              metrics.push({
-                key: "wait",
-                label: "Espera",
-                value: waitTime || "—",
-                icon: <Clock className="h-4 w-4 text-muted-foreground" />,
-              });
-            } else if (tabContext === "in-progress") {
-              metrics.push({
-                key: "service",
-                label: "Atendimento",
-                value: serviceTime || "—",
-                icon: <Stethoscope className="h-4 w-4 text-muted-foreground" />,
-              });
-
-              const calledAtTime = formatTime(entry.calledAt);
-              if (calledAtTime) {
-                metrics.push({
-                  key: "called-at",
-                  label: "Chamado às",
-                  value: calledAtTime,
-                  icon: <Clock className="h-4 w-4 text-muted-foreground" />,
-                });
-              }
-            } else {
-              metrics.push({
-                key: "service",
-                label: "Atendimento",
-                value: serviceTime || "—",
-                icon: <Stethoscope className="h-4 w-4 text-muted-foreground" />,
-              });
-
-              const paymentSummary = [
-                entry.paymentAmount ? `R$ ${entry.paymentAmount}` : null,
-                paymentStatusLabel ? `Status ${paymentStatusLabel}` : null,
-              ]
-                .filter(Boolean)
-                .join(" • ") || "—";
-
-              metrics.push({
-                key: "payment",
-                label: "Pagamento",
-                value: paymentSummary,
-                icon: <CreditCard className="h-4 w-4 text-muted-foreground" />,
-              });
+              return (
+                <section className="rounded-lg border border-border bg-muted/30 px-3 py-2">
+                  <p className="text-xs text-muted-foreground">Tempo de espera</p>
+                  <p className="text-xl font-semibold text-foreground">
+                    {waitTime || "—"}
+                  </p>
+                </section>
+              );
             }
 
-            if (metrics.length === 0) {
-              return null;
-            }
-
-            return metrics.length > 0 ? (
-              <div className="grid gap-2 text-sm text-muted-foreground sm:grid-cols-2">
-                {metrics.map((metric) => (
-                  <div
-                    key={metric.key}
-                    className="flex items-center justify-between rounded border border-border px-3 py-2"
-                  >
-                    <span className="flex items-center gap-2 text-xs uppercase">
-                      {metric.icon}
-                      {metric.label}
-                    </span>
-                    <span className="font-medium text-foreground">{metric.value}</span>
+            if (tabContext === "in-progress") {
+              return (
+                <section className="flex flex-col gap-3 rounded-lg border border-border bg-muted/30 px-3 py-2 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Tempo de atendimento</p>
+                    <p className="text-xl font-semibold text-foreground">
+                      {serviceTime || "—"}
+                    </p>
                   </div>
-                ))}
-              </div>
-            ) : null;
+                  {formatTime(entry.calledAt) && (
+                    <div>
+                      <p className="text-xs text-muted-foreground">Chamado às</p>
+                      <p className="text-xl font-semibold text-foreground">
+                        {formatTime(entry.calledAt)}
+                      </p>
+                    </div>
+                  )}
+                </section>
+              );
+            }
+
+            const paymentSummary = [
+              entry.paymentAmount ? `R$ ${entry.paymentAmount}` : null,
+              paymentStatusLabel ? paymentStatusLabel : null,
+            ]
+              .filter(Boolean)
+              .join(" • ") || "—";
+
+            return (
+              <section className="flex flex-col gap-3 rounded-lg border border-border bg-muted/30 px-3 py-2 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-xs text-muted-foreground">Tempo de atendimento</p>
+                  <p className="text-xl font-semibold text-foreground">
+                    {serviceTime || "—"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Pagamento</p>
+                  <p className="text-xl font-semibold text-foreground">{paymentSummary}</p>
+                </div>
+              </section>
+            );
           })()}
 
           {(primaryActions.length > 0 || secondaryActions.length > 0) && (

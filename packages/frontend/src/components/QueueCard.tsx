@@ -394,34 +394,26 @@ export function QueueCard({
         <CardContent className="space-y-3 pb-4 pt-0">
 
           {(() => {
+            const containerClasses =
+              "rounded-lg border border-border bg-muted/30 px-3 py-3";
+
+            const labelClasses = "text-sm font-medium text-muted-foreground";
+            const valueClasses = "text-lg font-semibold text-foreground";
+
             if (tabContext === "queue" || !tabContext) {
               return (
-                <section className="rounded-lg border border-border bg-muted/30 px-3 py-2">
-                  <p className="text-xs text-muted-foreground">Tempo de espera</p>
-                  <p className="text-xl font-semibold text-foreground">
-                    {waitTime || "—"}
-                  </p>
+                <section className={containerClasses}>
+                  <p className={labelClasses}>Tempo de espera</p>
+                  <p className={valueClasses}>{waitTime || "—"}</p>
                 </section>
               );
             }
 
             if (tabContext === "in-progress") {
               return (
-                <section className="flex flex-col gap-3 rounded-lg border border-border bg-muted/30 px-3 py-2 sm:flex-row sm:items-center sm:justify-between">
-                  <div>
-                    <p className="text-xs text-muted-foreground">Tempo de atendimento</p>
-                    <p className="text-xl font-semibold text-foreground">
-                      {serviceTime || "—"}
-                    </p>
-                  </div>
-                  {formatTime(entry.calledAt) && (
-                    <div>
-                      <p className="text-xs text-muted-foreground">Chamado às</p>
-                      <p className="text-xl font-semibold text-foreground">
-                        {formatTime(entry.calledAt)}
-                      </p>
-                    </div>
-                  )}
+                <section className={containerClasses}>
+                  <p className={labelClasses}>Tempo de atendimento</p>
+                  <p className={valueClasses}>{serviceTime || "—"}</p>
                 </section>
               );
             }
@@ -434,16 +426,16 @@ export function QueueCard({
               .join(" • ") || "—";
 
             return (
-              <section className="flex flex-col gap-3 rounded-lg border border-border bg-muted/30 px-3 py-2 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <p className="text-xs text-muted-foreground">Tempo de atendimento</p>
-                  <p className="text-xl font-semibold text-foreground">
-                    {serviceTime || "—"}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Pagamento</p>
-                  <p className="text-xl font-semibold text-foreground">{paymentSummary}</p>
+              <section className={containerClasses}>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className={labelClasses}>Tempo de atendimento</p>
+                    <p className={valueClasses}>{serviceTime || "—"}</p>
+                  </div>
+                  <div>
+                    <p className={labelClasses}>Pagamento</p>
+                    <p className={valueClasses}>{paymentSummary}</p>
+                  </div>
                 </div>
               </section>
             );

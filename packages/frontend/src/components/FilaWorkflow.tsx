@@ -84,7 +84,7 @@ export function FilaWorkflow({
 }: FilaWorkflowProps) {
   const visibleColumns = useMemo(() => {
     if (!user || user.role === Role.VET) {
-      return COLUMN_DEFINITIONS.slice(0, 3);
+      return COLUMN_DEFINITIONS.slice(0, 2);
     }
     return COLUMN_DEFINITIONS;
   }, [user]);
@@ -92,12 +92,12 @@ export function FilaWorkflow({
   const orderedEntries = useMemo(() => sortQueueEntries(entries), [entries]);
 
   return (
-    <section className="space-y-4 overflow-x-auto pb-4">
-      <div className="flex min-w-max gap-8 px-1">
+    <section className="space-y-4 pb-4">
+      <div className="flex flex-col gap-4 px-1 md:flex-row md:gap-8">
         {visibleColumns.map((column) => {
           const columnEntries = orderedEntries.filter(column.filter);
           return (
-            <div key={column.key} className="w-[320px] shrink-0">
+            <div key={column.key} className="w-full md:w-[320px]">
               <div className="flex items-center gap-2">
                 {column.icon}
                 <p className="text-sm font-semibold">{column.title}</p>
@@ -111,11 +111,11 @@ export function FilaWorkflow({
         })}
       </div>
 
-      <div className="flex min-w-max gap-8 px-1 items-start">
+      <div className="flex flex-col gap-4 px-1 md:flex-row md:items-start md:gap-8">
         {visibleColumns.map((column) => {
           const columnEntries = orderedEntries.filter(column.filter);
           return (
-            <div key={column.key} className="flex w-[320px] shrink-0 flex-col gap-3">
+            <div key={column.key} className="flex w-full flex-col gap-3 md:w-[320px] md:shrink-0">
               {columnEntries.length === 0 ? (
                 <div className="flex flex-1 items-center justify-center rounded-xl border border-dashed border-muted/40 bg-muted/10 p-6 text-center text-xs text-muted-foreground">
                   Nenhum paciente aqui.

@@ -342,13 +342,14 @@ describe("QueueService critical flows", () => {
     const first = await service.addPaymentEntry(
       entry.id,
       {
-        amount: "50",
+        amount: 50,
         paymentMethod: "PIX",
+        paymentTotal: 100,
       },
       "cashier-1",
     );
 
-    expect(first.paymentAmount).toBe("50.00");
+    expect(first.paymentAmount).toBe("100.00");
     expect(first.paymentStatus).toBe(PaymentStatus.PARTIAL);
     expect(first.paymentMethod).toBe("PIX");
     expect(first.paymentHistory).toHaveLength(1);
@@ -357,7 +358,7 @@ describe("QueueService critical flows", () => {
     const second = await service.addPaymentEntry(
       entry.id,
       {
-        amount: "30",
+        amount: 30,
         paymentMethod: "CASH",
         paymentNotes: "Entrada parcial",
       },
@@ -372,6 +373,17 @@ describe("QueueService critical flows", () => {
 
     const stored = await repository.findById(entry.id);
     expect(stored?.paymentHistory).toHaveLength(2);
+
+    const third = await service.addPaymentEntry(
+      entry.id,
+      {
+        amount: 20,
+        paymentMethod: "CASH",
+      },
+      "cashier-2",
+    );
+
+    expect(third.paymentStatus).toBe(PaymentStatus.PAID);
   });
 });
 

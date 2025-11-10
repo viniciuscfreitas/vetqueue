@@ -369,6 +369,7 @@ export const queueApi = {
 
   addPayment: (id: string, data: {
     amount: string | number;
+    paymentTotal?: string | number | null;
     paymentMethod: string;
     installments?: number | null;
     paymentReceivedAt?: string | null;

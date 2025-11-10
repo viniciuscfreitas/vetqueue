@@ -273,6 +273,7 @@ export default function QueuePage() {
     (payload: {
       amount: string;
       paymentMethod: string;
+      paymentTotal?: string | null;
       installments?: number | null;
       paymentReceivedAt?: string | null;
       paymentNotes?: string | null;

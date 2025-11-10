@@ -152,6 +152,7 @@ const paymentSchema = z.object({
 const paymentEntrySchema = z.object({
   amount: z.union([z.string(), z.number()]),
   paymentMethod: paymentMethodEnum,
+  paymentTotal: z.union([z.string(), z.number()]).nullable().optional(),
   installments: z.number().int().positive().max(48).nullable().optional(),
   paymentReceivedAt: z.string().datetime().nullable().optional(),
   paymentReceivedById: z.string().nullable().optional(),
@@ -644,13 +645,28 @@ router.post("/:id/payments", authMiddleware, requireModule(ModuleKey.FINANCIAL),
   try {
     const validated = paymentEntrySchema.parse(req.body);
 
+    const normalizeCurrency = (value: string) =>
+      Number(value.replace(/\./g, "").replace(",", "."));
+
     const normalizedAmount =
       typeof validated.amount === "number"
         ? validated.amount
-        : Number(validated.amount.replace(/\./g, "").replace(",", "."));
+        : normalizeCurrency(validated.amount);
 
     if (!Number.isFinite(normalizedAmount) || normalizedAmount <= 0) {
       res.status(400).json({ error: "Valor do pagamento deve ser maior que zero" });
+      return;
+    }
+
+    const normalizedTotal =
+      validated.paymentTotal === undefined || validated.paymentTotal === null
+        ? undefined
+        : typeof validated.paymentTotal === "number"
+          ? validated.paymentTotal
+          : normalizeCurrency(validated.paymentTotal);
+
+    if (normalizedTotal !== undefined && (!Number.isFinite(normalizedTotal) || normalizedTotal < 0)) {
+      res.status(400).json({ error: "Valor total do atendimento inválido" });
       return;
     }
 
@@ -668,6 +684,7 @@ router.post("/:id/payments", authMiddleware, requireModule(ModuleKey.FINANCIAL),
         paymentReceivedAt,
         paymentReceivedById: validated.paymentReceivedById ?? undefined,
         paymentNotes: validated.paymentNotes ?? undefined,
+        paymentTotal: normalizedTotal,
       },
       req.user?.id,
     );

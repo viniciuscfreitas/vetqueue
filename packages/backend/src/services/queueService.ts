@@ -688,8 +688,9 @@ export class QueueService {
   async addPaymentEntry(
     id: string,
     data: {
-      amount: string | number;
+      amount: number;
       paymentMethod: string;
+      paymentTotal?: number;
       installments?: number | null;
       paymentReceivedAt?: Date | null;
       paymentReceivedById?: string | null;
@@ -702,10 +703,7 @@ export class QueueService {
       throw new Error("Entrada não encontrada");
     }
 
-    const normalizedAmount =
-      typeof data.amount === "number" ? data.amount : Number(data.amount.toString().replace(",", "."));
-
-    if (!Number.isFinite(normalizedAmount) || normalizedAmount <= 0) {
+    if (!Number.isFinite(data.amount) || data.amount <= 0) {
       throw new Error("Valor do pagamento deve ser maior que zero");
     }
 
@@ -721,7 +719,7 @@ export class QueueService {
 
     const newRecord: PaymentHistoryEntry = {
       id: randomUUID(),
-      amount: normalizedAmount.toFixed(2),
+      amount: data.amount.toFixed(2),
       method: data.paymentMethod,
       installments: data.installments ?? null,
       receivedAt: normalizedReceivedAt,
@@ -737,19 +735,48 @@ export class QueueService {
     const methods = new Set(history.map((record) => record.method).filter(Boolean));
     const paymentMethod = methods.size === 1 ? Array.from(methods)[0] : "MULTIPLE";
 
-    let paymentStatus = entry.paymentStatus ?? PaymentStatus.PENDING;
-    if (paymentStatus !== PaymentStatus.PAID) {
-      paymentStatus = totalReceived > 0 ? PaymentStatus.PARTIAL : PaymentStatus.PENDING;
-    }
-
-    return this.repository.updatePayment(id, {
+    const updatePayload: {
+      paymentHistory: PaymentHistoryEntry[];
+      paymentAmount?: string | null;
+      paymentMethod?: string | null;
+      paymentStatus?: PaymentStatus;
+      paymentReceivedAt?: Date | null;
+      paymentReceivedById?: string | null;
+    } = {
       paymentHistory: history,
-      paymentAmount: totalFormatted,
       paymentMethod,
-      paymentStatus,
       paymentReceivedAt: newRecord.receivedAt ?? null,
       paymentReceivedById: newRecord.receivedById ?? null,
-    });
+    };
+
+    const targetTotal =
+      data.paymentTotal !== undefined
+        ? data.paymentTotal
+        : entry.paymentAmount
+          ? Number(entry.paymentAmount)
+          : undefined;
+
+    if (data.paymentTotal !== undefined) {
+      updatePayload.paymentAmount = data.paymentTotal != null ? data.paymentTotal.toFixed(2) : null;
+    }
+
+    if (entry.paymentStatus === PaymentStatus.CANCELLED) {
+      updatePayload.paymentStatus = PaymentStatus.CANCELLED;
+    } else if (targetTotal !== undefined && Number.isFinite(targetTotal)) {
+      const epsilon = 0.005;
+      if (totalReceived >= targetTotal - epsilon) {
+        updatePayload.paymentStatus = PaymentStatus.PAID;
+      } else if (totalReceived > 0) {
+        updatePayload.paymentStatus = PaymentStatus.PARTIAL;
+      } else {
+        updatePayload.paymentStatus = PaymentStatus.PENDING;
+      }
+    } else {
+      updatePayload.paymentStatus =
+        totalReceived > 0 ? PaymentStatus.PARTIAL : PaymentStatus.PENDING;
+    }
+
+    return this.repository.updatePayment(id, updatePayload);
   }
 
   async updateEntry(

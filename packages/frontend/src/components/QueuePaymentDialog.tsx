@@ -19,6 +19,7 @@ interface QueuePaymentDialogProps {
   onSubmit: (payload: {
     amount: string;
     paymentMethod: string;
+    paymentTotal?: string | null;
     installments?: number | null;
     paymentReceivedAt?: string | null;
     paymentNotes?: string | null;
@@ -77,6 +78,8 @@ export function QueuePaymentDialog({
   const [receivedAt, setReceivedAt] = useState<string>("");
   const [notes, setNotes] = useState<string>("");
   const [amountError, setAmountError] = useState<string>("");
+  const [total, setTotal] = useState<string>("");
+  const [totalError, setTotalError] = useState<string>("");
 
   useEffect(() => {
     if (entry && open) {
@@ -87,6 +90,12 @@ export function QueuePaymentDialog({
       setReceivedAt(toDateTimeLocal(new Date().toISOString()));
       setNotes("");
       setAmountError("");
+      setTotal(
+        entry.paymentAmount
+          ? toDisplayAmount(entry.paymentAmount)
+          : "",
+      );
+      setTotalError("");
     }
   }, [entry, open, user?.id]);
 
@@ -119,6 +128,16 @@ export function QueuePaymentDialog({
     }
     setAmountError("");
 
+    let normalizedTotal: number | null = null;
+    if (total) {
+      normalizedTotal = Number(normalizeAmountInput(total));
+      if (Number.isNaN(normalizedTotal) || normalizedTotal < 0) {
+        setTotalError("Valor total inválido");
+        return;
+      }
+    }
+    setTotalError("");
+
     const payload = {
       amount: normalized.toFixed(2),
       paymentMethod: method,
@@ -126,6 +145,7 @@ export function QueuePaymentDialog({
       paymentReceivedAt: fromDateTimeLocal(receivedAt),
       paymentNotes: notes.trim() || null,
       paymentReceivedById: receivedById === NONE_VALUE ? null : receivedById,
+      paymentTotal: normalizedTotal != null ? normalizedTotal.toFixed(2) : undefined,
     };
 
     onSubmit(payload);
@@ -183,16 +203,49 @@ export function QueuePaymentDialog({
               <div className="flex flex-col gap-2">
                 <p className="text-sm font-semibold text-foreground">{entry.patientName}</p>
                 <p className="text-xs text-muted-foreground">Tutor: {entry.tutorName}</p>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Total lançado</span>
-                  <span className="font-semibold text-foreground">
-                    {formatCurrency(entry.paymentAmount ?? "0")}
-                  </span>
+                <div className="grid gap-2 md:grid-cols-2">
+                  <div className="flex flex-col gap-1">
+                    <Label htmlFor="queue-payment-total" className="text-xs uppercase text-muted-foreground">
+                      Valor total do atendimento
+                    </Label>
+                    <Input
+                      id="queue-payment-total"
+                      inputMode="decimal"
+                      autoComplete="off"
+                      placeholder="0,00"
+                      value={total}
+                      onChange={(e) => {
+                        const cleaned = e.target.value.replace(/[^0-9.,]/g, "");
+                        setTotal(cleaned);
+                      }}
+                      onBlur={() => {
+                        if (!total) return;
+                        const normalizedTotalValue = Number(normalizeAmountInput(total));
+                        if (!Number.isNaN(normalizedTotalValue)) {
+                          setTotal(toDisplayAmount(normalizedTotalValue.toFixed(2)));
+                          setTotalError("");
+                        }
+                      }}
+                      aria-invalid={Boolean(totalError)}
+                      aria-describedby={totalError ? "queue-payment-total-error" : undefined}
+                    />
+                    {totalError ? (
+                      <p id="queue-payment-total-error" className="text-xs text-destructive">
+                        {totalError}
+                      </p>
+                    ) : null}
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs uppercase text-muted-foreground">Recebido</span>
+                    <span className="text-base font-semibold text-foreground">
+                      {formatCurrency(totalReceived.toFixed(2))}
+                    </span>
+                  </div>
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Recebido</span>
-                  <span className="font-semibold text-foreground">
-                    {formatCurrency(totalReceived.toFixed(2))}
+                  <span className="text-xs text-muted-foreground">Total registrado (contábil)</span>
+                  <span className="font-medium text-muted-foreground">
+                    {formatCurrency(entry.paymentAmount ?? "0")}
                   </span>
                 </div>
               </div>

@@ -236,20 +236,6 @@ export function QueueCard({
     );
   }
 
-  if (tabContext === "completed" && entry.paymentStatus !== PaymentStatus.PAID && onReceivePayment) {
-    secondaryActions.push(
-      <Button
-        key="register-payment"
-        onClick={() => onReceivePayment(entry)}
-        size="sm"
-        className="flex-1 sm:flex-none bg-primary text-primary-foreground hover:bg-primary/90"
-      >
-        <CreditCard className="mr-2 h-4 w-4" />
-        Registrar pagamento
-      </Button>
-    );
-  }
-
   if (entry.status !== Status.COMPLETED && entry.status !== Status.CANCELLED && onCancel) {
     secondaryActions.push(
       <Button
@@ -328,6 +314,18 @@ export function QueueCard({
                     <Pencil className="h-3.5 w-3.5" />
                   </Button>
                 )}
+                {tabContext === "completed" &&
+                  entry.paymentStatus !== PaymentStatus.PAID &&
+                  onReceivePayment && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => onReceivePayment(entry)}
+                      aria-label="Registrar pagamento"
+                    >
+                      <CreditCard className="h-3.5 w-3.5" />
+                    </Button>
+                  )}
                 <DialogTrigger asChild>
                   <Button
                     variant="ghost"

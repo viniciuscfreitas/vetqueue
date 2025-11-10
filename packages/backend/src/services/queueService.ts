@@ -7,11 +7,13 @@ import {
   Role,
   Status,
   QueueFormPreference,
+  PaymentHistoryEntry,
 } from "../core/types";
 import { logger } from "../lib/logger";
 import { QueueRepository } from "../repositories/queueRepository";
 import { UserRepository } from "../repositories/userRepository";
 import { QueueFormPreferenceRepository } from "../repositories/queueFormPreferenceRepository";
+import { randomUUID } from "crypto";
 
 const log = logger.withContext({ module: "Queue" });
 
@@ -619,6 +621,7 @@ export class QueueService {
       paymentReceivedById?: string | null;
       paymentReceivedAt?: Date | null;
       paymentNotes?: string | null;
+      paymentHistory?: PaymentHistoryEntry[];
     },
     currentUserId?: string
   ): Promise<QueueEntry> {
@@ -629,6 +632,7 @@ export class QueueService {
       paymentReceivedById?: string | null;
       paymentReceivedAt?: Date | null;
       paymentNotes?: string | null;
+      paymentHistory?: PaymentHistoryEntry[];
     } = {};
 
     if (data.paymentMethod !== undefined) {
@@ -646,6 +650,10 @@ export class QueueService {
 
     if (data.paymentNotes !== undefined) {
       payload.paymentNotes = data.paymentNotes;
+    }
+
+    if (data.paymentHistory !== undefined) {
+      payload.paymentHistory = data.paymentHistory;
     }
 
     if (targetStatus === PaymentStatus.PAID || targetStatus === PaymentStatus.PARTIAL) {
@@ -671,6 +679,77 @@ export class QueueService {
     }
 
     return this.repository.updatePayment(id, payload);
+  }
+
+  private calculateHistoryTotal(history: PaymentHistoryEntry[]): number {
+    return history.reduce((acc, record) => acc + Number(record.amount ?? 0), 0);
+  }
+
+  async addPaymentEntry(
+    id: string,
+    data: {
+      amount: string | number;
+      paymentMethod: string;
+      installments?: number | null;
+      paymentReceivedAt?: Date | null;
+      paymentReceivedById?: string | null;
+      paymentNotes?: string | null;
+    },
+    currentUserId?: string
+  ): Promise<QueueEntry> {
+    const entry = await this.repository.findById(id);
+    if (!entry) {
+      throw new Error("Entrada não encontrada");
+    }
+
+    const normalizedAmount =
+      typeof data.amount === "number" ? data.amount : Number(data.amount.toString().replace(",", "."));
+
+    if (!Number.isFinite(normalizedAmount) || normalizedAmount <= 0) {
+      throw new Error("Valor do pagamento deve ser maior que zero");
+    }
+
+    const createdAt = new Date();
+    const receivedAt = data.paymentReceivedAt ?? createdAt;
+    const normalizedReceivedAt = receivedAt instanceof Date ? receivedAt : new Date(receivedAt);
+
+    if (Number.isNaN(normalizedReceivedAt.getTime())) {
+      throw new Error("Data de pagamento inválida");
+    }
+
+    const existingHistory = entry.paymentHistory ?? [];
+
+    const newRecord: PaymentHistoryEntry = {
+      id: randomUUID(),
+      amount: normalizedAmount.toFixed(2),
+      method: data.paymentMethod,
+      installments: data.installments ?? null,
+      receivedAt: normalizedReceivedAt,
+      receivedById: data.paymentReceivedById ?? currentUserId ?? null,
+      notes: data.paymentNotes ?? null,
+      createdAt,
+    };
+
+    const history: PaymentHistoryEntry[] = [...existingHistory, newRecord];
+    const totalReceived = this.calculateHistoryTotal(history);
+    const totalFormatted = totalReceived.toFixed(2);
+
+    const methods = new Set(history.map((record) => record.method).filter(Boolean));
+    const paymentMethod = methods.size === 1 ? Array.from(methods)[0] : "MULTIPLE";
+
+    let paymentStatus = entry.paymentStatus ?? PaymentStatus.PENDING;
+    if (paymentStatus !== PaymentStatus.PAID) {
+      paymentStatus = totalReceived > 0 ? PaymentStatus.PARTIAL : PaymentStatus.PENDING;
+    }
+
+    return this.repository.updatePayment(id, {
+      paymentHistory: history,
+      paymentAmount: totalFormatted,
+      paymentMethod,
+      paymentStatus,
+      paymentReceivedAt: newRecord.receivedAt ?? null,
+      paymentReceivedById: newRecord.receivedById ?? null,
+    });
   }
 
   async updateEntry(

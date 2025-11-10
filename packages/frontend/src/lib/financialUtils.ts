@@ -2,9 +2,12 @@ import { PaymentStatus } from "./api";
 
 export const paymentMethodLabels: Record<string, string> = {
   CREDIT: "Crédito",
+  CREDIT_INSTALLMENTS: "Crédito parcelado",
   DEBIT: "Débito",
   CASH: "Dinheiro",
   PIX: "PIX",
+  TRANSFER: "Transferência",
+  MULTIPLE: "Múltiplos métodos",
   "": "Não informado",
   NÃO_INFORMADO: "Não informado",
 };

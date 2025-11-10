@@ -59,6 +59,17 @@ export enum PaymentStatus {
   CANCELLED = "CANCELLED",
 }
 
+export interface PaymentHistoryEntry {
+  id: string;
+  amount: string;
+  method: string;
+  installments?: number | null;
+  receivedAt?: Date | null;
+  receivedById?: string | null;
+  notes?: string | null;
+  createdAt: Date;
+}
+
 export interface Service {
   id: string;
   name: string;
@@ -92,6 +103,7 @@ export interface QueueEntry {
   paymentReceivedBy?: User | null;
   paymentReceivedAt?: Date | null;
   paymentNotes?: string | null;
+  paymentHistory?: PaymentHistoryEntry[];
   systemMessage?: string;
 }
 

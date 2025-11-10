@@ -110,6 +110,17 @@ export enum PaymentStatus {
   CANCELLED = "CANCELLED",
 }
 
+export interface PaymentHistoryEntry {
+  id: string;
+  amount: string;
+  method: string;
+  installments?: number | null;
+  receivedAt?: string | null;
+  receivedById?: string | null;
+  notes?: string | null;
+  createdAt: string;
+}
+
 export interface Service {
   id: string;
   name: string;
@@ -143,6 +154,7 @@ export interface QueueEntry {
   paymentReceivedBy?: User | null;
   paymentReceivedAt?: string | null;
   paymentNotes?: string | null;
+  paymentHistory?: PaymentHistoryEntry[];
   systemMessage?: string | null;
 }
 
@@ -354,6 +366,16 @@ export const queueApi = {
     paymentReceivedById?: string | null;
   }) =>
     api.patch<QueueEntry>(`/api/queue/${id}/payment`, data),
+
+  addPayment: (id: string, data: {
+    amount: string | number;
+    paymentMethod: string;
+    installments?: number | null;
+    paymentReceivedAt?: string | null;
+    paymentNotes?: string | null;
+    paymentReceivedById?: string | null;
+  }) =>
+    api.post<QueueEntry>(`/api/queue/${id}/payments`, data),
 
   getFinancialSummary: (filters?: {
     startDate?: string;

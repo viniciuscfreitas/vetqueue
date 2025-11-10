@@ -76,6 +76,7 @@ class InMemoryQueueRepository implements Partial<QueueRepository> {
       paymentReceivedBy: null,
       paymentReceivedAt: data.paymentReceivedAt ?? null,
       paymentNotes: data.paymentNotes ?? null,
+      paymentHistory: data.paymentHistory ?? [],
     };
 
     this.entries.set(entry.id, entry);
@@ -124,6 +125,7 @@ class InMemoryQueueRepository implements Partial<QueueRepository> {
       paymentReceivedAt:
         data.paymentReceivedAt !== undefined ? data.paymentReceivedAt : existing.paymentReceivedAt ?? null,
       paymentNotes: data.paymentNotes !== undefined ? data.paymentNotes : existing.paymentNotes,
+      paymentHistory: data.paymentHistory !== undefined ? data.paymentHistory : existing.paymentHistory ?? [],
     };
 
     this.entries.set(id, updated);
@@ -326,6 +328,50 @@ describe("QueueService critical flows", () => {
 
     activeEntries = await service.listActive();
     expect(activeEntries.map((item) => item.id)).not.toContain(entry.id);
+  });
+
+  it("acumula pagamentos parciais registrando histórico e status", async () => {
+    const { service, repository } = buildService();
+    const entry = await service.addToQueue({
+      patientName: "Bob",
+      tutorName: "Eva",
+      serviceType: "CONSULTA",
+      priority: Priority.NORMAL,
+    });
+
+    const first = await service.addPaymentEntry(
+      entry.id,
+      {
+        amount: "50",
+        paymentMethod: "PIX",
+      },
+      "cashier-1",
+    );
+
+    expect(first.paymentAmount).toBe("50.00");
+    expect(first.paymentStatus).toBe(PaymentStatus.PARTIAL);
+    expect(first.paymentMethod).toBe("PIX");
+    expect(first.paymentHistory).toHaveLength(1);
+    expect(first.paymentHistory?.[0].receivedById).toBe("cashier-1");
+
+    const second = await service.addPaymentEntry(
+      entry.id,
+      {
+        amount: "30",
+        paymentMethod: "CASH",
+        paymentNotes: "Entrada parcial",
+      },
+      "cashier-2",
+    );
+
+    expect(second.paymentAmount).toBe("80.00");
+    expect(second.paymentStatus).toBe(PaymentStatus.PARTIAL);
+    expect(second.paymentMethod).toBe("MULTIPLE");
+    expect(second.paymentHistory).toHaveLength(2);
+    expect(second.paymentHistory?.[1].notes).toBe("Entrada parcial");
+
+    const stored = await repository.findById(entry.id);
+    expect(stored?.paymentHistory).toHaveLength(2);
   });
 });
 

@@ -29,6 +29,7 @@ interface QueueCardProps {
   onViewRecord?: (patientId: string, queueEntryId: string) => void;
   onRegisterConsultation?: (patientId: string, queueEntryId: string) => void;
   onRequeue?: (id: string) => void;
+  onReceivePayment?: (entry: QueueEntry) => void;
   tabContext?: "queue" | "in-progress" | "completed" | "paid";
 }
 
@@ -93,6 +94,7 @@ export function QueueCard({
   onViewRecord,
   onRegisterConsultation,
   onRequeue,
+  onReceivePayment,
   tabContext,
 }: QueueCardProps) {
   const status = statusConfig[entry.status];
@@ -230,6 +232,20 @@ export function QueueCard({
         className="flex-1 sm:flex-none"
       >
         Retornar à fila
+      </Button>
+    );
+  }
+
+  if (tabContext === "completed" && entry.paymentStatus !== PaymentStatus.PAID && onReceivePayment) {
+    secondaryActions.push(
+      <Button
+        key="register-payment"
+        onClick={() => onReceivePayment(entry)}
+        size="sm"
+        className="flex-1 sm:flex-none bg-primary text-primary-foreground hover:bg-primary/90"
+      >
+        <CreditCard className="mr-2 h-4 w-4" />
+        Registrar pagamento
       </Button>
     );
   }

@@ -28,12 +28,14 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQueueMutations } from "@/hooks/useQueueMutations";
-import { ModuleKey, patientApi, Priority, queueApi, Role, Status } from "@/lib/api";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { ModuleKey, patientApi, Priority, queueApi, Role, Status, QueueEntry, userApi } from "@/lib/api";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { BellRing, ClipboardList } from "lucide-react";
 import type { HeaderAction, HeaderHelper } from "@/components/Header";
+import { QueuePaymentDialog } from "@/components/QueuePaymentDialog";
+import { createErrorHandler } from "@/lib/errors";
 
 export default function QueuePage() {
   const router = useRouter();
@@ -50,6 +52,8 @@ export default function QueuePage() {
   const [entryToCancel, setEntryToCancel] = useState<string | null>(null);
   const [recordPatientId, setRecordPatientId] = useState<string | null>(null);
   const [recordQueueEntryId, setRecordQueueEntryId] = useState<string | null>(null);
+  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
+  const [paymentEntry, setPaymentEntry] = useState<QueueEntry | null>(null);
 
   const previousEntriesRef = useRef<any[]>([]);
 
@@ -69,6 +73,21 @@ export default function QueuePage() {
     refetchInterval: (query) => (query.state.error ? false : 3000),
     enabled: !authLoading && !!user,
   });
+
+  const { data: receiversData } = useQuery({
+    queryKey: ["users", "payment-receivers"],
+    queryFn: () => userApi.list().then((res) => res.data),
+    enabled: !authLoading && !!user && canManageQueue,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const paymentReceivers = useMemo(
+    () =>
+      receiversData
+        ?.filter((receiver) => receiver.role === Role.RECEPCAO || receiver.role === Role.ADMIN)
+        .map((receiver) => ({ id: receiver.id, name: receiver.name })) ?? [],
+    [receiversData],
+  );
 
   const onCallNextSuccess = useCallback(() => {
     setShowRoomModal(false);
@@ -215,6 +234,56 @@ export default function QueuePage() {
     }
   }, [entryToCancel]);
 
+  const handleReceivePayment = useCallback((entry: QueueEntry) => {
+    setPaymentEntry(entry);
+    setPaymentDialogOpen(true);
+  }, []);
+
+  const addPaymentMutation = useMutation({
+    mutationFn: ({
+      id,
+      payload,
+    }: {
+      id: string;
+      payload: {
+        amount: string;
+        paymentMethod: string;
+        installments?: number | null;
+        paymentReceivedAt?: string | null;
+        paymentNotes?: string | null;
+        paymentReceivedById?: string | null;
+      };
+    }) => queueApi.addPayment(id, payload).then((res) => res.data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["queue"] });
+      toastRef.current({
+        variant: "default",
+        title: "Pagamento registrado",
+        description: "O pagamento foi lançado com sucesso.",
+      });
+      setPaymentDialogOpen(false);
+      setPaymentEntry(null);
+    },
+    onError: (error) => {
+      createErrorHandler(toastRef.current)(error);
+    },
+  });
+
+  const handleSubmitPayment = useCallback(
+    (payload: {
+      amount: string;
+      paymentMethod: string;
+      installments?: number | null;
+      paymentReceivedAt?: string | null;
+      paymentNotes?: string | null;
+      paymentReceivedById?: string | null;
+    }) => {
+      if (!paymentEntry) return;
+      addPaymentMutation.mutate({ id: paymentEntry.id, payload });
+    },
+    [addPaymentMutation, paymentEntry],
+  );
+
   if (authLoading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -316,6 +385,7 @@ export default function QueuePage() {
             onCancel={canManageQueue ? handleCancel : undefined}
             onViewRecord={handleViewRecord}
             onRegisterConsultation={isVet ? handleRegisterConsultation : undefined}
+            onReceivePayment={canManageQueue ? handleReceivePayment : undefined}
           />
         )}
       </div>
@@ -389,6 +459,20 @@ export default function QueuePage() {
           }}
         />
       )}
+
+      <QueuePaymentDialog
+        entry={paymentEntry}
+        open={paymentDialogOpen}
+        onOpenChange={(open) => {
+          setPaymentDialogOpen(open);
+          if (!open) {
+            setPaymentEntry(null);
+          }
+        }}
+        onSubmit={handleSubmitPayment}
+        isSubmitting={addPaymentMutation.isPending}
+        receivers={paymentReceivers}
+      />
     </AppShell>
   );
 }

@@ -81,6 +81,7 @@ model QueueEntry {
   paymentReceivedBy       User?          @relation("PaymentsReceived", fields: [paymentReceivedById], references: [id])
   paymentReceivedAt       DateTime?
   paymentNotes            String?
+  paymentHistory          Json?
   consultations           Consultation[]
 
   @@index([status])

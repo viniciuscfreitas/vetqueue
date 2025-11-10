@@ -60,6 +60,7 @@ export interface FilaWorkflowActions {
   onRequeue?: (id: string) => void;
   onViewRecord?: (patientId: string, queueEntryId: string) => void;
   onRegisterConsultation?: (patientId: string, queueEntryId: string) => void;
+  onReceivePayment?: (entry: QueueEntry) => void;
 }
 
 interface FilaWorkflowProps extends FilaWorkflowActions {
@@ -79,6 +80,7 @@ export function FilaWorkflow({
   onRequeue,
   onViewRecord,
   onRegisterConsultation,
+  onReceivePayment,
 }: FilaWorkflowProps) {
   const visibleColumns = useMemo(() => {
     if (!user || user.role === Role.VET) {
@@ -131,6 +133,7 @@ export function FilaWorkflow({
                     onRequeue={onRequeue}
                     onViewRecord={onViewRecord}
                     onRegisterConsultation={onRegisterConsultation}
+                  onReceivePayment={onReceivePayment}
                     tabContext={column.key as ColumnKey}
                   />
                 ))

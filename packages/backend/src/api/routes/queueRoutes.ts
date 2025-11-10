@@ -17,7 +17,7 @@ const queueService = new QueueService(repository);
 const auditRepository = new AuditRepository();
 const auditService = new AuditService(auditRepository);
 
-const paymentMethodEnum = z.enum(["CREDIT", "DEBIT", "CASH", "PIX"]);
+const paymentMethodEnum = z.enum(["CREDIT", "CREDIT_INSTALLMENTS", "DEBIT", "CASH", "PIX", "TRANSFER", "MULTIPLE"]);
 const paymentStatusEnum = z.enum(["PENDING", "PARTIAL", "PAID", "CANCELLED"]);
 
 const addQueueSchema = z
@@ -147,6 +147,15 @@ const paymentSchema = z.object({
   paymentReceivedAt: z.string().datetime().nullable().optional(),
   paymentNotes: z.string().nullable().optional(),
   paymentReceivedById: z.string().nullable().optional(),
+});
+
+const paymentEntrySchema = z.object({
+  amount: z.union([z.string(), z.number()]),
+  paymentMethod: paymentMethodEnum,
+  installments: z.number().int().positive().max(48).nullable().optional(),
+  paymentReceivedAt: z.string().datetime().nullable().optional(),
+  paymentReceivedById: z.string().nullable().optional(),
+  paymentNotes: z.string().nullable().optional(),
 });
 
 const draftSchema = z.object({
@@ -622,6 +631,66 @@ router.patch("/:id/payment", authMiddleware, requireModule(ModuleKey.FINANCIAL),
     }
 
     res.json(updatedEntry);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      res.status(400).json({ error: error.errors });
+      return;
+    }
+    res.status(400).json({ error: (error as Error).message });
+  }
+}));
+
+router.post("/:id/payments", authMiddleware, requireModule(ModuleKey.FINANCIAL), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const validated = paymentEntrySchema.parse(req.body);
+
+    const normalizedAmount =
+      typeof validated.amount === "number"
+        ? validated.amount
+        : Number(validated.amount.replace(/\./g, "").replace(",", "."));
+
+    if (!Number.isFinite(normalizedAmount) || normalizedAmount <= 0) {
+      res.status(400).json({ error: "Valor do pagamento deve ser maior que zero" });
+      return;
+    }
+
+    const paymentReceivedAt =
+      validated.paymentReceivedAt === undefined || validated.paymentReceivedAt === null
+        ? undefined
+        : new Date(validated.paymentReceivedAt);
+
+    const updatedEntry = await queueService.addPaymentEntry(
+      req.params.id,
+      {
+        amount: normalizedAmount,
+        paymentMethod: validated.paymentMethod,
+        installments: validated.installments ?? null,
+        paymentReceivedAt,
+        paymentReceivedById: validated.paymentReceivedById ?? undefined,
+        paymentNotes: validated.paymentNotes ?? undefined,
+      },
+      req.user?.id,
+    );
+
+    if (req.user) {
+      auditService.log({
+        userId: req.user.id,
+        action: "ADD_PAYMENT",
+        entityType: "QueueEntry",
+        entityId: updatedEntry.id,
+        metadata: {
+          paymentMethod: validated.paymentMethod,
+          amount: normalizedAmount.toFixed(2),
+          installments: validated.installments ?? null,
+        },
+      }).catch((error) => {
+        logger.error("Failed to log audit", {
+          error: error instanceof Error ? error.message : String(error)
+        });
+      });
+    }
+
+    res.status(201).json(updatedEntry);
   } catch (error) {
     if (error instanceof z.ZodError) {
       res.status(400).json({ error: error.errors });

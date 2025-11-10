@@ -1,5 +1,14 @@
 import { Prisma, QueueEntry as PrismaQueueEntry } from "@prisma/client";
-import { QueueEntry, Priority, Status, User, Role, Patient, PaymentStatus } from "../core/types";
+import {
+  QueueEntry,
+  Priority,
+  Status,
+  User,
+  Role,
+  Patient,
+  PaymentStatus,
+  PaymentHistoryEntry,
+} from "../core/types";
 import { prisma } from "../lib/prisma";
 
 const patientSelect = {
@@ -70,6 +79,76 @@ function buildActiveQueueWhere(extraFilters?: Prisma.QueueEntryWhereInput): Pris
   };
 }
 
+function parsePaymentHistory(value: Prisma.JsonValue | null | undefined): PaymentHistoryEntry[] | undefined {
+  if (!value) return undefined;
+  if (!Array.isArray(value)) return undefined;
+
+  const history: PaymentHistoryEntry[] = [];
+  for (const item of value) {
+    if (!item || typeof item !== "object") {
+      continue;
+    }
+    const record = item as Record<string, unknown>;
+    const id = typeof record.id === "string" ? record.id : undefined;
+    const amount =
+      typeof record.amount === "string"
+        ? record.amount
+        : typeof record.amount === "number"
+          ? record.amount.toFixed(2)
+          : undefined;
+    const method = typeof record.method === "string" ? record.method : undefined;
+    const createdAtRaw = typeof record.createdAt === "string" ? record.createdAt : null;
+    if (!id || !amount || !method || !createdAtRaw) {
+      continue;
+    }
+    const createdAt = new Date(createdAtRaw);
+    if (Number.isNaN(createdAt.getTime())) {
+      continue;
+    }
+    const receivedAtRaw = typeof record.receivedAt === "string" ? record.receivedAt : null;
+    const receivedAt =
+      receivedAtRaw && !Number.isNaN(new Date(receivedAtRaw).getTime()) ? new Date(receivedAtRaw) : null;
+    const installments =
+      typeof record.installments === "number" && Number.isFinite(record.installments)
+        ? record.installments
+        : null;
+    const receivedById =
+      typeof record.receivedById === "string" ? record.receivedById : record.receivedById === null ? null : undefined;
+    const notes =
+      typeof record.notes === "string" ? record.notes : record.notes === null ? null : undefined;
+
+    history.push({
+      id,
+      amount,
+      method,
+      installments: installments ?? null,
+      receivedAt,
+      receivedById: receivedById ?? null,
+      notes: notes ?? null,
+      createdAt,
+    });
+  }
+
+  return history.length > 0 ? history : undefined;
+}
+
+function serializePaymentHistory(history?: PaymentHistoryEntry[]): Prisma.JsonValue | undefined {
+  if (!history) {
+    return undefined;
+  }
+
+  return history.map((entry) => ({
+    id: entry.id,
+    amount: entry.amount,
+    method: entry.method,
+    installments: entry.installments ?? null,
+    receivedAt: entry.receivedAt ? entry.receivedAt.toISOString() : null,
+    receivedById: entry.receivedById ?? null,
+    notes: entry.notes ?? null,
+    createdAt: entry.createdAt.toISOString(),
+  }));
+}
+
 function mapPrismaToDomain(entry: PrismaQueueEntry & {
   assignedVet?: { id: string; username: string; name: string; role: string; createdAt: Date } | null;
   room?: { id: string; name: string; isActive: boolean; createdAt: Date } | null;
@@ -120,6 +199,7 @@ function mapPrismaToDomain(entry: PrismaQueueEntry & {
       : null,
     paymentReceivedAt: entry.paymentReceivedAt || null,
     paymentNotes: entry.paymentNotes || null,
+    paymentHistory: parsePaymentHistory(entry.paymentHistory as Prisma.JsonValue | null),
     patient: entry.patient ? {
       id: entry.patient.id,
       tutorId: entry.patient.tutorId,
@@ -155,6 +235,7 @@ export class QueueRepository {
     paymentReceivedById?: string;
     paymentReceivedAt?: Date;
     paymentNotes?: string;
+    paymentHistory?: PaymentHistoryEntry[];
   }): Promise<QueueEntry> {
     let patientName = data.patientName;
     let tutorName = data.tutorName;
@@ -187,6 +268,7 @@ export class QueueRepository {
         paymentReceivedById: data.paymentReceivedById,
         paymentReceivedAt: data.paymentReceivedAt,
         paymentNotes: data.paymentNotes,
+        paymentHistory: serializePaymentHistory(data.paymentHistory ?? []) ?? [],
       },
       include: defaultInclude,
     });
@@ -1325,6 +1407,7 @@ export class QueueRepository {
     paymentReceivedById?: string | null;
     paymentReceivedAt?: Date | null;
     paymentNotes?: string | null;
+    paymentHistory?: PaymentHistoryEntry[];
   }): Promise<QueueEntry> {
     const updateData: Prisma.QueueEntryUpdateInput = {};
 
@@ -1351,6 +1434,9 @@ export class QueueRepository {
     }
     if (data.paymentNotes !== undefined) {
       updateData.paymentNotes = data.paymentNotes;
+    }
+    if (data.paymentHistory !== undefined) {
+      updateData.paymentHistory = serializePaymentHistory(data.paymentHistory) ?? [];
     }
 
     const entry = await prisma.queueEntry.update({

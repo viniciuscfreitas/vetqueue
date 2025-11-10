@@ -86,9 +86,12 @@ function validateDateTime(value: string) {
 const paymentMethodOptions = [
   { value: NONE_VALUE, label: "Não informado" },
   { value: "CREDIT", label: "Crédito" },
+  { value: "CREDIT_INSTALLMENTS", label: "Crédito parcelado" },
   { value: "DEBIT", label: "Débito" },
   { value: "CASH", label: "Dinheiro" },
   { value: "PIX", label: "PIX" },
+  { value: "TRANSFER", label: "Transferência" },
+  { value: "MULTIPLE", label: "Múltiplos métodos" },
 ];
 
 const paymentStatusOptions = [

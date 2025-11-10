@@ -92,12 +92,12 @@ export function FilaWorkflow({
   const orderedEntries = useMemo(() => sortQueueEntries(entries), [entries]);
 
   return (
-    <section className="space-y-4 pb-4">
-      <div className="flex flex-col gap-4 px-1 md:flex-row md:gap-8">
+    <section className="space-y-4 px-1 pb-4">
+      <div className="flex flex-col gap-4 md:flex-row md:items-start md:gap-8">
         {visibleColumns.map((column) => {
           const columnEntries = orderedEntries.filter(column.filter);
           return (
-            <div key={column.key} className="w-full md:w-[320px]">
+            <div key={column.key} className="w-full md:w-[320px] md:shrink-0">
               <div className="flex items-center gap-2">
                 {column.icon}
                 <p className="text-sm font-semibold">{column.title}</p>
@@ -106,38 +106,31 @@ export function FilaWorkflow({
               <p className="mt-1 text-xs text-muted-foreground">
                 {columnEntries.length} {columnEntries.length === 1 ? "paciente" : "pacientes"}
               </p>
-            </div>
-          );
-        })}
-      </div>
 
-      <div className="flex flex-col gap-4 px-1 md:flex-row md:items-start md:gap-8">
-        {visibleColumns.map((column) => {
-          const columnEntries = orderedEntries.filter(column.filter);
-          return (
-            <div key={column.key} className="flex w-full flex-col gap-3 md:w-[320px] md:shrink-0">
-              {columnEntries.length === 0 ? (
-                <div className="flex flex-1 items-center justify-center rounded-xl border border-dashed border-muted/40 bg-muted/10 p-6 text-center text-xs text-muted-foreground">
-                  Nenhum paciente aqui.
-                </div>
-              ) : (
-                columnEntries.map((entry) => (
-                  <QueueCard
-                    key={entry.id}
-                    entry={entry}
-                    canManageQueue={canManageQueue}
-                    onCall={onCall}
-                    onStart={onStart}
-                    onComplete={onComplete}
-                    onCancel={onCancel}
-                    onRequeue={onRequeue}
-                    onViewRecord={onViewRecord}
-                    onRegisterConsultation={onRegisterConsultation}
-                  onReceivePayment={onReceivePayment}
-                    tabContext={column.key as ColumnKey}
-                  />
-                ))
-              )}
+              <div className="mt-3 flex flex-col gap-3">
+                {columnEntries.length === 0 ? (
+                  <div className="flex flex-1 items-center justify-center rounded-xl border border-dashed border-muted/40 bg-muted/10 p-6 text-center text-xs text-muted-foreground">
+                    Nenhum paciente aqui.
+                  </div>
+                ) : (
+                  columnEntries.map((entry) => (
+                    <QueueCard
+                      key={entry.id}
+                      entry={entry}
+                      canManageQueue={canManageQueue}
+                      onCall={onCall}
+                      onStart={onStart}
+                      onComplete={onComplete}
+                      onCancel={onCancel}
+                      onRequeue={onRequeue}
+                      onViewRecord={onViewRecord}
+                      onRegisterConsultation={onRegisterConsultation}
+                      onReceivePayment={onReceivePayment}
+                      tabContext={column.key as ColumnKey}
+                    />
+                  ))
+                )}
+              </div>
             </div>
           );
         })}

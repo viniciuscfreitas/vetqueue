@@ -59,9 +59,6 @@ function buildActiveQueueWhere(extraFilters?: Prisma.QueueEntryWhereInput): Pris
       },
       {
         status: Status.COMPLETED,
-        paymentStatus: {
-          not: PaymentStatus.PAID,
-        },
         completedAt: {
           gte: startOfDay,
           lte: endOfDay,

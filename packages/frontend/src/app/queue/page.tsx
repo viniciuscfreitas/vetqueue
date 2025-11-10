@@ -28,10 +28,10 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQueueMutations } from "@/hooks/useQueueMutations";
-import { ModuleKey, patientApi, Priority, queueApi, Role, Status, QueueEntry, userApi } from "@/lib/api";
+import { ModuleKey, patientApi, Priority, queueApi, Role, Status, QueueEntry } from "@/lib/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { BellRing, ClipboardList } from "lucide-react";
 import type { HeaderAction, HeaderHelper } from "@/components/Header";
 import { QueuePaymentDialog } from "@/components/QueuePaymentDialog";
@@ -73,21 +73,6 @@ export default function QueuePage() {
     refetchInterval: (query) => (query.state.error ? false : 3000),
     enabled: !authLoading && !!user,
   });
-
-  const { data: receiversData } = useQuery({
-    queryKey: ["users", "payment-receivers"],
-    queryFn: () => userApi.list().then((res) => res.data),
-    enabled: !authLoading && !!user && canManageQueue,
-    staleTime: 1000 * 60 * 5,
-  });
-
-  const paymentReceivers = useMemo(
-    () =>
-      receiversData
-        ?.filter((receiver) => receiver.role === Role.RECEPCAO || receiver.role === Role.ADMIN)
-        .map((receiver) => ({ id: receiver.id, name: receiver.name })) ?? [],
-    [receiversData],
-  );
 
   const onCallNextSuccess = useCallback(() => {
     setShowRoomModal(false);
@@ -394,7 +379,7 @@ export default function QueuePage() {
             onCancel={canManageQueue ? handleCancel : undefined}
             onViewRecord={handleViewRecord}
             onRegisterConsultation={isVet ? handleRegisterConsultation : undefined}
-            onReceivePayment={canManageQueue ? handleReceivePayment : undefined}
+            onReceivePayment={!isVet && canManageQueue ? handleReceivePayment : undefined}
           />
         )}
       </div>
@@ -480,7 +465,6 @@ export default function QueuePage() {
         }}
         onSubmit={handleSubmitPayment}
         isSubmitting={addPaymentMutation.isPending}
-        receivers={paymentReceivers}
       />
     </AppShell>
   );

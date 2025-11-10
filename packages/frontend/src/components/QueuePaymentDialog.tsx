@@ -26,7 +26,6 @@ interface QueuePaymentDialogProps {
     paymentReceivedById?: string | null;
   }) => void;
   isSubmitting?: boolean;
-  receivers?: Array<{ id: string; name: string }>;
 }
 
 const paymentMethodOptions = [
@@ -42,8 +41,6 @@ const paymentMethodLabels = paymentMethodOptions.reduce<Record<string, string>>(
   acc[option.value] = option.label;
   return acc;
 }, { MULTIPLE: "Múltiplos métodos" });
-
-const NONE_VALUE = "__none";
 
 function normalizeAmountInput(value: string) {
   return value.replace(/\./g, "").replace(",", ".");
@@ -67,14 +64,12 @@ export function QueuePaymentDialog({
   onOpenChange,
   onSubmit,
   isSubmitting = false,
-  receivers = [],
 }: QueuePaymentDialogProps) {
   const { user } = useAuth();
 
   const [amount, setAmount] = useState("");
   const [method, setMethod] = useState<string>("CASH");
   const [installments, setInstallments] = useState<string>("");
-  const [receivedById, setReceivedById] = useState<string>(NONE_VALUE);
   const [receivedAt, setReceivedAt] = useState<string>("");
   const [notes, setNotes] = useState<string>("");
   const [amountError, setAmountError] = useState<string>("");
@@ -86,35 +81,16 @@ export function QueuePaymentDialog({
       setAmount("");
       setMethod(entry.paymentMethod && paymentMethodLabels[entry.paymentMethod] ? entry.paymentMethod : "CASH");
       setInstallments("");
-      setReceivedById(entry.paymentReceivedById ?? user?.id ?? NONE_VALUE);
       setReceivedAt(toDateTimeLocal(new Date().toISOString()));
       setNotes("");
       setAmountError("");
       setTotal(entry.paymentAmount ? toDisplayAmount(entry.paymentAmount) : "");
       setTotalError("");
     }
-  }, [entry, open, user?.id]);
+  }, [entry, open]);
 
   const paymentHistory = entry?.paymentHistory ?? [];
   const totalReceived = useMemo(() => historyTotal(paymentHistory), [paymentHistory]);
-
-  const defaultReceiverOptions = useMemo(() => {
-    const options: Array<{ id: string; name: string }> = [];
-    const unique = new Map<string, string>();
-
-    receivers.forEach((receiver) => {
-      if (!unique.has(receiver.id)) {
-        unique.set(receiver.id, receiver.name);
-        options.push(receiver);
-      }
-    });
-
-    if (user && !unique.has(user.id)) {
-      options.unshift({ id: user.id, name: user.name });
-    }
-
-    return options;
-  }, [receivers, user]);
 
   const handleSubmit = () => {
     let normalizedAmount: number | undefined;
@@ -150,7 +126,7 @@ export function QueuePaymentDialog({
       installments: method === "CREDIT_INSTALLMENTS" && installments ? Number(installments) || null : null,
       paymentReceivedAt: fromDateTimeLocal(receivedAt),
       paymentNotes: notes.trim() || null,
-      paymentReceivedById: receivedById === NONE_VALUE ? null : receivedById,
+      paymentReceivedById: undefined,
       paymentTotal: normalizedTotal != null ? normalizedTotal.toFixed(2) : undefined,
     };
 
@@ -335,21 +311,11 @@ export function QueuePaymentDialog({
                     onChange={(e) => setReceivedAt(e.target.value)}
                   />
                 </div>
-                <div>
-                  <Label htmlFor="queue-payment-received-by">Responsável</Label>
-                  <Select value={receivedById} onValueChange={setReceivedById}>
-                    <SelectTrigger id="queue-payment-received-by">
-                      <SelectValue placeholder="Selecione..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value={NONE_VALUE}>Não informado</SelectItem>
-                      {defaultReceiverOptions.map((receiver) => (
-                        <SelectItem key={receiver.id} value={receiver.id}>
-                          {receiver.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                <div className="flex flex-col gap-1">
+                  <span className="text-xs uppercase text-muted-foreground">Responsável</span>
+                  <span className="rounded-md border border-border/60 bg-muted/40 px-3 py-2 text-sm font-medium text-foreground">
+                    {user?.name ?? "—"}
+                  </span>
                 </div>
               </div>
 

@@ -262,6 +262,7 @@ export default function QueuePage() {
         {
           onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["queue"] });
+            queryClient.invalidateQueries({ queryKey: ["financial"] });
             toastRef.current({
               variant: "default",
               title: isPayment ? "Pagamento registrado" : "Total atualizado",

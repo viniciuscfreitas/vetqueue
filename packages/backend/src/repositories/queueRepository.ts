@@ -27,6 +27,49 @@ const defaultInclude = {
   paymentReceivedBy: true,
 } as const;
 
+function getCurrentDayWindow(now: Date = new Date()) {
+  // TODO: parametrizar timezone da clínica ao invés de depender do timezone do servidor.
+  const startOfDay = new Date(now);
+  startOfDay.setHours(0, 0, 0, 0);
+
+  const endOfDay = new Date(now);
+  endOfDay.setHours(23, 59, 59, 999);
+
+  return { startOfDay, endOfDay };
+}
+
+function buildActiveQueueWhere(extraFilters?: Prisma.QueueEntryWhereInput): Prisma.QueueEntryWhereInput {
+  const { startOfDay, endOfDay } = getCurrentDayWindow();
+
+  const activeOrCompletedToday: Prisma.QueueEntryWhereInput = {
+    OR: [
+      {
+        status: {
+          in: [Status.WAITING, Status.CALLED, Status.IN_PROGRESS],
+        },
+      },
+      {
+        status: Status.COMPLETED,
+        paymentStatus: {
+          not: PaymentStatus.PAID,
+        },
+        completedAt: {
+          gte: startOfDay,
+          lte: endOfDay,
+        },
+      },
+    ],
+  };
+
+  if (!extraFilters) {
+    return activeOrCompletedToday;
+  }
+
+  return {
+    AND: [activeOrCompletedToday, extraFilters],
+  };
+}
+
 function mapPrismaToDomain(entry: PrismaQueueEntry & {
   assignedVet?: { id: string; username: string; name: string; role: string; createdAt: Date } | null;
   room?: { id: string; name: string; isActive: boolean; createdAt: Date } | null;
@@ -345,11 +388,7 @@ export class QueueRepository {
 
   async listActive(): Promise<QueueEntry[]> {
     const entries = await prisma.queueEntry.findMany({
-      where: {
-        status: {
-          in: [Status.WAITING, Status.CALLED, Status.IN_PROGRESS],
-        },
-      },
+      where: buildActiveQueueWhere(),
       include: defaultInclude,
       orderBy: [
         { priority: "asc" },
@@ -361,15 +400,12 @@ export class QueueRepository {
 
   async listActiveByVet(assignedVetId: string): Promise<QueueEntry[]> {
     const entries = await prisma.queueEntry.findMany({
-      where: {
-        status: {
-          in: [Status.WAITING, Status.CALLED, Status.IN_PROGRESS],
-        },
+      where: buildActiveQueueWhere({
         OR: [
           { assignedVetId: assignedVetId },
-          { assignedVetId: null }
-        ]
-      },
+          { assignedVetId: null },
+        ],
+      }),
       include: defaultInclude,
       orderBy: [
         { priority: "asc" },
@@ -381,12 +417,9 @@ export class QueueRepository {
 
   async listActiveGeneral(): Promise<QueueEntry[]> {
     const entries = await prisma.queueEntry.findMany({
-      where: {
-        status: {
-          in: [Status.WAITING, Status.CALLED, Status.IN_PROGRESS],
-        },
+      where: buildActiveQueueWhere({
         assignedVetId: null,
-      },
+      }),
       include: defaultInclude,
       orderBy: [
         { priority: "asc" },

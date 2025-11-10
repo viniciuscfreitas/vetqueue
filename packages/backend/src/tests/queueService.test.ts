@@ -7,6 +7,48 @@ class InMemoryQueueRepository implements Partial<QueueRepository> {
   private entries = new Map<string, QueueEntry>();
   private counter = 0;
 
+  private getCurrentDayWindow(now: Date = new Date()) {
+    // Mirror repository logic: relies on server local timezone.
+    const startOfDay = new Date(now);
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = new Date(now);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    return { startOfDay, endOfDay };
+  }
+
+  private isActiveOrCompletedToday(entry: QueueEntry, now = new Date()) {
+    if ([Status.WAITING, Status.CALLED, Status.IN_PROGRESS].includes(entry.status)) {
+      return true;
+    }
+
+    if (entry.status !== Status.COMPLETED) {
+      return false;
+    }
+
+    if (entry.paymentStatus === PaymentStatus.PAID) {
+      return false;
+    }
+
+    if (!entry.completedAt) {
+      return false;
+    }
+
+    const { startOfDay, endOfDay } = this.getCurrentDayWindow(now);
+    const completedAtTime = entry.completedAt.getTime();
+    return completedAtTime >= startOfDay.getTime() && completedAtTime <= endOfDay.getTime();
+  }
+
+  private orderEntries(entries: QueueEntry[]) {
+    return [...entries].sort((a, b) => {
+      if (a.priority !== b.priority) {
+        return a.priority - b.priority;
+      }
+      return a.createdAt.getTime() - b.createdAt.getTime();
+    });
+  }
+
   async create(data: Parameters<QueueRepository["create"]>[0]): Promise<QueueEntry> {
     const entry: QueueEntry = {
       id: `entry-${++this.counter}`,
@@ -87,6 +129,61 @@ class InMemoryQueueRepository implements Partial<QueueRepository> {
     this.entries.set(id, updated);
     return updated;
   }
+
+  async updateStatus(
+    id: string,
+    status: Status,
+    calledAt?: Date,
+    completedAt?: Date,
+    roomId?: string
+  ): Promise<QueueEntry> {
+    const existing = this.entries.get(id);
+    if (!existing) {
+      throw new Error("Entry not found");
+    }
+
+    const updated: QueueEntry = {
+      ...existing,
+      status,
+      ...(calledAt !== undefined ? { calledAt } : {}),
+      ...(completedAt !== undefined ? { completedAt } : {}),
+      ...(roomId !== undefined
+        ? {
+            roomId,
+            room: roomId ? { id: roomId, name: `Sala ${roomId}`, isActive: true, createdAt: new Date() } : null,
+          }
+        : {}),
+    };
+
+    this.entries.set(id, updated);
+    return updated;
+  }
+
+  async listActive(): Promise<QueueEntry[]> {
+    const now = new Date();
+    const entries = Array.from(this.entries.values()).filter((entry) =>
+      this.isActiveOrCompletedToday(entry, now)
+    );
+    return this.orderEntries(entries);
+  }
+
+  async listActiveByVet(assignedVetId: string): Promise<QueueEntry[]> {
+    const now = new Date();
+    const entries = Array.from(this.entries.values()).filter(
+      (entry) =>
+        this.isActiveOrCompletedToday(entry, now) &&
+        (entry.assignedVetId === assignedVetId || entry.assignedVetId === null)
+    );
+    return this.orderEntries(entries);
+  }
+
+  async listActiveGeneral(): Promise<QueueEntry[]> {
+    const now = new Date();
+    const entries = Array.from(this.entries.values()).filter(
+      (entry) => this.isActiveOrCompletedToday(entry, now) && entry.assignedVetId === null
+    );
+    return this.orderEntries(entries);
+  }
 }
 
 const buildService = () => {
@@ -149,7 +246,7 @@ describe("QueueService critical flows", () => {
         serviceType: "CONSULTA",
         priority: Priority.NORMAL,
       })
-    ).rejects.toThrowError(/Nome do paciente e tutor são obrigatórios/);
+    ).rejects.toThrowError(/Nome do paciente é obrigatório/);
   });
 
   it("preenche dados de pagamento automaticamente quando marcado como pago", async () => {
@@ -189,6 +286,46 @@ describe("QueueService critical flows", () => {
 
     const updated = await service.updateEntry(entry.id, { tutorName: "Clara Atualizada" }, Role.ADMIN);
     expect(updated.tutorName).toBe("Clara Atualizada");
+  });
+
+  it("mantém atendimento concluído não pago na lista ativa até que seja pago", async () => {
+    const { service } = buildService();
+    const entry = await service.addToQueue({
+      patientName: "Dexter",
+      tutorName: "Helena",
+      serviceType: "CONSULTA",
+      priority: Priority.NORMAL,
+    });
+
+    await service.completeService(entry.id, Role.ADMIN);
+
+    let activeEntries = await service.listActive();
+    expect(activeEntries.map((item) => item.id)).toContain(entry.id);
+
+    await service.updatePayment(entry.id, { paymentStatus: PaymentStatus.PAID }, "cashier-1");
+
+    activeEntries = await service.listActive();
+    expect(activeEntries.map((item) => item.id)).not.toContain(entry.id);
+  });
+
+  it("remove atendimento concluído não pago da lista ativa após virada do dia", async () => {
+    const { service } = buildService();
+    const entry = await service.addToQueue({
+      patientName: "Luka",
+      tutorName: "Renata",
+      serviceType: "CONSULTA",
+      priority: Priority.NORMAL,
+    });
+
+    await service.completeService(entry.id, Role.ADMIN);
+
+    let activeEntries = await service.listActive();
+    expect(activeEntries.map((item) => item.id)).toContain(entry.id);
+
+    vi.setSystemTime(new Date("2025-01-02T09:00:00.000Z"));
+
+    activeEntries = await service.listActive();
+    expect(activeEntries.map((item) => item.id)).not.toContain(entry.id);
   });
 });
 

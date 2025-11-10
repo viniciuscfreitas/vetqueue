@@ -246,24 +246,15 @@ export default function QueuePage() {
     }: {
       id: string;
       payload: {
-        amount: string;
-        paymentMethod: string;
+        amount?: string;
+        paymentMethod?: string;
+        paymentTotal?: string | null;
         installments?: number | null;
         paymentReceivedAt?: string | null;
         paymentNotes?: string | null;
         paymentReceivedById?: string | null;
       };
     }) => queueApi.addPayment(id, payload).then((res) => res.data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["queue"] });
-      toastRef.current({
-        variant: "default",
-        title: "Pagamento registrado",
-        description: "O pagamento foi lançado com sucesso.",
-      });
-      setPaymentDialogOpen(false);
-      setPaymentEntry(null);
-    },
     onError: (error) => {
       createErrorHandler(toastRef.current)(error);
     },
@@ -271,8 +262,8 @@ export default function QueuePage() {
 
   const handleSubmitPayment = useCallback(
     (payload: {
-      amount: string;
-      paymentMethod: string;
+      amount?: string;
+      paymentMethod?: string;
       paymentTotal?: string | null;
       installments?: number | null;
       paymentReceivedAt?: string | null;
@@ -280,7 +271,24 @@ export default function QueuePage() {
       paymentReceivedById?: string | null;
     }) => {
       if (!paymentEntry) return;
-      addPaymentMutation.mutate({ id: paymentEntry.id, payload });
+      const isPayment = Boolean(payload.amount);
+      addPaymentMutation.mutate(
+        { id: paymentEntry.id, payload },
+        {
+          onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["queue"] });
+            toastRef.current({
+              variant: "default",
+              title: isPayment ? "Pagamento registrado" : "Total atualizado",
+              description: isPayment
+                ? "O pagamento foi lançado com sucesso."
+                : "Valor total do atendimento atualizado.",
+            });
+            setPaymentDialogOpen(false);
+            setPaymentEntry(null);
+          },
+        },
+      );
     },
     [addPaymentMutation, paymentEntry],
   );

@@ -150,14 +150,32 @@ const paymentSchema = z.object({
 });
 
 const paymentEntrySchema = z.object({
-  amount: z.union([z.string(), z.number()]),
-  paymentMethod: paymentMethodEnum,
+  amount: z.union([z.string(), z.number()]).nullable().optional(),
+  paymentMethod: paymentMethodEnum.optional(),
   paymentTotal: z.union([z.string(), z.number()]).nullable().optional(),
   installments: z.number().int().positive().max(48).nullable().optional(),
   paymentReceivedAt: z.string().datetime().nullable().optional(),
   paymentReceivedById: z.string().nullable().optional(),
   paymentNotes: z.string().nullable().optional(),
 });
+
+function parseCurrencyValue(value: string | number | null | undefined): number | undefined {
+  if (value === undefined || value === null) {
+    return undefined;
+  }
+  if (typeof value === "number") {
+    return value;
+  }
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return undefined;
+  }
+  const normalized = trimmed.includes(",")
+    ? trimmed.replace(/\./g, "").replace(",", ".")
+    : trimmed;
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : undefined;
+}
 
 const draftSchema = z.object({
   step: z.enum(["identify", "details"]),
@@ -645,28 +663,21 @@ router.post("/:id/payments", authMiddleware, requireModule(ModuleKey.FINANCIAL),
   try {
     const validated = paymentEntrySchema.parse(req.body);
 
-    const normalizeCurrency = (value: string) =>
-      Number(value.replace(/\./g, "").replace(",", "."));
+    const normalizedAmount = parseCurrencyValue(validated.amount);
+    const normalizedTotal = parseCurrencyValue(validated.paymentTotal);
 
-    const normalizedAmount =
-      typeof validated.amount === "number"
-        ? validated.amount
-        : normalizeCurrency(validated.amount);
-
-    if (!Number.isFinite(normalizedAmount) || normalizedAmount <= 0) {
+    if (normalizedAmount !== undefined && normalizedAmount <= 0) {
       res.status(400).json({ error: "Valor do pagamento deve ser maior que zero" });
       return;
     }
 
-    const normalizedTotal =
-      validated.paymentTotal === undefined || validated.paymentTotal === null
-        ? undefined
-        : typeof validated.paymentTotal === "number"
-          ? validated.paymentTotal
-          : normalizeCurrency(validated.paymentTotal);
-
-    if (normalizedTotal !== undefined && (!Number.isFinite(normalizedTotal) || normalizedTotal < 0)) {
+    if (normalizedTotal !== undefined && normalizedTotal < 0) {
       res.status(400).json({ error: "Valor total do atendimento inválido" });
+      return;
+    }
+
+    if (normalizedAmount === undefined && normalizedTotal === undefined) {
+      res.status(400).json({ error: "Informe um valor ou o total do atendimento" });
       return;
     }
 
@@ -679,7 +690,7 @@ router.post("/:id/payments", authMiddleware, requireModule(ModuleKey.FINANCIAL),
       req.params.id,
       {
         amount: normalizedAmount,
-        paymentMethod: validated.paymentMethod,
+        paymentMethod: normalizedAmount !== undefined ? validated.paymentMethod ?? undefined : undefined,
         installments: validated.installments ?? null,
         paymentReceivedAt,
         paymentReceivedById: validated.paymentReceivedById ?? undefined,
@@ -696,8 +707,8 @@ router.post("/:id/payments", authMiddleware, requireModule(ModuleKey.FINANCIAL),
         entityType: "QueueEntry",
         entityId: updatedEntry.id,
         metadata: {
-          paymentMethod: validated.paymentMethod,
-          amount: normalizedAmount.toFixed(2),
+          paymentMethod: normalizedAmount !== undefined ? (validated.paymentMethod ?? null) : null,
+          amount: normalizedAmount !== undefined ? normalizedAmount.toFixed(2) : null,
           installments: validated.installments ?? null,
         },
       }).catch((error) => {

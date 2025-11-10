@@ -17,8 +17,8 @@ interface QueuePaymentDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (payload: {
-    amount: string;
-    paymentMethod: string;
+    amount?: string;
+    paymentMethod?: string;
     paymentTotal?: string | null;
     installments?: number | null;
     paymentReceivedAt?: string | null;
@@ -90,11 +90,7 @@ export function QueuePaymentDialog({
       setReceivedAt(toDateTimeLocal(new Date().toISOString()));
       setNotes("");
       setAmountError("");
-      setTotal(
-        entry.paymentAmount
-          ? toDisplayAmount(entry.paymentAmount)
-          : "",
-      );
+      setTotal(entry.paymentAmount ? toDisplayAmount(entry.paymentAmount) : "");
       setTotalError("");
     }
   }, [entry, open, user?.id]);
@@ -121,10 +117,15 @@ export function QueuePaymentDialog({
   }, [receivers, user]);
 
   const handleSubmit = () => {
-    const normalized = Number(normalizeAmountInput(amount));
-    if (!amount || Number.isNaN(normalized) || normalized <= 0) {
-      setAmountError("Informe um valor maior que zero");
-      return;
+    let normalizedAmount: number | undefined;
+    const trimmedAmount = amount.trim();
+    if (trimmedAmount) {
+      const parsed = Number(normalizeAmountInput(trimmedAmount));
+      if (Number.isNaN(parsed) || parsed < 0) {
+        setAmountError("Informe um valor válido");
+        return;
+      }
+      normalizedAmount = parsed > 0 ? parsed : undefined;
     }
     setAmountError("");
 
@@ -138,9 +139,14 @@ export function QueuePaymentDialog({
     }
     setTotalError("");
 
+    if (normalizedAmount === undefined && normalizedTotal == null) {
+      setAmountError("Informe um valor ou atualize o total");
+      return;
+    }
+
     const payload = {
-      amount: normalized.toFixed(2),
-      paymentMethod: method,
+      amount: normalizedAmount !== undefined ? normalizedAmount.toFixed(2) : undefined,
+      paymentMethod: normalizedAmount !== undefined ? method : undefined,
       installments: method === "CREDIT_INSTALLMENTS" && installments ? Number(installments) || null : null,
       paymentReceivedAt: fromDateTimeLocal(receivedAt),
       paymentNotes: notes.trim() || null,

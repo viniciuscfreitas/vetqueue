@@ -368,9 +368,9 @@ export const queueApi = {
     api.patch<QueueEntry>(`/api/queue/${id}/payment`, data),
 
   addPayment: (id: string, data: {
-    amount: string | number;
+    amount?: string | number | null;
     paymentTotal?: string | number | null;
-    paymentMethod: string;
+    paymentMethod?: string;
     installments?: number | null;
     paymentReceivedAt?: string | null;
     paymentNotes?: string | null;

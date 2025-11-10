@@ -365,7 +365,7 @@ describe("QueueService critical flows", () => {
       "cashier-2",
     );
 
-    expect(second.paymentAmount).toBe("80.00");
+    expect(second.paymentAmount).toBe("100.00");
     expect(second.paymentStatus).toBe(PaymentStatus.PARTIAL);
     expect(second.paymentMethod).toBe("MULTIPLE");
     expect(second.paymentHistory).toHaveLength(2);
@@ -384,6 +384,28 @@ describe("QueueService critical flows", () => {
     );
 
     expect(third.paymentStatus).toBe(PaymentStatus.PAID);
+  });
+
+  it("atualiza apenas o valor total do atendimento sem registrar pagamento", async () => {
+    const { service } = buildService();
+    const entry = await service.addToQueue({
+      patientName: "Nina",
+      tutorName: "Felipe",
+      serviceType: "CONSULTA",
+      priority: Priority.NORMAL,
+    });
+
+    const updated = await service.addPaymentEntry(
+      entry.id,
+      {
+        paymentTotal: 250,
+      },
+      "cashier-1",
+    );
+
+    expect(updated.paymentAmount).toBe("250.00");
+    expect(updated.paymentStatus).toBe(PaymentStatus.PENDING);
+    expect(updated.paymentHistory).toEqual(entry.paymentHistory ?? []);
   });
 });
 

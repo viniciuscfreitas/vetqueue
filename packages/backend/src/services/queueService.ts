@@ -688,8 +688,8 @@ export class QueueService {
   async addPaymentEntry(
     id: string,
     data: {
-      amount: number;
-      paymentMethod: string;
+      amount?: number;
+      paymentMethod?: string;
       paymentTotal?: number;
       installments?: number | null;
       paymentReceivedAt?: Date | null;
@@ -703,51 +703,63 @@ export class QueueService {
       throw new Error("Entrada não encontrada");
     }
 
-    if (!Number.isFinite(data.amount) || data.amount <= 0) {
-      throw new Error("Valor do pagamento deve ser maior que zero");
-    }
-
-    const createdAt = new Date();
-    const receivedAt = data.paymentReceivedAt ?? createdAt;
-    const normalizedReceivedAt = receivedAt instanceof Date ? receivedAt : new Date(receivedAt);
-
-    if (Number.isNaN(normalizedReceivedAt.getTime())) {
-      throw new Error("Data de pagamento inválida");
-    }
-
     const existingHistory = entry.paymentHistory ?? [];
+    let history: PaymentHistoryEntry[] = existingHistory;
+    let paymentMethodResult = entry.paymentMethod ?? null;
+    let paymentReceivedAtResult = entry.paymentReceivedAt ?? null;
+    let paymentReceivedByResult = entry.paymentReceivedById ?? null;
 
-    const newRecord: PaymentHistoryEntry = {
-      id: randomUUID(),
-      amount: data.amount.toFixed(2),
-      method: data.paymentMethod,
-      installments: data.installments ?? null,
-      receivedAt: normalizedReceivedAt,
-      receivedById: data.paymentReceivedById ?? currentUserId ?? null,
-      notes: data.paymentNotes ?? null,
-      createdAt,
-    };
+    if (data.amount !== undefined) {
+      if (!Number.isFinite(data.amount) || data.amount <= 0) {
+        throw new Error("Valor do pagamento deve ser maior que zero");
+      }
 
-    const history: PaymentHistoryEntry[] = [...existingHistory, newRecord];
+      const createdAt = new Date();
+      const receivedAt = data.paymentReceivedAt ?? createdAt;
+      const normalizedReceivedAt = receivedAt instanceof Date ? receivedAt : new Date(receivedAt);
+
+      if (Number.isNaN(normalizedReceivedAt.getTime())) {
+        throw new Error("Data de pagamento inválida");
+      }
+
+      const newRecord: PaymentHistoryEntry = {
+        id: randomUUID(),
+        amount: data.amount.toFixed(2),
+        method: data.paymentMethod ?? entry.paymentMethod ?? "UNSPECIFIED",
+        installments: data.installments ?? null,
+        receivedAt: normalizedReceivedAt,
+        receivedById: data.paymentReceivedById ?? currentUserId ?? null,
+        notes: data.paymentNotes ?? null,
+        createdAt,
+      };
+
+      history = [...existingHistory, newRecord];
+
+      const methods = new Set(history.map((record) => record.method).filter(Boolean));
+      paymentMethodResult = methods.size === 1 ? Array.from(methods)[0] : "MULTIPLE";
+      paymentReceivedAtResult = newRecord.receivedAt ?? null;
+      paymentReceivedByResult = newRecord.receivedById ?? null;
+    }
+
     const totalReceived = this.calculateHistoryTotal(history);
     const totalFormatted = totalReceived.toFixed(2);
 
-    const methods = new Set(history.map((record) => record.method).filter(Boolean));
-    const paymentMethod = methods.size === 1 ? Array.from(methods)[0] : "MULTIPLE";
-
     const updatePayload: {
-      paymentHistory: PaymentHistoryEntry[];
+      paymentHistory?: PaymentHistoryEntry[];
       paymentAmount?: string | null;
       paymentMethod?: string | null;
       paymentStatus?: PaymentStatus;
       paymentReceivedAt?: Date | null;
       paymentReceivedById?: string | null;
     } = {
-      paymentHistory: history,
-      paymentMethod,
-      paymentReceivedAt: newRecord.receivedAt ?? null,
-      paymentReceivedById: newRecord.receivedById ?? null,
     };
+
+    if (history !== existingHistory) {
+      updatePayload.paymentHistory = history;
+      updatePayload.paymentMethod = paymentMethodResult;
+      updatePayload.paymentReceivedAt = paymentReceivedAtResult;
+      updatePayload.paymentReceivedById = paymentReceivedByResult;
+    }
 
     const targetTotal =
       data.paymentTotal !== undefined
@@ -757,7 +769,10 @@ export class QueueService {
           : undefined;
 
     if (data.paymentTotal !== undefined) {
-      updatePayload.paymentAmount = data.paymentTotal != null ? data.paymentTotal.toFixed(2) : null;
+      updatePayload.paymentAmount =
+        data.paymentTotal != null ? data.paymentTotal.toFixed(2) : null;
+    } else if (history !== existingHistory && (!entry.paymentAmount || Number(entry.paymentAmount) === 0)) {
+      updatePayload.paymentAmount = totalFormatted;
     }
 
     if (entry.paymentStatus === PaymentStatus.CANCELLED) {

@@ -394,15 +394,12 @@ export function QueueCard({
         <CardContent className="space-y-3 pb-4 pt-0">
 
           {(() => {
-            const containerClasses =
-              "rounded-lg border border-border bg-muted/30 px-3 py-3";
-
-            const labelClasses = "text-sm font-medium text-muted-foreground";
-            const valueClasses = "text-lg font-semibold text-foreground";
+            const labelClasses = "text-xs font-medium text-muted-foreground";
+            const valueClasses = "text-lg font-semibold tracking-tight text-foreground";
 
             if (tabContext === "queue" || !tabContext) {
               return (
-                <section className={containerClasses}>
+                <section className="flex flex-col gap-1">
                   <p className={labelClasses}>Tempo de espera</p>
                   <p className={valueClasses}>{waitTime || "—"}</p>
                 </section>
@@ -411,7 +408,7 @@ export function QueueCard({
 
             if (tabContext === "in-progress") {
               return (
-                <section className={containerClasses}>
+                <section className="flex flex-col gap-1">
                   <p className={labelClasses}>Tempo de atendimento</p>
                   <p className={valueClasses}>{serviceTime || "—"}</p>
                 </section>
@@ -426,16 +423,14 @@ export function QueueCard({
               .join(" • ") || "—";
 
             return (
-              <section className={containerClasses}>
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div>
-                    <p className={labelClasses}>Tempo de atendimento</p>
-                    <p className={valueClasses}>{serviceTime || "—"}</p>
-                  </div>
-                  <div>
-                    <p className={labelClasses}>Pagamento</p>
-                    <p className={valueClasses}>{paymentSummary}</p>
-                  </div>
+              <section className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex flex-col gap-1">
+                  <p className={labelClasses}>Tempo de atendimento</p>
+                  <p className={valueClasses}>{serviceTime || "—"}</p>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <p className={labelClasses}>Pagamento</p>
+                  <p className={valueClasses}>{paymentSummary}</p>
                 </div>
               </section>
             );

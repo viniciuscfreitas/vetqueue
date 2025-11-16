@@ -86,6 +86,25 @@ export function RoomSelectModal({ open, onSelect, onCancel }: RoomSelectModalPro
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [open, selectedRoomId, isSelectedDisabled, handleConfirm, onCancel]);
 
+  useEffect(() => {
+    if (!open) {
+      document.body.style.overflow = "";
+      document.body.style.paddingRight = "";
+      return;
+    }
+
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+    document.body.style.overflow = "hidden";
+    if (scrollbarWidth > 0) {
+      document.body.style.paddingRight = `${scrollbarWidth}px`;
+    }
+
+    return () => {
+      document.body.style.overflow = "";
+      document.body.style.paddingRight = "";
+    };
+  }, [open]);
+
   if (!open) return null;
 
   return (

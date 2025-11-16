@@ -14,6 +14,7 @@ import { Label } from "./ui/label";
 import { Button } from "./ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { CheckCircle2, AlertCircle } from "lucide-react";
+import { useScrollLock } from "@/hooks/useScrollLock";
 
 interface RoomSelectModalProps {
   open: boolean;
@@ -86,24 +87,7 @@ export function RoomSelectModal({ open, onSelect, onCancel }: RoomSelectModalPro
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [open, selectedRoomId, isSelectedDisabled, handleConfirm, onCancel]);
 
-  useEffect(() => {
-    if (!open) {
-      document.body.style.overflow = "";
-      document.body.style.paddingRight = "";
-      return;
-    }
-
-    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-    document.body.style.overflow = "hidden";
-    if (scrollbarWidth > 0) {
-      document.body.style.paddingRight = `${scrollbarWidth}px`;
-    }
-
-    return () => {
-      document.body.style.overflow = "";
-      document.body.style.paddingRight = "";
-    };
-  }, [open]);
+  useScrollLock(open);
 
   if (!open) return null;
 

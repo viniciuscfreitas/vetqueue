@@ -144,7 +144,7 @@ export function QueueCard({
 
   if (entry.status === Status.WAITING && onCall) {
     primaryActions.push(
-      <Button key="call" onClick={() => onCall(entry.id)} size="sm" className="bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-100 rounded-full px-6">
+      <Button key="call" onClick={() => onCall(entry.id)} size="sm" className="bg-primary hover:bg-primary/90 text-white shadow-md shadow-primary/20 rounded-full px-6">
         Chamar
       </Button>
     );
@@ -152,7 +152,7 @@ export function QueueCard({
 
   if (entry.status === Status.CALLED && onStart) {
     primaryActions.push(
-      <Button key="start" onClick={() => onStart(entry.id)} size="sm" className="bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-100 rounded-full px-6">
+      <Button key="start" onClick={() => onStart(entry.id)} size="sm" className="bg-primary hover:bg-primary/90 text-white shadow-md shadow-primary/20 rounded-full px-6">
         Iniciar
       </Button>
     );

@@ -116,8 +116,8 @@ function AppShellInner({ header, children }: AppShellProps) {
                   className={cn(
                     "w-full aspect-square flex items-center justify-center rounded-xl transition-all duration-200 group",
                     isActive
-                      ? "text-orange-500 bg-orange-50"
-                      : "text-gray-400 hover:bg-gray-50 hover:text-orange-400",
+                      ? "text-blue-600 bg-blue-50"
+                      : "text-gray-400 hover:bg-gray-50 hover:text-blue-500",
                   )}
                   title={item.label}
                   onClick={() => setSidebarOpen(false)}
@@ -137,8 +137,8 @@ function AppShellInner({ header, children }: AppShellProps) {
               <LogOut className="w-5 h-5" />
             </button>
 
-            <div className="p-1 rounded-full border-2 border-orange-500 overflow-hidden w-10 h-10">
-              <div className="w-full h-full bg-orange-100 flex items-center justify-center text-orange-600 font-bold text-xs">
+            <div className="p-1 rounded-full border-2 border-blue-600 overflow-hidden w-10 h-10">
+              <div className="w-full h-full bg-blue-50 flex items-center justify-center text-blue-700 font-bold text-xs">
                 {user?.name?.substring(0, 2).toUpperCase() ?? "US"}
               </div>
             </div>

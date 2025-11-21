@@ -144,7 +144,7 @@ export function QueueCard({
 
   if (entry.status === Status.WAITING && onCall) {
     primaryActions.push(
-      <Button key="call" onClick={() => onCall(entry.id)} size="sm" className="bg-orange-500 hover:bg-orange-600 text-white shadow-md shadow-orange-100 rounded-full px-6">
+      <Button key="call" onClick={() => onCall(entry.id)} size="sm" className="bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-100 rounded-full px-6">
         Chamar
       </Button>
     );

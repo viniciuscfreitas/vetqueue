@@ -1,15 +1,15 @@
 "use client";
 
-import { FormEvent, useEffect, useId, useMemo, useState } from "react";
+import { FormEvent, useEffect, useId, useMemo, useState, ReactNode } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { Search, Bell, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-type HeaderActionVariant = "primary" | "outline";
+export type HeaderActionVariant = "primary" | "outline";
 
-type HeaderActionsPlacement = "right" | "below";
+export type HeaderActionsPlacement = "right" | "below";
 
 export type HeaderHelperVariant = "default" | "warning" | "success" | "info";
 
@@ -23,7 +23,7 @@ export interface HeaderHelper {
 export interface HeaderAction {
   label: string;
   onClick: () => void;
-  icon?: React.ReactNode;
+  icon?: ReactNode;
   variant?: HeaderActionVariant;
   ariaLabel?: string;
   badgeCount?: number;
@@ -41,7 +41,7 @@ interface HeaderProps {
   onSearch?: (term: string) => void;
   isSearching?: boolean;
   actions?: HeaderAction[];
-  children?: React.ReactNode;
+  children?: ReactNode;
   showGreeting?: boolean;
   actionsPlacement?: HeaderActionsPlacement;
   subtitleClassName?: string;
@@ -76,14 +76,14 @@ export function Header({
   const greeting = useMemo(() => {
     if (!user?.name) return "Olá";
     const firstName = user.name.split(" ")[0];
-    return `Olá, ${firstName}`;
+    return `Olá, ${user.role === 'VET' ? 'Dr(a). ' : ''}${firstName}!`;
   }, [user]);
 
   const effectiveTitle = title ?? (showGreeting ? greeting : "");
   const effectiveSubtitle =
     subtitle ??
     (showGreeting
-      ? "Aqui está o resumo do seu hospital hoje — mantenha o ritmo das filas e consultas."
+      ? "Aqui está o resumo do seu hospital hoje"
       : undefined);
 
   const isSearchControlled = searchValue !== undefined;
@@ -103,165 +103,54 @@ export function Header({
     onSearchChange?.(value);
   };
 
-  const renderActions = (items: HeaderAction[], alignment: string) => {
-    if (items.length === 0) return null;
+  // Extract specific actions for the new layout
+  const addAction = actions.find(a => a.label.toLowerCase().includes("adicionar") || a.label.toLowerCase().includes("novo"));
+  const otherActions = actions.filter(a => a !== addAction);
 
-    const mapVariant = (variant?: HeaderActionVariant) => {
-      switch (variant) {
-        case "primary":
-          return "default";
-        case "outline":
-          return "secondary";
-        default:
-          return "ghost";
-      }
-    };
+  return (
+    <header className="flex justify-between items-center mb-10">
+      <div>
+        <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
+          {effectiveTitle} <span className="animate-wave">👋</span>
+        </h1>
+        <p className="text-gray-500 mt-1">{effectiveSubtitle}</p>
+      </div>
 
-    const formatBadge = (value: number) => {
-      if (value > 99) return "99+";
-      return value.toString();
-    };
+      <div className="flex items-center gap-4">
+        {/* Search Button (Visual only for now, or functional if needed) */}
+        <button className="p-3 bg-white rounded-full hover:bg-gray-50 transition-colors shadow-sm border border-gray-100">
+          <Search className="w-5 h-5 text-gray-600" />
+        </button>
 
-    const badgeClasses = (tone: HeaderAction["badgeTone"]) => {
-      switch (tone) {
-        case "info":
-          return "bg-sky-100 text-sky-900";
-        case "success":
-          return "bg-emerald-100 text-emerald-900";
-        case "warning":
-          return "bg-amber-100 text-amber-900";
-        case "destructive":
-          return "bg-destructive/15 text-destructive";
-        default:
-          return "bg-muted text-muted-foreground";
-      }
-    };
+        {/* Notification Bell */}
+        <button className="p-3 bg-white rounded-full hover:bg-gray-50 transition-colors shadow-sm border border-gray-100 relative">
+          <Bell className="w-5 h-5 text-gray-600" />
+          <span className="absolute top-2 right-2.5 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
+        </button>
 
-    return (
-      <div className={`flex flex-wrap items-center gap-2 ${alignment}`}>
-        {items.map((action) => (
-          <Button
-            key={action.label}
-            type="button"
-            onClick={action.onClick}
-            size="sm"
-            variant={mapVariant(action.variant)}
-            className="gap-1 px-2 py-1.5 text-sm"
-            aria-label={action.ariaLabel}
+        {/* Primary Action (New Appointment) */}
+        {addAction && (
+          <button
+            onClick={addAction.onClick}
+            className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-full font-medium transition-colors shadow-lg shadow-orange-200"
           >
-            {action.icon}
-            <span className="leading-none">{action.label}</span>
-            {typeof action.badgeCount === "number" && (
-              <span
-                className={cn(
-                  "inline-flex min-w-[1.5rem] justify-center rounded-full px-1.5 py-0.5 text-[11px] font-semibold leading-none",
-                  badgeClasses(action.badgeTone),
-                )}
-              >
-                {formatBadge(action.badgeCount)}
-              </span>
-            )}
+            <Plus className="w-5 h-5" />
+            {addAction.label}
+          </button>
+        )}
+
+        {/* Render other actions if any (fallback) */}
+        {otherActions.map((action, idx) => (
+          <Button
+            key={idx}
+            onClick={action.onClick}
+            variant={action.variant === 'outline' ? 'outline' : 'default'}
+            size="sm"
+          >
+            {action.label}
           </Button>
         ))}
       </div>
-    );
-  };
-
-  const topActions = actionsPlacement === "right" ? actions : [];
-  const bottomActions = actionsPlacement === "below" ? actions : [];
-  const hasSearch = Boolean(onSearch || onSearchChange);
-  const hasLowerRow = hasSearch || bottomActions.length > 0;
-
-  return (
-    <div className="w-full">
-      <div className="flex flex-col gap-2 py-2">
-        <div className="flex flex-col gap-1.5 py-1 sm:flex-row sm:items-center sm:justify-between sm:py-2">
-          <div className="flex min-w-[220px] flex-1 flex-col gap-1">
-            {effectiveTitle && (
-              <h1 className="truncate text-left text-xl font-semibold text-foreground">
-                {effectiveTitle}
-              </h1>
-            )}
-            {effectiveSubtitle && (
-              <p
-                className={cn(
-                  "max-w-full text-left text-xs text-muted-foreground whitespace-nowrap truncate",
-                  subtitleClassName,
-                )}
-              >
-                {effectiveSubtitle}
-              </p>
-            )}
-            {helper && (
-              <div
-                className={cn(
-                  "flex max-w-full items-center gap-1.5 self-start rounded-md px-2 py-1 text-[11px] font-medium sm:max-w-md",
-                  (!helper.variant || helper.variant === "default") && "bg-muted text-muted-foreground",
-                  helper.variant === "info" && "bg-sky-100 text-sky-900",
-                  helper.variant === "success" && "bg-emerald-100 text-emerald-900",
-                  helper.variant === "warning" && "bg-amber-100 text-amber-900",
-                )}
-              >
-                <span className="truncate">{helper.text}</span>
-                {helper.actionLabel && helper.onAction && (
-                  <button
-                    type="button"
-                    onClick={helper.onAction}
-                    className="shrink-0 text-[11px] font-semibold underline-offset-2 hover:underline"
-                  >
-                    {helper.actionLabel}
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
-          {renderActions(topActions, "justify-end")}
-        </div>
-
-        {hasLowerRow && (
-          <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-between">
-            {(hasSearch || bottomActions.length > 0) && (
-              <div className="flex flex-wrap items-center gap-1.5 sm:justify-end">
-                {hasSearch && (
-                  <form
-                    onSubmit={handleSubmit}
-                    className="group flex min-w-[220px] items-center gap-2 rounded-md border border-border bg-background/60 px-2 py-1.5 transition focus-within:border-foreground focus-within:bg-background focus-within:shadow-sm"
-                  >
-                    <label htmlFor={searchInputId} className="sr-only">
-                      {searchLabel ?? "Buscar"}
-                    </label>
-                    <Search
-                      className="h-4 w-4 text-muted-foreground transition group-focus-within:text-foreground"
-                      aria-hidden
-                    />
-                    <Input
-                      id={searchInputId}
-                      value={currentSearchValue}
-                      onChange={(event) => handleSearchChange(event.target.value)}
-                      placeholder={searchPlaceholder}
-                      className="flex-1 border-none bg-transparent p-0 text-sm placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0"
-                    />
-                    {onSearch && (
-                      <Button
-                        type="submit"
-                        size="sm"
-                        variant="ghost"
-                        className="h-7 px-2 text-muted-foreground transition group-hover:text-foreground group-focus-within:text-foreground"
-                      >
-                        {isSearching ? "Buscando…" : "Buscar"}
-                      </Button>
-                    )}
-                  </form>
-                )}
-
-                {renderActions(bottomActions, "justify-end")}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      {children && <div className="mt-2">{children}</div>}
-    </div>
+    </header>
   );
 }

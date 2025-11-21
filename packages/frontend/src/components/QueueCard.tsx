@@ -1,5 +1,6 @@
+import React from "react";
 import { QueueEntry, Status, ServiceType, PaymentStatus, Priority } from "@/lib/api";
-import { Card, CardContent, CardTitle } from "./ui/card";
+import { Card, CardContent } from "./ui/card";
 import { Button } from "./ui/button";
 import { calculateWaitTime, calculateServiceTime } from "@/lib/utils";
 import { useState, useEffect } from "react";
@@ -16,7 +17,17 @@ import {
   Pencil,
   Stethoscope,
   User,
+  MoreHorizontal,
+  Timer,
+  AlertCircle
 } from "lucide-react";
+import { cn } from "@/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface QueueCardProps {
   entry: QueueEntry;
@@ -36,23 +47,28 @@ interface QueueCardProps {
 const statusConfig = {
   [Status.WAITING]: {
     label: "Aguardando",
-    badgeClass: "bg-amber-100 text-amber-800 border-amber-200",
+    badgeClass: "bg-amber-50 text-amber-700 border-amber-100",
+    icon: Clock
   },
   [Status.CALLED]: {
     label: "Chamado",
-    badgeClass: "bg-sky-100 text-sky-700 border-sky-200",
+    badgeClass: "bg-sky-50 text-sky-700 border-sky-100",
+    icon: AlertCircle
   },
   [Status.IN_PROGRESS]: {
     label: "Em atendimento",
-    badgeClass: "bg-blue-100 text-blue-700 border-blue-200",
+    badgeClass: "bg-blue-50 text-blue-700 border-blue-100",
+    icon: Stethoscope
   },
   [Status.COMPLETED]: {
     label: "Finalizado",
-    badgeClass: "bg-emerald-100 text-emerald-700 border-emerald-200",
+    badgeClass: "bg-emerald-50 text-emerald-700 border-emerald-100",
+    icon: CheckCircle2
   },
   [Status.CANCELLED]: {
     label: "Cancelado",
-    badgeClass: "bg-slate-100 text-slate-600 border-slate-200",
+    badgeClass: "bg-slate-50 text-slate-600 border-slate-100",
+    icon: FileText
   },
 } as const;
 
@@ -98,9 +114,6 @@ export function QueueCard({
   tabContext,
 }: QueueCardProps) {
   const status = statusConfig[entry.status];
-  const canStart = entry.status === Status.CALLED || entry.status === Status.WAITING;
-  const canComplete = entry.status === Status.IN_PROGRESS || entry.status === Status.CALLED;
-
   const [, setCurrentTime] = useState(Date.now());
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
@@ -125,24 +138,13 @@ export function QueueCard({
     [Priority.NORMAL]: "Normal",
   } as const;
 
-  const formatTime = (value?: string | null) => {
-    if (!value) return undefined;
-    try {
-      return new Date(value).toLocaleTimeString("pt-BR", {
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-    } catch {
-      return undefined;
-    }
-  };
-
+  // Actions Logic
   const primaryActions: JSX.Element[] = [];
   const secondaryActions: JSX.Element[] = [];
 
   if (entry.status === Status.WAITING && onCall) {
     primaryActions.push(
-      <Button key="call" onClick={() => onCall(entry.id)} size="sm" className="flex-1 sm:flex-none">
+      <Button key="call" onClick={() => onCall(entry.id)} size="sm" className="bg-orange-500 hover:bg-orange-600 text-white shadow-md shadow-orange-100 rounded-full px-6">
         Chamar
       </Button>
     );
@@ -150,7 +152,7 @@ export function QueueCard({
 
   if (entry.status === Status.CALLED && onStart) {
     primaryActions.push(
-      <Button key="start" onClick={() => onStart(entry.id)} size="sm" className="flex-1 sm:flex-none">
+      <Button key="start" onClick={() => onStart(entry.id)} size="sm" className="bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-100 rounded-full px-6">
         Iniciar
       </Button>
     );
@@ -162,297 +164,145 @@ export function QueueCard({
         key="complete"
         onClick={() => onComplete(entry.id)}
         size="sm"
-        className="flex-1 sm:flex-none bg-green-600 text-white hover:bg-green-700"
+        className="bg-green-600 hover:bg-green-700 text-white shadow-md shadow-green-100 rounded-full px-6"
       >
         Finalizar
       </Button>
     );
   }
 
+  // Secondary Actions (Dropdown or extra buttons)
+  const menuActions = [];
+
   if (tabContext === "in-progress" && onRequeue) {
-    secondaryActions.push(
-      <Button
-        key="requeue-in-progress"
-        onClick={() => onRequeue(entry.id)}
-        size="sm"
-        variant="outline"
-        className="flex-1 sm:flex-none"
-      >
-        Reenfileirar
-      </Button>
-    );
+    menuActions.push({ label: "Reenfileirar", onClick: () => onRequeue(entry.id) });
   }
 
-  if (
-    entry.status === Status.IN_PROGRESS &&
-    entry.serviceType === ServiceType.CONSULTA &&
-    entry.patientId &&
-    onRegisterConsultation
-  ) {
+  if (entry.status === Status.IN_PROGRESS && entry.serviceType === ServiceType.CONSULTA && entry.patientId && onRegisterConsultation) {
     secondaryActions.push(
-      <Button
-        key="register-consultation"
-        onClick={() => onRegisterConsultation(entry.patientId!, entry.id)}
-        size="sm"
-        variant="outline"
-        className="flex-1 sm:flex-none"
-      >
+      <Button key="reg-consult" variant="outline" size="sm" onClick={() => onRegisterConsultation(entry.patientId!, entry.id)} className="rounded-full border-gray-200 text-gray-600 hover:bg-gray-50">
         Registrar consulta
       </Button>
-    );
+    )
   }
 
-  if (
-    entry.status === Status.IN_PROGRESS &&
-    entry.serviceType !== ServiceType.CONSULTA &&
-    entry.patientId &&
-    onViewRecord
-  ) {
+  if (entry.status === Status.IN_PROGRESS && entry.serviceType !== ServiceType.CONSULTA && entry.patientId && onViewRecord) {
     secondaryActions.push(
-      <Button
-        key="view-record"
-        onClick={() => onViewRecord(entry.patientId!, entry.id)}
-        size="sm"
-        variant="outline"
-        className="flex-1 sm:flex-none"
-      >
-        <FileText className="mr-2 h-4 w-4" />
+      <Button key="view-record" variant="outline" size="sm" onClick={() => onViewRecord(entry.patientId!, entry.id)} className="rounded-full border-gray-200 text-gray-600 hover:bg-gray-50">
         Ver Prontuário
       </Button>
-    );
+    )
   }
 
   if (tabContext === "completed" && entry.paymentStatus !== PaymentStatus.PAID && onRequeue) {
-    secondaryActions.push(
-      <Button
-        key="requeue-completed"
-        onClick={() => onRequeue(entry.id)}
-        size="sm"
-        variant="outline"
-        className="flex-1 sm:flex-none"
-      >
-        Retornar à fila
-      </Button>
-    );
+    menuActions.push({ label: "Retornar à fila", onClick: () => onRequeue(entry.id) });
   }
 
   if (entry.status !== Status.COMPLETED && entry.status !== Status.CANCELLED && onCancel) {
-    secondaryActions.push(
-      <Button
-        key="cancel"
-        onClick={() => onCancel(entry.id)}
-        size="sm"
-        variant="destructive"
-        className="flex-1 sm:flex-none"
-      >
-        Cancelar
-      </Button>
-    );
+    menuActions.push({ label: "Cancelar", onClick: () => onCancel(entry.id), destructive: true });
   }
+
+  if (canEdit) {
+    menuActions.push({ label: "Editar", onClick: () => setEditDialogOpen(true) });
+  }
+
+  if (tabContext === "completed" && entry.paymentStatus !== PaymentStatus.PAID && onReceivePayment) {
+    menuActions.push({ label: "Registrar Pagamento", onClick: () => onReceivePayment(entry) });
+  }
+
 
   return (
     <>
-      <Card className="w-full max-w-xl rounded-xl border border-border bg-background sm:mx-auto">
-        <CardContent className="pb-2">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-            <div className="mt-[13px] flex flex-col gap-1 sm:mt-[13px]">
-              <CardTitle className="text-lg font-semibold leading-tight text-foreground">
-                {entry.patientName}
-              </CardTitle>
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-semibold uppercase text-muted-foreground">
-                {position !== undefined && entry.status === Status.WAITING && (
-                  <span className="flex items-center gap-1">
-                    <Clock className="h-3.5 w-3.5" />
-                    Fila #{position}
-                  </span>
-                )}
-                {!([Status.WAITING, Status.IN_PROGRESS].includes(entry.status)) && (
-                  <span className="flex items-center gap-1">
-                    <Clock className="h-3.5 w-3.5" />
-                    {status.label}
-                  </span>
-                )}
-                {entry.simplesVetId && (
-                  <span className="flex items-center gap-1">
-                    <Hash className="h-3.5 w-3.5" />
-                    {entry.simplesVetId}
-                  </span>
-                )}
+      <Card className="w-full bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden group">
+        <CardContent className="p-0">
+          <div className="p-5 flex flex-col gap-4">
+            {/* Header: Status & Time */}
+            <div className="flex items-center justify-between">
+              <div className={cn("px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1.5 border", status.badgeClass)}>
+                <status.icon className="w-3 h-3" />
+                {status.label}
               </div>
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
-                <span className="flex items-center gap-1 font-medium text-foreground">
-                  <Stethoscope className="h-4 w-4" />
-                  {serviceLabel}
-                </span>
-                <span className="flex items-center gap-1">
-                  <User className="h-4 w-4" />
-                  {entry.tutorName}
-                </span>
-                {entry.assignedVet && (
-                  <span className="flex items-center gap-1">
-                    <CheckCircle2 className="h-4 w-4" />
-                    {entry.assignedVet.name}
-                  </span>
-                )}
-                {entry.room && (
-                  <span className="flex items-center gap-1">
-                    <DoorOpen className="h-4 w-4" />
-                    Sala {entry.room.name}
-                  </span>
-                )}
+
+              <div className="flex items-center gap-2 text-gray-400 text-xs font-medium">
+                <Timer className="w-3.5 h-3.5" />
+                {tabContext === "in-progress" ? serviceTime : waitTime || "00:00"}
               </div>
             </div>
-            <Dialog open={detailsDialogOpen} onOpenChange={setDetailsDialogOpen}>
-              <div className="flex items-center gap-1 self-start">
-                {canEdit && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setEditDialogOpen(true)}
-                    aria-label="Editar atendimento"
-                  >
-                    <Pencil className="h-3.5 w-3.5" />
-                  </Button>
-                )}
-                {tabContext === "completed" &&
-                  entry.paymentStatus !== PaymentStatus.PAID &&
-                  onReceivePayment && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => onReceivePayment(entry)}
-                      aria-label="Registrar pagamento"
-                    >
-                      <CreditCard className="h-3.5 w-3.5" />
-                    </Button>
-                  )}
-                <DialogTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    aria-label="Ver detalhes do atendimento"
-                  >
-                    <FileText className="h-3.5 w-3.5" />
-                  </Button>
-                </DialogTrigger>
+
+            {/* Main Content: Patient & Tutor */}
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h3 className="text-lg font-bold text-gray-900 leading-tight mb-1">
+                  {entry.patientName}
+                </h3>
+                <div className="flex items-center gap-2 text-sm text-gray-500">
+                  <User className="w-3.5 h-3.5" />
+                  {entry.tutorName}
+                </div>
               </div>
 
-              <DialogContent className="max-w-2xl">
-                <DialogHeader>
-                  <DialogTitle>Detalhes do atendimento</DialogTitle>
-                </DialogHeader>
+              {/* Service Badge */}
+              <div className="bg-gray-50 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-600 border border-gray-100">
+                {serviceLabel}
+              </div>
+            </div>
 
-                <div className="space-y-4">
-                  <div className="space-y-3">
-                    <div className="space-y-1">
-                      <p className="text-xs text-muted-foreground uppercase tracking-wide">Tutor</p>
-                      <p className="text-sm font-medium break-words">{entry.tutorName}</p>
-                      {entry.simplesVetId && (
-                        <p className="text-xs text-muted-foreground">Ficha #{entry.simplesVetId}</p>
-                      )}
-                    </div>
-
-                    <div className="space-y-1">
-                      <p className="text-xs text-muted-foreground uppercase tracking-wide">Serviço</p>
-                      <p className="text-sm font-medium break-words">{serviceLabel}</p>
-                      {entry.hasScheduledAppointment && (
-                        <p className="text-xs text-muted-foreground">
-                          {entry.scheduledAt
-                            ? `Agendado para ${new Date(entry.scheduledAt).toLocaleString("pt-BR", {
-                                hour: "2-digit",
-                                minute: "2-digit",
-                                day: "2-digit",
-                                month: "2-digit",
-                              })}`
-                            : "Agendamento confirmado"}
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="space-y-1">
-                      <p className="text-xs text-muted-foreground uppercase tracking-wide">Prioridade</p>
-                      <p className="text-sm font-medium break-words">
-                        {priorityLabels[entry.priority] ?? priorityLabels[Priority.NORMAL]}
-                      </p>
-                    </div>
-
-                    {entry.assignedVet && (
-                      <div className="space-y-1">
-                        <p className="text-xs text-muted-foreground uppercase tracking-wide">Veterinário</p>
-                        <p className="text-sm font-medium break-words">{entry.assignedVet.name}</p>
-                      </div>
-                    )}
-
-                    {entry.room && (
-                      <div className="space-y-1">
-                        <p className="text-xs text-muted-foreground uppercase tracking-wide">Sala</p>
-                        <p className="text-sm font-medium break-words">{entry.room.name}</p>
-                      </div>
-                    )}
-                  </div>
-
-                  {(entry.paymentAmount || paymentStatusLabel) && (
-                    <div className="space-y-1 rounded-md border border-border bg-muted/30 p-3 text-sm">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Pagamento</p>
-                      {entry.paymentAmount && <p className="font-medium">Valor: R$ {entry.paymentAmount}</p>}
-                      {paymentStatusLabel && (
-                        <p className="text-xs uppercase tracking-wide text-muted-foreground">Status: {paymentStatusLabel}</p>
-                      )}
-                    </div>
-                  )}
+            {/* Footer Info: Vet, Room, Priority */}
+            <div className="flex items-center gap-4 text-xs text-gray-500 border-t border-gray-50 pt-4 mt-1">
+              {entry.assignedVet && (
+                <div className="flex items-center gap-1.5" title="Veterinário">
+                  <Stethoscope className="w-3.5 h-3.5 text-gray-400" />
+                  <span className="truncate max-w-[100px]">{entry.assignedVet.name}</span>
                 </div>
-              </DialogContent>
-            </Dialog>
+              )}
+              {entry.room && (
+                <div className="flex items-center gap-1.5" title="Sala">
+                  <DoorOpen className="w-3.5 h-3.5 text-gray-400" />
+                  <span>Sala {entry.room.name}</span>
+                </div>
+              )}
+              {entry.priority !== Priority.NORMAL && (
+                <div className={cn("flex items-center gap-1.5 font-medium",
+                  entry.priority === Priority.EMERGENCY ? "text-red-600" : "text-orange-600"
+                )}>
+                  <AlertCircle className="w-3.5 h-3.5" />
+                  {priorityLabels[entry.priority]}
+                </div>
+              )}
+            </div>
           </div>
-        </CardContent>
-        <CardContent className="space-y-3 pb-4 pt-0">
 
-          {(() => {
-            const labelClasses = "text-xs font-medium text-muted-foreground";
-            const valueClasses = "text-lg font-semibold tracking-tight text-foreground";
+          {/* Actions Footer */}
+          {(primaryActions.length > 0 || secondaryActions.length > 0 || menuActions.length > 0) && (
+            <div className="bg-gray-50/50 px-5 py-3 border-t border-gray-100 flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                {secondaryActions}
 
-            if (tabContext === "queue" || !tabContext) {
-              return (
-                <section className="flex flex-col gap-1">
-                  <p className={labelClasses}>Tempo de espera</p>
-                  <p className={valueClasses}>{waitTime || "—"}</p>
-                </section>
-              );
-            }
+                {menuActions.length > 0 && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-gray-100 text-gray-500">
+                        <MoreHorizontal className="w-4 h-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start">
+                      {menuActions.map((action, idx) => (
+                        <DropdownMenuItem
+                          key={idx}
+                          onClick={action.onClick}
+                          className={action.destructive ? "text-red-600 focus:text-red-600" : ""}
+                        >
+                          {action.label}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
+              </div>
 
-            if (tabContext === "in-progress") {
-              return (
-                <section className="flex flex-col gap-1">
-                  <p className={labelClasses}>Tempo de atendimento</p>
-                  <p className={valueClasses}>{serviceTime || "—"}</p>
-                </section>
-              );
-            }
-
-            const paymentSummary = [
-              entry.paymentAmount ? `R$ ${entry.paymentAmount}` : null,
-              paymentStatusLabel ? paymentStatusLabel : null,
-            ]
-              .filter(Boolean)
-              .join(" • ") || "—";
-
-            return (
-              <section className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex flex-col gap-1">
-                  <p className={labelClasses}>Tempo de atendimento</p>
-                  <p className={valueClasses}>{serviceTime || "—"}</p>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <p className={labelClasses}>Pagamento</p>
-                  <p className={valueClasses}>{paymentSummary}</p>
-                </div>
-              </section>
-            );
-          })()}
-
-          {(primaryActions.length > 0 || secondaryActions.length > 0) && (
-            <div className="flex flex-wrap justify-end gap-2">
-              {[...primaryActions, ...secondaryActions].map((action) => action)}
+              <div className="flex items-center gap-2">
+                {primaryActions}
+              </div>
             </div>
           )}
         </CardContent>

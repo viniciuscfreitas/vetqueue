@@ -3,6 +3,7 @@
 import { AddQueueFormInline } from "@/components/AddQueueFormInline";
 import { AppShell } from "@/components/AppShell";
 import { Header } from "@/components/Header";
+import { KPICard } from "@/components/KPICard";
 import { PatientRecordDialog } from "@/components/PatientRecordDialog";
 import { FilaWorkflow } from "@/components/FilaWorkflow";
 import { RoomSelectModal } from "@/components/RoomSelectModal";
@@ -32,7 +33,7 @@ import { ModuleKey, patientApi, Priority, queueApi, Role, Status, QueueEntry } f
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { BellRing, ClipboardList } from "lucide-react";
+import { BellRing, ClipboardList, DollarSign, AlertTriangle, Package } from "lucide-react";
 import type { HeaderAction, HeaderHelper } from "@/components/Header";
 import { QueuePaymentDialog } from "@/components/QueuePaymentDialog";
 import { createErrorHandler } from "@/lib/errors";
@@ -55,7 +56,7 @@ export default function QueuePage() {
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
   const [paymentEntry, setPaymentEntry] = useState<QueueEntry | null>(null);
 
-  const previousEntriesRef = useRef<any[]>([]);
+  const previousEntriesRef = useRef<QueueEntry[]>([]);
 
   const isVet = user?.role === Role.VET;
   const canManageQueue = canAccess(ModuleKey.QUEUE);
@@ -118,7 +119,7 @@ export default function QueuePage() {
         }
       });
     }
-      previousEntriesRef.current = entries;
+    previousEntriesRef.current = entries;
   }, [entries]);
 
   const callNextFnRef = useRef(queueMutations.callNext);
@@ -296,33 +297,37 @@ export default function QueuePage() {
     (entry) => entry.status === Status.CALLED || entry.status === Status.IN_PROGRESS,
   ).length;
 
-  const headerActions: HeaderAction[] = [
-    canManageQueue
-      ? {
-          label: "Adicionar paciente",
-          icon: <ClipboardList className="h-4 w-4" />,
-          onClick: () => setShowAddQueueModal(true),
-        }
-      : null,
-    canCallOrManageQueue
-      ? {
-          label: "Chamar próximo",
-          icon: <BellRing className="h-4 w-4" />,
-          onClick: handleCallNext,
-          badgeCount: waitingCount,
-          badgeTone: waitingCount >= 5 ? "warning" : waitingCount > 0 ? "info" : "default",
-        }
-      : null,
-  ].filter(Boolean) as HeaderAction[];
-
-  const queueTone = waitingCount >= 5 ? "warning" : "info";
-  const queueHelper: HeaderHelper | undefined =
-    waitingCount > 0 || inProgressCount > 0
-      ? {
-          text: `${waitingCount} aguardando${inProgressCount ? ` • ${inProgressCount} em andamento` : ""}`,
-          variant: queueTone,
-        }
-      : undefined;
+  // Mock Data for KPIs - In a real app, these would come from an API
+  const kpis = [
+    {
+      title: "Faturamento",
+      value: "R$ 57.257,00",
+      growth: "6.2%",
+      icon: DollarSign,
+      iconColor: "text-green-600",
+      bgColor: "bg-green-100",
+      description: "vs mês passado",
+    },
+    {
+      title: "Internações Críticas",
+      value: "12 Pacientes",
+      growth: "2 Novos",
+      icon: AlertTriangle,
+      iconColor: "text-yellow-600",
+      bgColor: "bg-yellow-100",
+      description: "hoje",
+      isUrgent: true,
+    },
+    {
+      title: "Farmácia & Estoque",
+      value: "R$ 47.257,00",
+      growth: "6.2%",
+      icon: Package,
+      iconColor: "text-blue-600",
+      bgColor: "bg-blue-100",
+      description: "vs mês passado",
+    }
+  ];
 
   return (
     <AppShell
@@ -330,12 +335,34 @@ export default function QueuePage() {
         <Header
           title="Fila de atendimentos"
           subtitle="Organize a fila e chame o próximo paciente com fluidez."
-          actions={headerActions}
-          helper={queueHelper}
+          actions={[
+            canManageQueue ? {
+              label: "Novo Atendimento",
+              onClick: () => setShowAddQueueModal(true),
+              variant: "primary"
+            } : undefined
+          ].filter(Boolean) as any}
         />
       }
     >
-      <div className="space-y-6">
+      <div className="space-y-8">
+        {/* KPI Section */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {kpis.map((kpi, index) => (
+            <KPICard
+              key={index}
+              title={kpi.title}
+              value={kpi.value}
+              growth={kpi.growth}
+              icon={kpi.icon}
+              iconColor={kpi.iconColor}
+              bgColor={kpi.bgColor}
+              description={kpi.description}
+              isUrgent={kpi.isUrgent}
+            />
+          ))}
+        </div>
+
         {entriesLoading ? (
           <div className="space-y-6 rounded-2xl border border-border bg-card p-6 shadow-sm">
             <div className="space-y-3">

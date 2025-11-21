@@ -33,7 +33,7 @@
     box-sizing: border-box;
   }
   body {
-    @apply bg-background text-foreground font-sans;
+    @apply bg-[#F3F4F6] text-foreground font-sans;
   }
   input[type="date"] {
     max-width: 100%;

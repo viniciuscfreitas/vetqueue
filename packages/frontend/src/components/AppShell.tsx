@@ -82,83 +82,66 @@ function AppShellInner({ header, children }: AppShellProps) {
   };
 
   return (
-    <div className="min-h-screen bg-muted/30">
+    <div className="min-h-screen bg-[#F3F4F6]">
       <div className="flex min-h-screen">
+        {/* Slim Sidebar */}
         <aside
           className={cn(
-            "fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-white px-4 pb-6 pt-4 transition-transform duration-200",
+            "fixed inset-y-0 left-0 z-40 flex w-20 flex-col items-center bg-white py-6 shadow-sm border-r border-gray-100 transition-transform duration-200",
             sidebarOpen ? "translate-x-0" : "-translate-x-full sm:translate-x-0",
           )}
           aria-label="Menu principal"
         >
-          <div className="relative flex items-center justify-center px-2 py-1">
-            <Link href="/" className="flex items-center justify-center gap-2">
-              <Image
-                src="/logo.png"
-                alt="FisioPet"
-                width={160}
-                height={40}
-                className="h-9 w-auto"
-                priority
-              />
-            </Link>
-            <button
-              type="button"
-              aria-label="Fechar menu"
-              className="absolute right-1 top-1 rounded-md p-2 text-muted-foreground hover:bg-muted sm:hidden"
-              onClick={() => setSidebarOpen(false)}
-            >
-              <X className="h-5 w-5" />
-            </button>
+          <div className="mb-10 p-2 bg-orange-500 rounded-xl shadow-lg shadow-orange-200">
+             <Link href="/">
+                <Image
+                  src="/logo.png"
+                  alt="FisioPet"
+                  width={24}
+                  height={24}
+                  className="h-6 w-6 text-white brightness-0 invert"
+                  priority
+                />
+             </Link>
           </div>
 
-          <nav className="mt-6 flex-1 space-y-1 overflow-y-auto pr-1">
+          <nav className="flex-1 flex flex-col gap-6 w-full px-4">
             {navigation.map((item) => {
               const isActive = isItemActive(item);
-
               const Icon = item.icon;
               return (
                 <Link
                   key={item.id}
                   href={item.href}
                   className={cn(
-                    "group relative flex items-center gap-3 border-l-2 border-transparent px-3 py-2 text-sm transition-colors",
+                    "w-full aspect-square flex items-center justify-center rounded-xl transition-all duration-200 group",
                     isActive
-                      ? "border-primary text-foreground font-semibold"
-                      : "text-muted-foreground hover:border-muted hover:text-foreground",
+                      ? "text-orange-500 bg-orange-50"
+                      : "text-gray-400 hover:bg-gray-50 hover:text-orange-400",
                   )}
+                  title={item.label}
                   onClick={() => setSidebarOpen(false)}
                 >
-                  <span className={cn("flex h-8 w-8 items-center justify-center text-muted-foreground transition-colors", isActive && "text-primary")}>
-                    <Icon className="h-4 w-4" />
-                  </span>
-                  <span className="flex-1">
-                    <span className={cn("block", isActive ? "font-semibold" : "font-medium")}>{item.label}</span>
-                    {item.description && (
-                      <span className="block text-xs text-muted-foreground/80">
-                        {item.description}
-                      </span>
-                    )}
-                  </span>
+                  <Icon className="w-6 h-6" />
                 </Link>
               );
             })}
           </nav>
 
-          <div className="mt-auto space-y-3">
-            <div className="flex items-start gap-3">
-              <div className="min-w-0">
-                <p className="truncate text-sm font-medium text-muted-foreground">Logado como</p>
-                <p className="truncate text-base font-semibold text-foreground">{user?.name ?? "Usuário"}</p>
-                <p className="truncate text-xs uppercase tracking-wide text-muted-foreground/70">
-                  {user?.role?.toLowerCase() ?? "role"}
-                </p>
+          <div className="mt-auto mb-4 flex flex-col gap-4 items-center">
+             <button 
+                onClick={handleLogout}
+                className="text-gray-400 hover:text-red-500 transition-colors"
+                title="Sair"
+             >
+                <LogOut className="w-5 h-5" />
+             </button>
+             
+            <div className="p-1 rounded-full border-2 border-orange-500 overflow-hidden w-10 h-10">
+              <div className="w-full h-full bg-orange-100 flex items-center justify-center text-orange-600 font-bold text-xs">
+                 {user?.name?.substring(0, 2).toUpperCase() ?? "US"}
               </div>
             </div>
-            <Button variant="ghost" size="sm" className="w-full justify-start gap-2 px-2" onClick={handleLogout}>
-              <LogOut className="h-4 w-4" />
-              Sair
-            </Button>
           </div>
         </aside>
 
@@ -170,13 +153,13 @@ function AppShellInner({ header, children }: AppShellProps) {
           />
         )}
 
-        <div className="flex min-h-screen flex-1 flex-col sm:pl-64">
-          <div className="bg-white sm:sticky sm:top-0 sm:z-20">
-            <div className="flex items-start gap-2 px-4 py-1.5 sm:px-6 sm:py-2 lg:px-10">
-              <div className="flex-1">{header}</div>
-            </div>
-          </div>
-          <main className="flex-1 px-4 pb-24 pt-6 sm:px-6 sm:pb-10 lg:px-10">{children}</main>
+        <div className="flex min-h-screen flex-1 flex-col sm:pl-20">
+           {/* Header Wrapper - Removed sticky white bg to match design */}
+           <div className="px-8 pt-8 pb-4">
+              {header}
+           </div>
+           
+          <main className="flex-1 px-8 pb-10">{children}</main>
           <MobileBottomNav items={mobileNavigation} activeItemId={activeItemId} />
         </div>
       </div>

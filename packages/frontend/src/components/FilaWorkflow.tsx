@@ -92,25 +92,37 @@ export function FilaWorkflow({
   const orderedEntries = useMemo(() => sortQueueEntries(entries), [entries]);
 
   return (
-    <section className="space-y-4 px-1 pb-4">
-      <div className="flex flex-col gap-4 md:flex-row md:items-start md:gap-8">
+    <section className="space-y-4 px-1 pb-4 overflow-x-auto">
+      <div className="flex flex-col gap-6 md:flex-row md:items-start md:gap-8 min-w-full md:min-w-0">
         {visibleColumns.map((column) => {
           const columnEntries = orderedEntries.filter(column.filter);
           return (
-            <div key={column.key} className="w-full md:w-[320px] md:shrink-0">
-              <div className="flex items-center gap-2">
-                {column.icon}
-                <p className="text-sm font-semibold">{column.title}</p>
-                <span className={cn("h-2 w-2 rounded-full", column.indicator)} />
+            <div key={column.key} className="w-full md:w-[350px] md:shrink-0 flex flex-col">
+              {/* Column Header */}
+              <div className="flex items-center justify-between mb-4 px-1">
+                <div className="flex items-center gap-2">
+                  <div className={cn("p-2 rounded-lg bg-white shadow-sm border border-gray-100")}>
+                    {column.icon}
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-gray-700 text-sm">{column.title}</h3>
+                    <p className="text-xs text-gray-400 font-medium">
+                      {columnEntries.length} {columnEntries.length === 1 ? "paciente" : "pacientes"}
+                    </p>
+                  </div>
+                </div>
+                <div className={cn("h-1.5 w-1.5 rounded-full", column.indicator)} />
               </div>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {columnEntries.length} {columnEntries.length === 1 ? "paciente" : "pacientes"}
-              </p>
 
-              <div className="mt-3 flex flex-col gap-3">
+              {/* Cards Container */}
+              <div className="flex flex-col gap-4">
                 {columnEntries.length === 0 ? (
-                  <div className="flex flex-1 items-center justify-center rounded-xl border border-dashed border-muted/40 bg-muted/10 p-6 text-center text-xs text-muted-foreground">
-                    Nenhum paciente aqui.
+                  <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-gray-200 bg-gray-50/50 p-8 text-center">
+                    <div className="bg-white p-3 rounded-full shadow-sm mb-3">
+                      <column.icon.type className="w-5 h-5 text-gray-300" />
+                    </div>
+                    <p className="text-sm font-medium text-gray-500">Vazio por enquanto</p>
+                    <p className="text-xs text-gray-400 mt-1">Nenhum paciente nesta etapa</p>
                   </div>
                 ) : (
                   columnEntries.map((entry) => (

@@ -1,0 +1,32 @@
+{
+    "name": "broker-backend",
+    "version": "1.0.0",
+    "description": "Backend API para site de corretor - Grug Brain style! 🦖",
+    "main": "server.js",
+    "scripts": {
+        "start": "node server.js",
+        "dev": "nodemon server.js"
+    },
+    "keywords": [
+        "real-estate",
+        "api",
+        "grug"
+    ],
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "bcrypt": "^5.1.1",
+        "better-sqlite3": "^11.7.0",
+        "cors": "^2.8.5",
+        "dotenv": "^16.4.7",
+        "express": "^4.21.1",
+        "express-validator": "^7.2.0",
+        "helmet": "^8.1.0",
+        "jsonwebtoken": "^9.0.2",
+        "morgan": "^1.10.1",
+        "multer": "^1.4.5-lts.1"
+    },
+    "devDependencies": {
+        "nodemon": "^3.1.11"
+    }
+}

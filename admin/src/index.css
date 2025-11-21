@@ -1,0 +1,56 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-background text-primary antialiased font-sans;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-serif;
+  }
+
+  /* High visibility focus indicator for keyboard navigation */
+  :focus-visible {
+    @apply outline-none ring-2 ring-gold ring-offset-2 ring-offset-white;
+  }
+
+  /* Search bar input - sem focus ring */
+  #search-bar-input:focus-visible {
+    @apply outline-none ring-0 ring-offset-0;
+    box-shadow: none !important;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-primary text-white px-6 py-2 rounded-lg hover:bg-secondary transition-all duration-300 font-medium shadow-lg shadow-primary/20 flex items-center justify-center gap-2 focus:ring-2 focus:ring-offset-2 focus:ring-primary min-h-[44px];
+  }
+
+  .btn-gold {
+    @apply bg-gold-dark text-white px-6 py-2 rounded-lg hover:bg-gold transition-all duration-300 font-medium shadow-lg shadow-gold/20 flex items-center justify-center gap-2 focus:ring-2 focus:ring-offset-2 focus:ring-gold min-h-[44px];
+  }
+
+  .btn-outline {
+    @apply border border-gray-300 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-50 transition-all duration-300 font-medium flex items-center justify-center gap-2 focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 min-h-[44px];
+  }
+
+  .input-field {
+    @apply w-full px-4 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-gold/50 focus:border-gold outline-none transition-all placeholder:text-gray-500 text-gray-900 min-h-[44px];
+  }
+
+  .card {
+    @apply bg-white p-4 rounded-2xl shadow-xl shadow-gray-100 border border-gray-100;
+  }
+
+  /* Utility for screen readers */
+  .sr-only {
+    @apply absolute w-px h-px p-0 -m-px overflow-hidden whitespace-nowrap border-0;
+  }
+}

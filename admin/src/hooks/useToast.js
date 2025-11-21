@@ -1,0 +1,17 @@
+import { useState } from 'react';
+
+// Hook simples para gerenciar toast - Grug gosta: estado mínimo
+export function useToast() {
+    const [toast, setToast] = useState(null);
+
+    const showToast = (message, type = 'info') => {
+        setToast({ message, type });
+    };
+
+    const hideToast = () => {
+        setToast(null);
+    };
+
+    return { toast, showToast, hideToast };
+}
+

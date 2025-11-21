@@ -288,47 +288,6 @@ export default function QueuePage() {
     );
   }
 
-  if (!canCallOrManageQueue) {
-    return null;
-  }
-
-  const waitingCount = entries.filter((entry) => entry.status === Status.WAITING).length;
-  const inProgressCount = entries.filter(
-    (entry) => entry.status === Status.CALLED || entry.status === Status.IN_PROGRESS,
-  ).length;
-
-  // Mock Data for KPIs - In a real app, these would come from an API
-  const kpis = [
-    {
-      title: "Faturamento",
-      value: "R$ 57.257,00",
-      growth: "6.2%",
-      icon: DollarSign,
-      iconColor: "text-green-600",
-      bgColor: "bg-green-100",
-      description: "vs mês passado",
-    },
-    {
-      title: "Internações Críticas",
-      value: "12 Pacientes",
-      growth: "2 Novos",
-      icon: AlertTriangle,
-      iconColor: "text-yellow-600",
-      bgColor: "bg-yellow-100",
-      description: "hoje",
-      isUrgent: true,
-    },
-    {
-      title: "Farmácia & Estoque",
-      value: "R$ 47.257,00",
-      growth: "6.2%",
-      icon: Package,
-      iconColor: "text-blue-600",
-      bgColor: "bg-blue-100",
-      description: "vs mês passado",
-    }
-  ];
-
   return (
     <AppShell
       header={
@@ -346,23 +305,6 @@ export default function QueuePage() {
       }
     >
       <div className="space-y-8">
-        {/* KPI Section */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {kpis.map((kpi, index) => (
-            <KPICard
-              key={index}
-              title={kpi.title}
-              value={kpi.value}
-              growth={kpi.growth}
-              icon={kpi.icon}
-              iconColor={kpi.iconColor}
-              bgColor={kpi.bgColor}
-              description={kpi.description}
-              isUrgent={kpi.isUrgent}
-            />
-          ))}
-        </div>
-
         {entriesLoading ? (
           <div className="space-y-6 rounded-2xl border border-border bg-card p-6 shadow-sm">
             <div className="space-y-3">

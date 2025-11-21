@@ -130,13 +130,14 @@ export function Header({
 
         {/* Primary Action (New Appointment) */}
         {addAction && (
-          <button
+          <Button
             onClick={addAction.onClick}
-            className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-full font-medium transition-colors shadow-lg shadow-orange-200"
+            className="flex items-center gap-2 rounded-full shadow-lg"
+            size="lg"
           >
-            <Plus className="w-5 h-5" />
+            <Plus className="w-5 h-5 mr-2" />
             {addAction.label}
-          </button>
+          </Button>
         )}
 
         {/* Render other actions if any (fallback) */}

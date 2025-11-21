@@ -213,98 +213,101 @@ export function QueueCard({
 
   return (
     <>
-      <Card className="w-full bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden group">
-        <CardContent className="p-0">
-          <div className="p-5 flex flex-col gap-4">
-            {/* Header: Status & Time */}
-            <div className="flex items-center justify-between">
-              <div className={cn("px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1.5 border", status.badgeClass)}>
+      <Card className="w-full bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer group">
+        <CardContent className="p-4">
+          {/* Header: ID and Steps/Status */}
+          <div className="flex justify-between items-start mb-3">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-gray-400">#{entry.id.substring(0, 8).toUpperCase()}</span>
+              <div className={cn("flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border", status.badgeClass)}>
                 <status.icon className="w-3 h-3" />
                 {status.label}
               </div>
-
-              <div className="flex items-center gap-2 text-gray-400 text-xs font-medium">
-                <Timer className="w-3.5 h-3.5" />
-                {tabContext === "in-progress" ? serviceTime : waitTime || "00:00"}
-              </div>
             </div>
 
-            {/* Main Content: Patient & Tutor */}
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <h3 className="text-lg font-bold text-gray-900 leading-tight mb-1">
-                  {entry.patientName}
-                </h3>
-                <div className="flex items-center gap-2 text-sm text-gray-500">
-                  <User className="w-3.5 h-3.5" />
-                  {entry.tutorName}
-                </div>
-              </div>
-
-              {/* Service Badge */}
-              <div className="bg-gray-50 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-600 border border-gray-100">
-                {serviceLabel}
-              </div>
-            </div>
-
-            {/* Footer Info: Vet, Room, Priority */}
-            <div className="flex items-center gap-4 text-xs text-gray-500 border-t border-gray-50 pt-4 mt-1">
-              {entry.assignedVet && (
-                <div className="flex items-center gap-1.5" title="Veterinário">
-                  <Stethoscope className="w-3.5 h-3.5 text-gray-400" />
-                  <span className="truncate max-w-[100px]">{entry.assignedVet.name}</span>
+            <div className="flex items-center gap-1">
+              {/* Primary Action Button (Small) */}
+              {primaryActions.length > 0 && (
+                <div className="mr-1">
+                  {primaryActions[0]}
                 </div>
               )}
-              {entry.room && (
-                <div className="flex items-center gap-1.5" title="Sala">
-                  <DoorOpen className="w-3.5 h-3.5 text-gray-400" />
-                  <span>Sala {entry.room.name}</span>
-                </div>
-              )}
-              {entry.priority !== Priority.NORMAL && (
-                <div className={cn("flex items-center gap-1.5 font-medium",
-                  entry.priority === Priority.EMERGENCY ? "text-red-600" : "text-orange-600"
-                )}>
-                  <AlertCircle className="w-3.5 h-3.5" />
-                  {priorityLabels[entry.priority]}
-                </div>
+
+              {/* Menu Actions */}
+              {(secondaryActions.length > 0 || menuActions.length > 0 || primaryActions.length > 1) && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="text-gray-300 hover:text-gray-600 p-1 rounded-full hover:bg-gray-50 transition-colors">
+                      <MoreHorizontal className="w-4 h-4" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    {primaryActions.slice(1).map((action, idx) => (
+                      <div key={`primary-${idx}`} className="p-1">
+                        {action}
+                      </div>
+                    ))}
+                    {secondaryActions.map((action, idx) => (
+                      <div key={`sec-${idx}`} className="p-1">
+                        {action}
+                      </div>
+                    ))}
+                    {menuActions.map((action, idx) => (
+                      <DropdownMenuItem
+                        key={idx}
+                        onClick={action.onClick}
+                        className={action.destructive ? "text-red-600 focus:text-red-600" : ""}
+                      >
+                        {action.label}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               )}
             </div>
           </div>
 
-          {/* Actions Footer */}
-          {(primaryActions.length > 0 || secondaryActions.length > 0 || menuActions.length > 0) && (
-            <div className="bg-gray-50/50 px-5 py-3 border-t border-gray-100 flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                {secondaryActions}
-
-                {menuActions.length > 0 && (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-gray-100 text-gray-500">
-                        <MoreHorizontal className="w-4 h-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start">
-                      {menuActions.map((action, idx) => (
-                        <DropdownMenuItem
-                          key={idx}
-                          onClick={action.onClick}
-                          className={action.destructive ? "text-red-600 focus:text-red-600" : ""}
-                        >
-                          {action.label}
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                )}
-              </div>
-
-              <div className="flex items-center gap-2">
-                {primaryActions}
-              </div>
+          {/* Main Content: Patient Info */}
+          <div className="mb-3">
+            <div className="flex items-center gap-2 mb-1">
+              <h3 className="font-bold text-gray-800 text-lg">{entry.patientName}</h3>
+              <span className="text-sm text-gray-500">• {serviceLabel}</span>
             </div>
-          )}
+            <div className="flex items-center gap-2 text-sm text-gray-500">
+              <User className="w-3 h-3" />
+              {entry.tutorName}
+            </div>
+          </div>
+
+          {/* Footer: Date/Value & Vet */}
+          <div className="pt-3 border-t border-gray-50 flex justify-between items-end">
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-2 text-xs text-gray-400">
+                <Clock className="w-3 h-3" />
+                {tabContext === "in-progress" ? serviceTime : waitTime || "00:00"}
+              </div>
+              {entry.priority !== Priority.NORMAL && (
+                <div className={cn("text-xs font-bold flex items-center gap-1",
+                  entry.priority === Priority.EMERGENCY ? "text-red-600" : "text-orange-600"
+                )}>
+                  <AlertCircle className="w-3 h-3" />
+                  {priorityLabels[entry.priority]}
+                </div>
+              )}
+            </div>
+
+            {entry.assignedVet && (
+              <div className="flex items-center gap-2">
+                <div className="text-right">
+                  <p className="text-[10px] text-gray-400">Vet.</p>
+                  <p className="text-xs font-medium text-gray-600 truncate max-w-[80px]">{entry.assignedVet.name.split(' ')[0]}</p>
+                </div>
+                <div className="w-8 h-8 rounded-full bg-gray-100 border-2 border-white shadow-sm flex items-center justify-center text-xs font-bold text-gray-500">
+                  {entry.assignedVet.name.substring(0, 2).toUpperCase()}
+                </div>
+              </div>
+            )}
+          </div>
         </CardContent>
       </Card>
 

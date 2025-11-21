@@ -92,60 +92,58 @@ export function FilaWorkflow({
   const orderedEntries = useMemo(() => sortQueueEntries(entries), [entries]);
 
   return (
-    <section className="space-y-4 px-1 pb-4 overflow-x-auto">
-      <div className="flex flex-col gap-6 md:flex-row md:items-start md:gap-8 min-w-full md:min-w-0">
-        {visibleColumns.map((column) => {
-          const columnEntries = orderedEntries.filter(column.filter);
-          return (
-            <div key={column.key} className="w-full md:w-[350px] md:shrink-0 flex flex-col">
-              {/* Column Header */}
-              <div className="flex items-center justify-between mb-4 px-1">
-                <div className="flex items-center gap-2">
-                  <div className={cn("p-2 rounded-lg bg-white shadow-sm border border-gray-100")}>
-                    {column.icon}
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-gray-700 text-sm">{column.title}</h3>
-                    <p className="text-xs text-gray-400 font-medium">
-                      {columnEntries.length} {columnEntries.length === 1 ? "paciente" : "pacientes"}
-                    </p>
-                  </div>
-                </div>
-                <div className={cn("h-1.5 w-1.5 rounded-full", column.indicator)} />
-              </div>
-
-              {/* Cards Container */}
-              <div className="flex flex-col gap-4">
-                {columnEntries.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-gray-200 bg-gray-50/50 p-8 text-center">
-                    <div className="bg-white p-3 rounded-full shadow-sm mb-3">
-                      <column.icon.type className="w-5 h-5 text-gray-300" />
+    <section className="h-full overflow-hidden flex flex-col">
+      <div className="flex-1 overflow-x-auto pb-4">
+        <div className="flex gap-6 min-w-full h-full">
+          {visibleColumns.map((column) => {
+            const columnEntries = orderedEntries.filter(column.filter);
+            return (
+              <div key={column.key} className="flex-1 min-w-[300px] flex flex-col h-full">
+                {/* Column Header */}
+                <div className="flex items-center justify-between mb-4 px-1">
+                  <div className="flex items-center gap-2">
+                    <div className={cn("p-2 rounded-lg bg-white shadow-sm border border-gray-100")}>
+                      {column.icon}
                     </div>
-                    <p className="text-sm font-medium text-gray-500">Vazio por enquanto</p>
-                    <p className="text-xs text-gray-400 mt-1">Nenhum paciente nesta etapa</p>
+                    <div>
+                      <h3 className="font-bold text-gray-700 text-sm">{column.title}</h3>
+                      <p className="text-xs text-gray-400 font-medium">
+                        {columnEntries.length} {columnEntries.length === 1 ? "paciente" : "pacientes"}
+                      </p>
+                    </div>
                   </div>
-                ) : (
-                  columnEntries.map((entry) => (
-                    <QueueCard
-                      key={entry.id}
-                      entry={entry}
-                      canManageQueue={canManageQueue}
-                      onCall={onCall}
-                      onStart={onStart}
-                      onComplete={onComplete}
-                      onCancel={onCancel}
-                      onRequeue={onRequeue}
-                      onViewRecord={onViewRecord}
-                      onRegisterConsultation={onRegisterConsultation}
-                      onReceivePayment={onReceivePayment}
-                      tabContext={column.key as ColumnKey}
-                    />
-                  ))
-                )}
+                  <div className={cn("h-1.5 w-1.5 rounded-full", column.indicator)} />
+                </div>
+
+                {/* Cards Container */}
+                <div className="flex-1 overflow-y-auto pr-2 space-y-4 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
+                  {columnEntries.length === 0 ? (
+                    <div className="h-32 border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center text-gray-400 text-sm bg-gray-50/50">
+                      <p>Sem pacientes</p>
+                    </div>
+                  ) : (
+                    columnEntries.map((entry) => (
+                      <QueueCard
+                        key={entry.id}
+                        entry={entry}
+                        canManageQueue={canManageQueue}
+                        onCall={onCall}
+                        onStart={onStart}
+                        onComplete={onComplete}
+                        onCancel={onCancel}
+                        onRequeue={onRequeue}
+                        onViewRecord={onViewRecord}
+                        onRegisterConsultation={onRegisterConsultation}
+                        onReceivePayment={onReceivePayment}
+                        tabContext={column.key as ColumnKey}
+                      />
+                    ))
+                  )}
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
     </section>
   );

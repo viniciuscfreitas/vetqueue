@@ -13,6 +13,8 @@ import {
   Activity,
   AlertCircle,
   DoorOpen,
+  Clock,
+  Stethoscope,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -40,23 +42,23 @@ interface QueueCardProps {
 const statusConfig = {
   [Status.WAITING]: {
     label: "Aguardando",
-    badgeClass: "bg-amber-50 text-amber-700 border-amber-100",
+    badgeClass: "bg-orange-100 text-orange-600",
   },
   [Status.CALLED]: {
     label: "Chamado",
-    badgeClass: "bg-sky-50 text-sky-700 border-sky-100",
+    badgeClass: "bg-blue-100 text-blue-600",
   },
   [Status.IN_PROGRESS]: {
-    label: "Em atendimento",
-    badgeClass: "bg-blue-50 text-blue-700 border-blue-100",
+    label: "Em Atendimento",
+    badgeClass: "bg-purple-100 text-purple-600",
   },
   [Status.COMPLETED]: {
-    label: "Finalizado",
-    badgeClass: "bg-emerald-50 text-emerald-700 border-emerald-100",
+    label: "Concluído",
+    badgeClass: "bg-green-100 text-green-600",
   },
   [Status.CANCELLED]: {
     label: "Cancelado",
-    badgeClass: "bg-slate-50 text-slate-600 border-slate-100",
+    badgeClass: "bg-gray-100 text-gray-600",
   },
 } as const;
 
@@ -66,13 +68,6 @@ const SERVICE_LABELS: Record<string, string> = {
   [ServiceType.CIRURGIA]: "Cirurgia",
   [ServiceType.EXAME]: "Exame",
   [ServiceType.BANHO_TOSA]: "Banho e Tosa",
-};
-
-const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
-  [PaymentStatus.PENDING]: "Pendente",
-  [PaymentStatus.PARTIAL]: "Parcial",
-  [PaymentStatus.PAID]: "Pago",
-  [PaymentStatus.CANCELLED]: "Cancelado",
 };
 
 const priorityLabels = {
@@ -88,16 +83,18 @@ function getServiceLabel(serviceType: string): string {
   return SERVICE_LABELS[serviceType] ?? serviceType;
 }
 
-function getPaymentStatusLabel(status?: PaymentStatus): string | undefined {
-  if (!status) return undefined;
-  return PAYMENT_STATUS_LABELS[status] ?? status;
-}
-
 // Helper to format date
 function formatDate(dateString?: string | null): string {
   if (!dateString) return "";
   const date = new Date(dateString);
   return date.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
+}
+
+// Helper to format time
+function formatTime(dateString?: string | null): string {
+  if (!dateString) return "";
+  const date = new Date(dateString);
+  return date.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
 }
 
 // Helper to format currency
@@ -118,7 +115,7 @@ function getStepsCompleted(status: Status): number {
     case Status.IN_PROGRESS:
       return 2;
     case Status.COMPLETED:
-      return 5;
+      return 3;
     case Status.CANCELLED:
       return 0;
     default:
@@ -154,14 +151,12 @@ export function QueueCard({
   const waitTime = calculateWaitTime(entry.createdAt, entry.calledAt);
   const serviceTime = calculateServiceTime(entry.calledAt, entry.completedAt);
   const serviceLabel = getServiceLabel(entry.serviceType);
-  const paymentStatusLabel = getPaymentStatusLabel(entry.paymentStatus);
 
   const canEdit = entry.status === Status.WAITING && canManageQueue;
   const queryClient = useQueryClient();
 
   // Actions Logic
   const primaryActions: JSX.Element[] = [];
-  const secondaryActions: JSX.Element[] = [];
 
   if (entry.status === Status.WAITING && onCall) {
     primaryActions.push(
@@ -192,7 +187,7 @@ export function QueueCard({
     );
   }
 
-  // Secondary Actions (Dropdown or extra buttons)
+  // Menu Actions
   const menuActions = [];
 
   if (tabContext === "in-progress" && onRequeue) {
@@ -200,23 +195,15 @@ export function QueueCard({
   }
 
   if (entry.status === Status.IN_PROGRESS && entry.serviceType === ServiceType.CONSULTA && entry.patientId && onRegisterConsultation) {
-    secondaryActions.push(
-      <Button key="reg-consult" variant="outline" size="sm" onClick={() => onRegisterConsultation(entry.patientId!, entry.id)} className="rounded-full border-gray-200 text-gray-600 hover:bg-gray-50">
-        Registrar consulta
-      </Button>
-    )
+    menuActions.push({ label: "Registrar Consulta", onClick: () => onRegisterConsultation(entry.patientId!, entry.id) });
   }
 
   if (entry.status === Status.IN_PROGRESS && entry.serviceType !== ServiceType.CONSULTA && entry.patientId && onViewRecord) {
-    secondaryActions.push(
-      <Button key="view-record" variant="outline" size="sm" onClick={() => onViewRecord(entry.patientId!, entry.id)} className="rounded-full border-gray-200 text-gray-600 hover:bg-gray-50">
-        Ver Prontuário
-      </Button>
-    )
+    menuActions.push({ label: "Ver Prontuário", onClick: () => onViewRecord(entry.patientId!, entry.id) });
   }
 
   if (tabContext === "completed" && entry.paymentStatus !== PaymentStatus.PAID && onRequeue) {
-    menuActions.push({ label: "Retornar à fila", onClick: () => onRequeue(entry.id) });
+    menuActions.push({ label: "Retornar à Fila", onClick: () => onRequeue(entry.id) });
   }
 
   if (entry.status !== Status.COMPLETED && entry.status !== Status.CANCELLED && onCancel) {
@@ -232,13 +219,13 @@ export function QueueCard({
   }
 
   const stepsCompleted = getStepsCompleted(entry.status);
-  const totalSteps = 5;
+  const totalSteps = 3;
 
   return (
     <>
-      <Card className="w-full bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer group">
+      <Card className="bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer mb-4 group">
         <CardContent className="p-4">
-          {/* Header: ID and Steps/Status */}
+          {/* Header: ID, Steps, Status Badge, Menu */}
           <div className="flex justify-between items-start mb-3">
             <div className="flex items-center gap-2">
               {entry.simplesVetId && (
@@ -248,12 +235,15 @@ export function QueueCard({
                 {stepsCompleted}/{totalSteps}
                 <Activity className="w-3 h-3" />
               </div>
+              <span className={cn("px-3 py-1 rounded-full text-xs font-bold", status.badgeClass)}>
+                {status.label}
+              </span>
             </div>
 
             {menuActions.length > 0 && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="text-gray-300 hover:text-gray-600 p-1 rounded-full hover:bg-gray-50 transition-colors">
+                  <button className="text-gray-300 hover:text-gray-600">
                     <MoreVertical className="w-4 h-4" />
                   </button>
                 </DropdownMenuTrigger>
@@ -272,20 +262,46 @@ export function QueueCard({
             )}
           </div>
 
-          {/* Main Content: Patient Info */}
+          {/* Main Content: Patient & Breed */}
           <div className="mb-3">
             <div className="flex items-center gap-2 mb-1">
               <h3 className="font-bold text-gray-800 text-lg">{entry.patientName}</h3>
               <span className="text-sm text-gray-500">• {entry.patient?.breed || serviceLabel}</span>
             </div>
-            <div className="flex items-center gap-2 text-sm text-gray-500">
+            <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
               <User className="w-3 h-3" />
               {entry.tutorName}
             </div>
+
+            {/* Additional Info Row */}
+            <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500">
+              {entry.room && (
+                <div className="flex items-center gap-1.5 bg-gray-50 px-2 py-1 rounded-md">
+                  <DoorOpen className="w-3 h-3" />
+                  <span className="font-medium">{entry.room.name}</span>
+                </div>
+              )}
+
+              {entry.priority !== Priority.NORMAL && (
+                <div className={cn("flex items-center gap-1 px-2 py-1 rounded-md font-bold",
+                  entry.priority === Priority.EMERGENCY ? "bg-red-50 text-red-600" : "bg-orange-50 text-orange-600"
+                )}>
+                  <AlertCircle className="w-3 h-3" />
+                  {priorityLabels[entry.priority]}
+                </div>
+              )}
+
+              {entry.calledAt && (
+                <div className="flex items-center gap-1.5">
+                  <Clock className="w-3 h-3" />
+                  <span>{formatTime(entry.calledAt)}</span>
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* Footer: Date/Value & Vet */}
-          <div className="pt-3 border-t border-gray-50 flex justify-between items-end">
+          {/* Footer: Date/Time & Vet Avatar */}
+          <div className="pt-3 border-t border-gray-50 flex justify-between items-center">
             <div className="flex flex-col gap-1">
               <div className="flex items-center gap-2 text-xs text-gray-400">
                 <Calendar className="w-3 h-3" />
@@ -294,33 +310,25 @@ export function QueueCard({
               {entry.paymentAmount && (
                 <div className="text-sm font-bold text-gray-700">{formatCurrency(entry.paymentAmount)}</div>
               )}
-              {entry.priority !== Priority.NORMAL && (
-                <div className={cn("text-xs font-bold flex items-center gap-1",
-                  entry.priority === Priority.EMERGENCY ? "text-red-600" : "text-orange-600"
-                )}>
-                  <AlertCircle className="w-3 h-3" />
-                  {priorityLabels[entry.priority]}
+              {tabContext === "in-progress" && (
+                <div className="text-xs font-medium text-primary">
+                  ⏱ {serviceTime}
                 </div>
               )}
-              {entry.room && (
-                <div className="flex items-center gap-1 text-xs text-gray-500">
-                  <DoorOpen className="w-3 h-3" />
-                  {entry.room.name}
+              {tabContext === "queue" && entry.status === Status.WAITING && (
+                <div className="text-xs font-medium text-orange-600">
+                  ⏱ {waitTime}
                 </div>
               )}
             </div>
 
             {entry.assignedVet && (
               <div className="flex items-center gap-2">
-                <div className="text-right">
-                  <p className="text-[10px] text-gray-400">Resp.</p>
-                  <p className="text-xs font-medium text-gray-600 truncate max-w-[80px]">
-                    {entry.assignedVet.name.split(' ')[0]}
-                  </p>
-                </div>
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 border-2 border-white shadow-sm flex items-center justify-center text-xs font-bold text-primary">
-                  {entry.assignedVet.name.substring(0, 2).toUpperCase()}
-                </div>
+                <img
+                  src={`https://ui-avatars.com/api/?name=${encodeURIComponent(entry.assignedVet.name)}&background=3b82f6&color=fff&size=128`}
+                  alt={entry.assignedVet.name}
+                  className="w-8 h-8 rounded-full border-2 border-white shadow-sm"
+                />
               </div>
             )}
           </div>

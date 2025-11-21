@@ -100,7 +100,7 @@ export function FilaWorkflow({
             return (
               <div key={column.key} className="flex-1 min-w-[300px] flex flex-col h-full">
                 {/* Column Header */}
-                <div className="flex items-center justify-between mb-4 px-1">
+                <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
                     <div className={cn("p-2 rounded-lg bg-white shadow-sm border border-gray-100")}>
                       {column.icon}
@@ -116,7 +116,7 @@ export function FilaWorkflow({
                 </div>
 
                 {/* Cards Container */}
-                <div className="flex-1 overflow-y-auto pr-2 space-y-4 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
+                <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
                   {columnEntries.length === 0 ? (
                     <div className="h-32 border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center text-gray-400 text-sm bg-gray-50/50">
                       <p>Sem pacientes</p>

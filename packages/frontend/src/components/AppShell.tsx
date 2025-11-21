@@ -92,17 +92,17 @@ function AppShellInner({ header, children }: AppShellProps) {
           )}
           aria-label="Menu principal"
         >
-          <div className="mb-10 p-2 bg-orange-500 rounded-xl shadow-lg shadow-orange-200">
-             <Link href="/">
-                <Image
-                  src="/logo.png"
-                  alt="FisioPet"
-                  width={24}
-                  height={24}
-                  className="h-6 w-6 text-white brightness-0 invert"
-                  priority
-                />
-             </Link>
+          <div className="mb-10 mt-2 flex justify-center w-full">
+            <Link href="/">
+              <Image
+                src="/logo.png"
+                alt="FisioPet"
+                width={48}
+                height={48}
+                className="w-12 h-12 object-contain"
+                priority
+              />
+            </Link>
           </div>
 
           <nav className="flex-1 flex flex-col gap-6 w-full px-4">
@@ -129,17 +129,17 @@ function AppShellInner({ header, children }: AppShellProps) {
           </nav>
 
           <div className="mt-auto mb-4 flex flex-col gap-4 items-center">
-             <button 
-                onClick={handleLogout}
-                className="text-gray-400 hover:text-red-500 transition-colors"
-                title="Sair"
-             >
-                <LogOut className="w-5 h-5" />
-             </button>
-             
+            <button
+              onClick={handleLogout}
+              className="text-gray-400 hover:text-red-500 transition-colors"
+              title="Sair"
+            >
+              <LogOut className="w-5 h-5" />
+            </button>
+
             <div className="p-1 rounded-full border-2 border-orange-500 overflow-hidden w-10 h-10">
               <div className="w-full h-full bg-orange-100 flex items-center justify-center text-orange-600 font-bold text-xs">
-                 {user?.name?.substring(0, 2).toUpperCase() ?? "US"}
+                {user?.name?.substring(0, 2).toUpperCase() ?? "US"}
               </div>
             </div>
           </div>
@@ -154,11 +154,11 @@ function AppShellInner({ header, children }: AppShellProps) {
         )}
 
         <div className="flex min-h-screen flex-1 flex-col sm:pl-20">
-           {/* Header Wrapper - Removed sticky white bg to match design */}
-           <div className="px-8 pt-8 pb-4">
-              {header}
-           </div>
-           
+          {/* Header Wrapper - Removed sticky white bg to match design */}
+          <div className="px-8 pt-8 pb-4">
+            {header}
+          </div>
+
           <main className="flex-1 px-8 pb-10">{children}</main>
           <MobileBottomNav items={mobileNavigation} activeItemId={activeItemId} />
         </div>

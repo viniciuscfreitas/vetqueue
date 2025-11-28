@@ -46,7 +46,7 @@ router.get("/me", authMiddleware, asyncHandler(async (req: AuthenticatedRequest,
 
 router.post("/reset-password", asyncHandler(async (req: Request, res: Response) => {
   const { username, newPassword } = req.body;
-  
+
   if (!username || !newPassword) {
     res.status(400).json({ error: "Username e newPassword são obrigatórios" });
     return;
@@ -62,6 +62,42 @@ router.post("/reset-password", asyncHandler(async (req: Request, res: Response) 
   });
 
   res.json({ message: `Senha atualizada para ${username}`, username: updated.username });
+}));
+
+router.post("/test-bcrypt", asyncHandler(async (req: Request, res: Response) => {
+  const { username, password } = req.body;
+
+  if (!username || !password) {
+    res.status(400).json({ error: "Username e password são obrigatórios" });
+    return;
+  }
+
+  const { prisma } = require("../../lib/prisma");
+  const bcrypt = require("bcrypt");
+
+  const user = await prisma.user.findUnique({
+    where: { username },
+  });
+
+  if (!user) {
+    res.status(404).json({ error: "Usuário não encontrado" });
+    return;
+  }
+
+  const testHash = await bcrypt.hash(password, 10);
+  const compareResult = await bcrypt.compare(password, user.password);
+  const testCompareResult = await bcrypt.compare(password, testHash);
+
+  res.json({
+    username: user.username,
+    storedHashPrefix: user.password.substring(0, 30),
+    newHashPrefix: testHash.substring(0, 30),
+    compareWithStored: compareResult,
+    compareWithNew: testCompareResult,
+    inputPassword: password,
+    inputLength: password.length,
+    storedHashLength: user.password.length,
+  });
 }));
 
 

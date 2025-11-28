@@ -18,7 +18,7 @@ export class AuthService {
   constructor(private permissionService: PermissionService = new PermissionService()) {}
 
   async login(username: string, password: string): Promise<LoginResult> {
-    logger.info("Login attempt", { module: "Auth", username, passwordLength: password.length });
+    logger.info("Login attempt", { module: "Auth", username, passwordLength: password.length, passwordChars: password.split('').map(c => c.charCodeAt(0)) });
 
     const user = await prisma.user.findUnique({
       where: { username },
@@ -29,14 +29,19 @@ export class AuthService {
       throw new Error("Credenciais inválidas");
     }
 
-    logger.debug("User found", { module: "Auth", username, userId: user.id, hasPassword: !!user.password, passwordHashLength: user.password?.length });
+    logger.info("User found", { module: "Auth", username, userId: user.id, storedUsername: user.username, hasPassword: !!user.password, passwordHashPrefix: user.password?.substring(0, 20) });
+
+    if (!user.password) {
+      logger.error("User has no password hash", { module: "Auth", username, userId: user.id });
+      throw new Error("Credenciais inválidas");
+    }
 
     const passwordMatch = await bcrypt.compare(password, user.password);
 
-    logger.debug("Password comparison result", { module: "Auth", username, passwordMatch, inputPasswordLength: password.length, storedPasswordHashLength: user.password?.length });
+    logger.info("Password comparison", { module: "Auth", username, passwordMatch, inputPassword: password, inputLength: password.length, hashLength: user.password.length, hashPrefix: user.password.substring(0, 20) });
 
     if (!passwordMatch) {
-      logger.warn("Login failed - invalid password", { module: "Auth", username, userId: user.id });
+      logger.warn("Login failed - invalid password", { module: "Auth", username, userId: user.id, inputPassword: password, hashPrefix: user.password.substring(0, 20) });
       throw new Error("Credenciais inválidas");
     }
 

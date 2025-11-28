@@ -1,7 +1,30 @@
 import axios from "axios";
 
+const getBaseURL = () => {
+  const envUrl = process.env.NEXT_PUBLIC_API_URL;
+
+  if (envUrl) {
+    return envUrl;
+  }
+
+  if (typeof window !== "undefined") {
+    const hostname = window.location.hostname;
+    const port = window.location.port;
+
+    if (port === "8080" || port === "80") {
+      return "";
+    }
+
+    if (port === "3000") {
+      return "http://localhost:3002";
+    }
+  }
+
+  return "";
+};
+
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "",
+  baseURL: getBaseURL(),
   timeout: 10000,
 });
 

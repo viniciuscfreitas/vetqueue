@@ -37,7 +37,6 @@ const defaultInclude = {
 } as const;
 
 function getCurrentDayWindow(now: Date = new Date()) {
-  // TODO: parametrizar timezone da clínica ao invés de depender do timezone do servidor.
   const startOfDay = new Date(now);
   startOfDay.setHours(0, 0, 0, 0);
 
@@ -187,12 +186,12 @@ function mapPrismaToDomain(entry: PrismaQueueEntry & {
     paymentReceivedById: entry.paymentReceivedById || null,
     paymentReceivedBy: entry.paymentReceivedBy
       ? {
-          id: entry.paymentReceivedBy.id,
-          username: entry.paymentReceivedBy.username,
-          name: entry.paymentReceivedBy.name,
-          role: entry.paymentReceivedBy.role as Role,
-          createdAt: entry.paymentReceivedBy.createdAt,
-        }
+        id: entry.paymentReceivedBy.id,
+        username: entry.paymentReceivedBy.username,
+        name: entry.paymentReceivedBy.name,
+        role: entry.paymentReceivedBy.role as Role,
+        createdAt: entry.paymentReceivedBy.createdAt,
+      }
       : null,
     paymentReceivedAt: entry.paymentReceivedAt || null,
     paymentNotes: entry.paymentNotes || null,
@@ -1420,11 +1419,11 @@ export class QueueRepository {
     if (data.paymentReceivedById !== undefined) {
       updateData.paymentReceivedBy = data.paymentReceivedById
         ? {
-            connect: { id: data.paymentReceivedById },
-          }
+          connect: { id: data.paymentReceivedById },
+        }
         : {
-            disconnect: true,
-          };
+          disconnect: true,
+        };
     }
     if (data.paymentReceivedAt !== undefined) {
       updateData.paymentReceivedAt = data.paymentReceivedAt;
@@ -1522,10 +1521,10 @@ export class QueueRepository {
 
     const avgAge = patientsWithBirthDate.length > 0
       ? patientsWithBirthDate.reduce((sum, patient) => {
-          const birthYear = patient.birthDate!.getFullYear();
-          const currentYear = new Date().getFullYear();
-          return sum + (currentYear - birthYear);
-        }, 0) / patientsWithBirthDate.length
+        const birthYear = patient.birthDate!.getFullYear();
+        const currentYear = new Date().getFullYear();
+        return sum + (currentYear - birthYear);
+      }, 0) / patientsWithBirthDate.length
       : 0;
 
     return {

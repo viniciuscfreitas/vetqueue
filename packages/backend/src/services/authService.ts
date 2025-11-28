@@ -18,7 +18,7 @@ export class AuthService {
   constructor(private permissionService: PermissionService = new PermissionService()) {}
 
   async login(username: string, password: string): Promise<LoginResult> {
-    logger.info("Login attempt", { module: "Auth", username });
+    logger.info("Login attempt", { module: "Auth", username, passwordLength: password.length });
 
     const user = await prisma.user.findUnique({
       where: { username },
@@ -29,7 +29,11 @@ export class AuthService {
       throw new Error("Credenciais inválidas");
     }
 
+    logger.debug("User found", { module: "Auth", username, userId: user.id, hasPassword: !!user.password, passwordHashLength: user.password?.length });
+
     const passwordMatch = await bcrypt.compare(password, user.password);
+
+    logger.debug("Password comparison result", { module: "Auth", username, passwordMatch, inputPasswordLength: password.length, storedPasswordHashLength: user.password?.length });
 
     if (!passwordMatch) {
       logger.warn("Login failed - invalid password", { module: "Auth", username, userId: user.id });

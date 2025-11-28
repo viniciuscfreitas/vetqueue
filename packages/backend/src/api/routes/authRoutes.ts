@@ -44,6 +44,26 @@ router.get("/me", authMiddleware, asyncHandler(async (req: AuthenticatedRequest,
   res.json({ user: { ...user, permissions }, permissions });
 }));
 
+router.post("/reset-password", asyncHandler(async (req: Request, res: Response) => {
+  const { username, newPassword } = req.body;
+  
+  if (!username || !newPassword) {
+    res.status(400).json({ error: "Username e newPassword são obrigatórios" });
+    return;
+  }
+
+  const bcrypt = require("bcrypt");
+  const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+  const { prisma } = require("../../lib/prisma");
+  const updated = await prisma.user.update({
+    where: { username },
+    data: { password: hashedPassword },
+  });
+
+  res.json({ message: `Senha atualizada para ${username}`, username: updated.username });
+}));
+
 
 export default router;
 

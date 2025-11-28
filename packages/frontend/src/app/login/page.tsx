@@ -41,7 +41,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div 
+    <div
       className="min-h-screen flex items-center justify-center p-4"
       style={{
         background: `linear-gradient(to bottom right, #259DE3, #5B96B7)`
@@ -50,11 +50,11 @@ export default function LoginPage() {
       <Card className="w-full max-w-md border-2 shadow-lg" style={{ borderColor: '#5B96B7' }}>
         <CardHeader className="space-y-4">
           <div className="flex justify-center">
-            <Image 
-              src="/logo.png" 
-              alt="Fisiopet" 
-              width={379} 
-              height={130} 
+            <Image
+              src="/logo.png"
+              alt="Fisiopet"
+              width={379}
+              height={130}
               className="h-20 w-auto"
               priority
             />
@@ -88,9 +88,9 @@ export default function LoginPage() {
               />
             </div>
 
-            <Button 
-              type="submit" 
-              className="w-full text-white hover:opacity-90 transition-opacity" 
+            <Button
+              type="submit"
+              className="w-full text-white hover:opacity-90 transition-opacity"
               style={{ backgroundColor: '#259DE3' }}
               disabled={loading}
             >

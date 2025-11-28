@@ -17,12 +17,30 @@ const loginSchema = z.object({
 });
 
 router.post("/login", asyncHandler(async (req: Request, res: Response) => {
+  const { logger } = require("../../lib/logger");
+  logger.info("Login route called", { 
+    module: "Auth", 
+    rawBody: JSON.stringify(req.body),
+    username: req.body?.username,
+    passwordLength: req.body?.password?.length,
+    passwordChars: req.body?.password?.split('').map((c: string) => c.charCodeAt(0))
+  });
+  
   const data = loginSchema.parse(req.body);
+  
+  logger.info("Login schema parsed", { 
+    module: "Auth", 
+    parsedUsername: data.username,
+    parsedPasswordLength: data.password.length,
+    parsedPasswordChars: data.password.split('').map(c => c.charCodeAt(0))
+  });
+  
   try {
     const result = await authService.login(data.username, data.password);
     res.json(result);
   } catch (error) {
     if (error instanceof Error && error.message === "Credenciais inválidas") {
+      logger.warn("Login failed in route", { module: "Auth", error: error.message, username: data.username });
       res.status(401).json({ error: error.message });
       return;
     }

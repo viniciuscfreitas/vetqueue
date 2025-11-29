@@ -656,17 +656,66 @@ export class QueueService {
       payload.paymentHistory = data.paymentHistory;
     }
 
+    const paymentPayload = this.buildPaymentUpdatePayload(targetStatus, {
+      paymentReceivedById: data.paymentReceivedById,
+      paymentReceivedAt: data.paymentReceivedAt,
+    }, currentUserId);
+    Object.assign(payload, paymentPayload);
+
+    return this.repository.updatePayment(id, payload);
+  }
+
+  private calculateHistoryTotal(history: PaymentHistoryEntry[]): number {
+    return history.reduce((acc, record) => acc + Number(record.amount ?? 0), 0);
+  }
+
+  private calculatePaymentStatus(
+    totalReceived: number,
+    targetTotal: number | undefined,
+    currentStatus: PaymentStatus
+  ): PaymentStatus {
+    if (currentStatus === PaymentStatus.CANCELLED) {
+      return PaymentStatus.CANCELLED;
+    }
+
+    if (targetTotal !== undefined && Number.isFinite(targetTotal)) {
+      const epsilon = 0.005;
+      if (totalReceived >= targetTotal - epsilon) {
+        return PaymentStatus.PAID;
+      } else if (totalReceived > 0) {
+        return PaymentStatus.PARTIAL;
+      } else {
+        return PaymentStatus.PENDING;
+      }
+    }
+
+    return totalReceived > 0 ? PaymentStatus.PARTIAL : PaymentStatus.PENDING;
+  }
+
+  private buildPaymentUpdatePayload(
+    targetStatus: PaymentStatus | undefined,
+    data: {
+      paymentReceivedById?: string | null;
+      paymentReceivedAt?: Date | null;
+    },
+    currentUserId?: string
+  ): {
+    paymentReceivedById?: string | null;
+    paymentReceivedAt?: Date | null;
+  } {
+    const payload: {
+      paymentReceivedById?: string | null;
+      paymentReceivedAt?: Date | null;
+    } = {};
+
     if (targetStatus === PaymentStatus.PAID || targetStatus === PaymentStatus.PARTIAL) {
       payload.paymentReceivedById =
         data.paymentReceivedById !== undefined ? data.paymentReceivedById : currentUserId ?? null;
       payload.paymentReceivedAt =
         data.paymentReceivedAt !== undefined ? data.paymentReceivedAt : new Date();
     } else if (targetStatus === PaymentStatus.PENDING || targetStatus === PaymentStatus.CANCELLED) {
-      if (data.paymentReceivedById !== undefined) {
-        payload.paymentReceivedById = data.paymentReceivedById;
-      } else {
-        payload.paymentReceivedById = null;
-      }
+      payload.paymentReceivedById =
+        data.paymentReceivedById !== undefined ? data.paymentReceivedById : null;
       payload.paymentReceivedAt =
         data.paymentReceivedAt !== undefined ? data.paymentReceivedAt : null;
     } else {
@@ -678,11 +727,7 @@ export class QueueService {
       }
     }
 
-    return this.repository.updatePayment(id, payload);
-  }
-
-  private calculateHistoryTotal(history: PaymentHistoryEntry[]): number {
-    return history.reduce((acc, record) => acc + Number(record.amount ?? 0), 0);
+    return payload;
   }
 
   async addPaymentEntry(
@@ -775,21 +820,11 @@ export class QueueService {
       updatePayload.paymentAmount = totalFormatted;
     }
 
-    if (entry.paymentStatus === PaymentStatus.CANCELLED) {
-      updatePayload.paymentStatus = PaymentStatus.CANCELLED;
-    } else if (targetTotal !== undefined && Number.isFinite(targetTotal)) {
-      const epsilon = 0.005;
-      if (totalReceived >= targetTotal - epsilon) {
-        updatePayload.paymentStatus = PaymentStatus.PAID;
-      } else if (totalReceived > 0) {
-        updatePayload.paymentStatus = PaymentStatus.PARTIAL;
-      } else {
-        updatePayload.paymentStatus = PaymentStatus.PENDING;
-      }
-    } else {
-      updatePayload.paymentStatus =
-        totalReceived > 0 ? PaymentStatus.PARTIAL : PaymentStatus.PENDING;
-    }
+    updatePayload.paymentStatus = this.calculatePaymentStatus(
+      totalReceived,
+      targetTotal,
+      entry.paymentStatus
+    );
 
     return this.repository.updatePayment(id, updatePayload);
   }

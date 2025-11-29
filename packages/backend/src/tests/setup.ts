@@ -1,4 +1,5 @@
 import { prisma } from '../lib/prisma';
+import jwt from 'jsonwebtoken';
 
 export async function cleanupDatabase() {
   try {
@@ -26,7 +27,7 @@ export async function ensureAdminSeed() {
     return existing;
   }
 
-  const bcrypt = require('bcrypt');
+  const bcrypt = (await import('bcrypt')).default;
   const hashedPassword = await bcrypt.hash(adminPassword, 10);
 
   return prisma.user.create({
@@ -40,7 +41,7 @@ export async function ensureAdminSeed() {
 }
 
 export async function createTestUser() {
-  const bcrypt = require('bcrypt');
+  const bcrypt = (await import('bcrypt')).default;
   return await prisma.user.create({
     data: {
       username: 'testuser',
@@ -52,8 +53,26 @@ export async function createTestUser() {
 }
 
 export async function getAuthToken(userId: string): Promise<string> {
-  const jwt = require('jsonwebtoken');
   const secret = process.env.JWT_SECRET || 'test-secret';
-  return jwt.sign({ id: userId }, secret);
+  
+  // Buscar usuário para incluir dados no token
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+  
+  if (!user) {
+    throw new Error(`User ${userId} not found`);
+  }
+  
+  return jwt.sign(
+    {
+      id: user.id,
+      username: user.username,
+      name: user.name,
+      role: user.role,
+    },
+    secret,
+    { expiresIn: '24h' }
+  );
 }
 

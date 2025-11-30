@@ -672,7 +672,7 @@ export class QueueService {
   private calculatePaymentStatus(
     totalReceived: number,
     targetTotal: number | undefined,
-    currentStatus: PaymentStatus
+    currentStatus: PaymentStatus | undefined
   ): PaymentStatus {
     if (currentStatus === PaymentStatus.CANCELLED) {
       return PaymentStatus.CANCELLED;

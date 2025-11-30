@@ -102,19 +102,32 @@ router.post("/test-bcrypt", asyncHandler(async (req: Request, res: Response) => 
     return;
   }
 
+  // Testar com e sem trim
+  const trimmedPassword = password.trim();
   const testHash = await bcrypt.hash(password, 10);
+  const testHashTrimmed = await bcrypt.hash(trimmedPassword, 10);
+  
   const compareResult = await bcrypt.compare(password, user.password);
+  const compareResultTrimmed = await bcrypt.compare(trimmedPassword, user.password);
   const testCompareResult = await bcrypt.compare(password, testHash);
+  const testCompareResultTrimmed = await bcrypt.compare(trimmedPassword, testHashTrimmed);
 
   res.json({
     username: user.username,
     storedHashPrefix: user.password.substring(0, 30),
     newHashPrefix: testHash.substring(0, 30),
+    newHashTrimmedPrefix: testHashTrimmed.substring(0, 30),
     compareWithStored: compareResult,
+    compareWithStoredTrimmed: compareResultTrimmed,
     compareWithNew: testCompareResult,
+    compareWithNewTrimmed: testCompareResultTrimmed,
     inputPassword: password,
+    inputPasswordTrimmed: trimmedPassword,
     inputLength: password.length,
+    inputLengthTrimmed: trimmedPassword.length,
     storedHashLength: user.password.length,
+    passwordChars: password.split('').map((c: string) => c.charCodeAt(0)),
+    passwordTrimmedChars: trimmedPassword.split('').map((c: string) => c.charCodeAt(0)),
   });
 }));
 

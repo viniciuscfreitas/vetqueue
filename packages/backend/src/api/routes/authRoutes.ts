@@ -13,7 +13,7 @@ const permissionService = new PermissionService();
 
 const loginSchema = z.object({
   username: z.string().trim().min(1, "Usuário é obrigatório"),
-  password: z.string().trim().min(1, "Senha é obrigatória"),
+  password: z.string().trim().min(1, "Senha é obrigatória"), // Trim para consistência com criação de usuário
 });
 
 router.post("/login", asyncHandler(async (req: Request, res: Response) => {

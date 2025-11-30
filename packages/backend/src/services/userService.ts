@@ -29,28 +29,32 @@ export class UserService {
     name: string;
     role: Role;
   }): Promise<User> {
-    if (!data.username.trim() || !data.password.trim() || !data.name.trim()) {
-      logger.warn("Missing required user fields", { hasUsername: !!data.username.trim(), hasPassword: !!data.password.trim(), hasName: !!data.name.trim() });
+    const trimmedPassword = data.password.trim();
+    const trimmedUsername = data.username.trim();
+    const trimmedName = data.name.trim();
+
+    if (!trimmedUsername || !trimmedPassword || !trimmedName) {
+      logger.warn("Missing required user fields", { hasUsername: !!trimmedUsername, hasPassword: !!trimmedPassword, hasName: !!trimmedName });
       throw new Error("Username, senha e nome são obrigatórios");
     }
 
-    if (data.password.length < 6) {
-      logger.warn("Password too short", { passwordLength: data.password.length });
+    if (trimmedPassword.length < 6) {
+      logger.warn("Password too short", { passwordLength: trimmedPassword.length });
       throw new Error("Senha deve ter no mínimo 6 caracteres");
     }
 
-    const existingUser = await this.repository.findByUsername(data.username);
+    const existingUser = await this.repository.findByUsername(trimmedUsername);
     if (existingUser) {
-      logger.warn("Username already exists", { username: data.username });
+      logger.warn("Username already exists", { username: trimmedUsername });
       throw new Error("Já existe um usuário com este username");
     }
 
-    const hashedPassword = await bcrypt.hash(data.password, 10);
+    const hashedPassword = await bcrypt.hash(trimmedPassword, 10);
 
     return this.repository.create({
-      username: data.username,
+      username: trimmedUsername,
       password: hashedPassword,
-      name: data.name,
+      name: trimmedName,
       role: data.role,
     });
   }

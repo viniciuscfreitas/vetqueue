@@ -8,44 +8,43 @@ async function main() {
 
   const hashedPassword = await bcrypt.hash("senha123", 10);
 
-  const recepcao = await prisma.user.upsert({
-    where: { username: "recepcao" },
-    update: {
-      password: hashedPassword,
-    },
-    create: {
-      username: "recepcao",
-      password: hashedPassword,
-      name: "Recepção",
-      role: "RECEPCAO",
-    },
-  });
+  // Verificar se usuários já existem antes de criar/atualizar
+  const recepcaoExists = await prisma.user.findUnique({ where: { username: "recepcao" } });
+  const recepcao = recepcaoExists 
+    ? recepcaoExists
+    : await prisma.user.create({
+        data: {
+          username: "recepcao",
+          password: hashedPassword,
+          name: "Recepção",
+          role: "RECEPCAO",
+        },
+      });
 
-  const admin = await prisma.user.upsert({
-    where: { username: "alex" },
-    update: {
-      password: await bcrypt.hash("alex", 10),
-    },
-    create: {
-      username: "alex",
-      password: await bcrypt.hash("alex", 10),
-      name: "Administrador",
-      role: "ADMIN",
-    },
-  });
+  const adminExists = await prisma.user.findUnique({ where: { username: "alex" } });
+  const adminPassword = await bcrypt.hash("alex", 10);
+  const admin = adminExists
+    ? adminExists
+    : await prisma.user.create({
+        data: {
+          username: "alex",
+          password: adminPassword,
+          name: "Administrador",
+          role: "ADMIN",
+        },
+      });
 
-  const drjoao = await prisma.user.upsert({
-    where: { username: "drjoao" },
-    update: {
-      password: hashedPassword,
-    },
-    create: {
-      username: "drjoao",
-      password: hashedPassword,
-      name: "Dr. João",
-      role: "VET",
-    },
-  });
+  const drjoaoExists = await prisma.user.findUnique({ where: { username: "drjoao" } });
+  const drjoao = drjoaoExists
+    ? drjoaoExists
+    : await prisma.user.create({
+        data: {
+          username: "drjoao",
+          password: hashedPassword,
+          name: "Dr. João",
+          role: "VET",
+        },
+      });
 
   console.log("✅ Created users:", { recepcao, admin, drjoao });
 
